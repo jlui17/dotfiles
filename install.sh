@@ -15,7 +15,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     exit 1
   fi
   
-  brew_packages=(git fzf zoxide tmux zsh)
+  brew_packages=(git fzf zoxide tmux zsh neovim)
   for package in "${brew_packages[@]}"; do
     if ! brew list --formula | grep -q "^${package}\$"; then
       brew install "$package"
@@ -31,7 +31,7 @@ elif [[ -f "/etc/arch-release" ]]; then
       exit 1
   fi
   
-  pacman_packages=(git fzf zoxide tmux zsh)
+  pacman_packages=(git fzf zoxide tmux zsh neovim)
   # Update pacman database
   sudo pacman -Syu --noconfirm
 
@@ -79,9 +79,39 @@ if [ -f "$TMUX_CONF_DIR/tmux.conf" ]; then
 fi
 ln -sf "$DOTFILES_DIR/tmux.conf" "$TMUX_CONF_DIR/tmux.conf"
 
+# nvim
+echo "Setting up Neovim configuration..."
+NVIM_CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/nvim"
+
+# Check if neovim is installed
+if ! command_exists nvim; then
+    echo "Neovim not found. Installing..."
+    if [[ "$(uname)" == "Darwin" ]]; then
+        brew install neovim
+    elif [[ -f "/etc/arch-release" ]]; then
+        sudo pacman -S --noconfirm neovim
+    fi
+else
+    echo "Neovim is already installed."
+fi
+
+# Check if nvim config already exists and is a symlink to our dotfiles
+if [ -L "$NVIM_CONF_DIR" ] && [ "$(readlink "$NVIM_CONF_DIR")" = "$DOTFILES_DIR/nvim" ]; then
+    echo "Neovim configuration is already linked to dotfiles."
+elif [ -d "$NVIM_CONF_DIR" ]; then
+    echo "Backing up existing Neovim configuration..."
+    mv "$NVIM_CONF_DIR" "$NVIM_CONF_DIR.bak"
+    echo "Creating symlink for Neovim configuration..."
+    ln -sf "$DOTFILES_DIR/nvim" "$NVIM_CONF_DIR"
+else
+    echo "Creating symlink for Neovim configuration..."
+    ln -sf "$DOTFILES_DIR/nvim" "$NVIM_CONF_DIR"
+fi
+
 echo ""
-echo "Dotfiles installation complete!"
+echo "✅ Dotfiles installation complete!"
 echo ""
 echo "Notes:"
 echo "- Zsh plugins will be automatically installed the first time you open zsh."
 echo "- To install tmux plugins, start tmux and press 'prefix + I' (Ctrl+b + I)."
+echo "- Neovim configuration is now linked. Run 'nvim' to start using it. Also run :MasonInstallAll"
