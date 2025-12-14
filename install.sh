@@ -1,9 +1,87 @@
 #!/bin/zsh
 
+# Function to check if a command exists
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+# --- Dependency Installation ---
+echo "Checking and installing dependencies..."
+
+if [[ "$(uname)" == "Darwin" ]]; then
+  # macOS
+  if ! command_exists brew; then
+    echo "Homebrew not found. Please install it first: https://brew.sh/"
+    exit 1
+  fi
+  
+  brew_packages=(git fzf zoxide tmux zsh)
+  for package in "${brew_packages[@]}"; do
+    if ! brew list --formula | grep -q "^${package}\$"; then
+      brew install "$package"
+    else
+      echo "$package is already installed."
+    fi
+  done
+
+elif [[ -f "/etc/arch-release" ]]; then
+  # Arch Linux
+  if ! command_exists sudo; then
+      echo "sudo is required to install packages on Arch Linux."
+      exit 1
+  fi
+  
+  pacman_packages=(git fzf zoxide tmux zsh)
+  # Update pacman database
+  sudo pacman -Syu --noconfirm
+
+  for package in "${pacman_packages[@]}"; do
+    if ! pacman -Qs "^${package}\$" > /dev/null; then
+      sudo pacman -S --noconfirm "$package"
+    else
+      echo "$package is already installed."
+    fi
+  done
+
+else
+  echo "Unsupported OS. This script supports macOS and Arch Linux."
+  exit 1
+fi
+
+# --- TPM (Tmux Plugin Manager) ---
+TPM_DIR="$HOME/.tmux/plugins/tpm"
+if [ ! -d "$TPM_DIR" ]; then
+  echo "Cloning Tmux Plugin Manager (tpm)..."
+  git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+else
+  echo "Tmux Plugin Manager (tpm) is already installed."
+fi
+
+
 DOTFILES_DIR="$HOME/src/dotfiles"
 
-# Create symlinks
-ln -sf "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"
-ln -sf "$DOTFILES_DIR/tmux.conf" "$XDG_CONFIG_HOME/tmux/tmux.conf"
+# --- Symlinking ---
+echo "Backing up and creating symlinks..."
 
-echo "Dotfiles installed!"
+# zshrc
+if [ -f "$HOME/.zshrc" ]; then
+    mv "$HOME/.zshrc" "$HOME/.zshrc.bak"
+fi
+ln -sf "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"
+
+# tmux.conf
+TMUX_CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tmux"
+if [ ! -d "$TMUX_CONF_DIR" ]; then
+  mkdir -p "$TMUX_CONF_DIR"
+fi
+if [ -f "$TMUX_CONF_DIR/tmux.conf" ]; then
+    mv "$TMUX_CONF_DIR/tmux.conf" "$TMUX_CONF_DIR/tmux.conf.bak"
+fi
+ln -sf "$DOTFILES_DIR/tmux.conf" "$TMUX_CONF_DIR/tmux.conf"
+
+echo ""
+echo "Dotfiles installation complete!"
+echo ""
+echo "Notes:"
+echo "- Zsh plugins will be automatically installed the first time you open zsh."
+echo "- To install tmux plugins, start tmux and press 'prefix + I' (Ctrl+b + I)."
