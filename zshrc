@@ -66,4 +66,4 @@ alias vim-zsh='nvim ~/.zshrc'
 # Shell integrations
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
-eval "$(~/.local/bin/mise activate zsh)"
+eval "$(/usr/bin/mise activate zsh)"
