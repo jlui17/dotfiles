@@ -60,7 +60,10 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 # Aliases
 alias ls='ls --color'
 alias vim='nvim'
+alias src-zsh='source ~/.zshrc'
+alias vim-zsh='nvim ~/.zshrc'
 
 # Shell integrations
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
+eval "$(~/.local/bin/mise activate zsh)"
