@@ -64,8 +64,8 @@ alias src-zsh='source ~/.zshrc'
 alias vim-zsh='nvim ~/.zshrc'
 
 # Custom functions
-if [ -d "zsh-functions" ]; then
-  for file in "zsh-functions"/*.sh; do
+if [ -d "${HOME}/src/dotfiles/zsh-functions" ]; then
+  for file in "${HOME}/src/dotfiles/zsh-functions"/*.sh; do
     [ -r "$file" ] && source "$file"
   done
 fi
