@@ -73,4 +73,9 @@ fi
 # Shell integrations
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
-eval "$(/usr/bin/mise activate zsh)"
+
+if [[ "$(uname)" == "Darwin" ]]; then
+  eval "$(/opt/homebrew/bin/mise activate zsh)"
+else
+  eval "$(/usr/bin/mise activate zsh)"
+fi
