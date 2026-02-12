@@ -41,7 +41,7 @@ _get_session_list() {
   tmux ls 2>/dev/null | while read line; do
     session_name=$(echo "$line" | cut -d: -f1)
     session_info=$(echo "$line" | cut -d: -f2-)
-    printf "%-20s %s\n" "$session_name" "$session_info"
+    printf "%-20s:%s\n" "$session_name" "$session_info"
   done
 }
 
@@ -86,7 +86,7 @@ $sessions_output"
         fi
       else
         # Extract session name (first column)
-        local session_name=$(echo "$selection" | awk '{print $1}')
+        local session_name=$(echo "$selection" | cut -d: -f1 | sed 's/ *$//')
         tmux new -A -s "$session_name"
       fi
     else
@@ -121,7 +121,7 @@ tmuxk() {
     if [[ -n "$selections" ]]; then
       echo "$selections" | while IFS= read -r selection; do
         if [[ -n "$selection" ]]; then
-          local session_name=$(echo "$selection" | awk '{print $1}')
+          local session_name=$(echo "$selection" | cut -d: -f1 | sed 's/ *$//')
           echo "Killing session: $session_name"
           tmux kill-session -t "$session_name"
         fi

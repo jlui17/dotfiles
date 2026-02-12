@@ -5,6 +5,14 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# Homebrew shellenv (macOS)
+if [[ -f "/opt/homebrew/bin/brew" ]] then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+# Word deletion stops at path separators, dots, dashes, equals
+WORDCHARS=${WORDCHARS//[\/.\-=]/}
+
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
@@ -25,6 +33,9 @@ zinit light zsh-users/zsh-syntax-highlighting
 zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
 zinit light Aloxaf/fzf-tab
+
+# Zinit snippets
+zinit snippet OMZP::git
 
 # Load completions
 autoload -Uz compinit && compinit
@@ -55,7 +66,12 @@ setopt hist_find_no_dups
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
+
+# Environment
+export TERM=xterm-256color
+export EDITOR='nvim'
 
 # Aliases
 alias ls='ls --color'
@@ -63,19 +79,20 @@ alias vim='nvim'
 alias src-zsh='source ~/.zshrc'
 alias vim-zsh='nvim ~/.zshrc'
 
-# Custom functions
-if [ -d "${HOME}/src/dotfiles/zsh-functions" ]; then
-  for file in "${HOME}/src/dotfiles/zsh-functions"/*.sh; do
-    [ -r "$file" ] && source "$file"
-  done
-fi
-
 # Shell integrations
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
+enable-fzf-tab
 
-if [[ "$(uname)" == "Darwin" ]]; then
-  eval "$(/opt/homebrew/bin/mise activate zsh)"
-else
-  eval "$(/usr/bin/mise activate zsh)"
+# Custom functions
+DOTFILES_DIR="${${(%):-%x}:A:h}"
+setopt NULL_GLOB
+for file in "$DOTFILES_DIR/zsh-functions"/*.sh; do
+  [[ -f "$file" ]] && source "$file"
+done
+unsetopt NULL_GLOB
+
+# Mise
+if command -v mise &>/dev/null; then
+  eval "$(mise activate zsh)"
 fi
