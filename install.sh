@@ -98,11 +98,9 @@ fi
 # Check if nvim config already exists and is a symlink to our dotfiles
 if [ -L "$NVIM_CONF_DIR" ] && [ "$(readlink "$NVIM_CONF_DIR")" = "$DOTFILES_DIR/nvim" ]; then
     echo "Neovim configuration is already linked to dotfiles."
-elif [ -d "$NVIM_CONF_DIR" ]; then
-    echo "Backing up existing Neovim configuration..."
-    mv "$NVIM_CONF_DIR" "$NVIM_CONF_DIR.bak"
-    echo "Creating symlink for Neovim configuration..."
-    ln -sf "$DOTFILES_DIR/nvim" "$NVIM_CONF_DIR"
+elif [ -d "$NVIM_CONF_DIR" ] || [ -e "$NVIM_CONF_DIR" ]; then
+    echo "⚠️  Existing Neovim configuration found at $NVIM_CONF_DIR"
+    echo "   Skipping nvim setup. Please back it up or remove it, then re-run this script."
 else
     echo "Creating symlink for Neovim configuration..."
     ln -sf "$DOTFILES_DIR/nvim" "$NVIM_CONF_DIR"
