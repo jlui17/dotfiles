@@ -10,6 +10,8 @@ if [[ -f "/opt/homebrew/bin/brew" ]] then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
 # Word deletion stops at path separators, dots, dashes, equals
 WORDCHARS=${WORDCHARS//[\/.\-=]/}
 
@@ -79,6 +81,11 @@ alias vim='nvim'
 alias src-zsh='source ~/.zshrc'
 alias vim-zsh='nvim ~/.zshrc'
 
+# Mise (before shell integrations that depend on mise-managed tools)
+if command -v mise &>/dev/null; then
+  eval "$(mise activate zsh)"
+fi
+
 # Shell integrations
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
@@ -91,8 +98,3 @@ for file in "$DOTFILES_DIR/zsh-functions"/*.sh; do
   [[ -f "$file" ]] && source "$file"
 done
 unsetopt NULL_GLOB
-
-# Mise
-if command -v mise &>/dev/null; then
-  eval "$(mise activate zsh)"
-fi
