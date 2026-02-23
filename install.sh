@@ -5,6 +5,10 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+CURRENT_USER="$(whoami)"
+IS_WORK_COMPUTER=false
+[[ "$CURRENT_USER" == "juslui" ]] && IS_WORK_COMPUTER=true
+
 # --- Dependency Installation ---
 echo "Checking and installing dependencies..."
 
@@ -15,7 +19,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     exit 1
   fi
   
-  brew_packages=(git fzf zoxide tmux zsh neovim)
+  brew_packages=(git fzf zoxide tmux zsh neovim ghostty)
   for package in "${brew_packages[@]}"; do
     if ! brew list --formula | grep -q "^${package}\$"; then
       brew install "$package"
@@ -31,7 +35,7 @@ elif [[ -f "/etc/arch-release" ]]; then
       exit 1
   fi
   
-  pacman_packages=(git fzf zoxide tmux zsh neovim)
+  pacman_packages=(git fzf zoxide tmux zsh neovim ghostty)
   # Update pacman database
   sudo pacman -Syu --noconfirm
 
@@ -58,16 +62,20 @@ else
 fi
 
 
-DOTFILES_DIR="$HOME/src/dotfiles"
+DOTFILES_DIR="${0:A:h}"
 
 # --- Symlinking ---
 echo "Backing up and creating symlinks..."
 
 # zshrc
-if [ -f "$HOME/.zshrc" ]; then
-    mv "$HOME/.zshrc" "$HOME/.zshrc.bak"
+if [[ "$IS_WORK_COMPUTER" == true ]]; then
+  echo "Work computer detected — skipping zshrc symlink."
+else
+  if [ -f "$HOME/.zshrc" ]; then
+      mv "$HOME/.zshrc" "$HOME/.zshrc.bak"
+  fi
+  ln -sf "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"
 fi
-ln -sf "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"
 
 # tmux.conf
 TMUX_CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tmux"
@@ -106,6 +114,20 @@ else
     ln -sf "$DOTFILES_DIR/nvim" "$NVIM_CONF_DIR"
 fi
 
+# ghostty config
+if [[ "$(uname)" == "Darwin" ]]; then
+  GHOSTTY_CONF_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
+else
+  GHOSTTY_CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/ghostty"
+fi
+if [ ! -d "$GHOSTTY_CONF_DIR" ]; then
+  mkdir -p "$GHOSTTY_CONF_DIR"
+fi
+if [ -f "$GHOSTTY_CONF_DIR/config" ]; then
+    mv "$GHOSTTY_CONF_DIR/config" "$GHOSTTY_CONF_DIR/config.bak"
+fi
+ln -sf "$DOTFILES_DIR/ghostty/config" "$GHOSTTY_CONF_DIR/config"
+
 echo ""
 echo "✅ Dotfiles installation complete!"
 echo ""
@@ -113,3 +135,4 @@ echo "Notes:"
 echo "- Zsh plugins will be automatically installed the first time you open zsh."
 echo "- To install tmux plugins, start tmux and press 'prefix + I' (Ctrl+b + I)."
 echo "- Neovim configuration is now linked. Run 'nvim' to start using it. Also run :MasonInstallAll"
+echo "- Ghostty configuration is now linked to the platform-appropriate config location."
