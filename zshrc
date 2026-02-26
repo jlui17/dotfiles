@@ -80,6 +80,7 @@ alias ls='ls --color'
 alias vim='nvim'
 alias src-zsh='source ~/.zshrc'
 alias vim-zsh='nvim ~/.zshrc'
+alias lg='lazygit'
 
 # Mise (before shell integrations that depend on mise-managed tools)
 if command -v mise &>/dev/null; then

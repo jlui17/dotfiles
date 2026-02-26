@@ -1,43 +1,28 @@
 #!/bin/zsh
 
-_fix-tmux-ls() {
-  [[ -n $TMUX ]] && return 0 # Exit early if already in a tmux session
+tmuxfix() {
+  local pids=($(pgrep -x tmux))
 
-  LS_OUT=$(tmux ls 2>&1)
-  if [[ $LS_OUT =~ "failed to connect to server" ]]; then
-    echo "Tmux server not responding. Attempting to send USR1 signal to tmux processes..."
-
-    # Get all tmux processes
-    TMUX_PIDS=($(pgrep -f tmux))
-
-    if [[ ${#TMUX_PIDS[@]} -eq 0 ]]; then
-      echo "No tmux processes found."
-      return 1
-    fi
-
-    # Try each PID until server responds or we run out of PIDs
-    for pid in "${TMUX_PIDS[@]}"; do
-      echo "Sending USR1 signal to tmux process $pid"
-      kill -USR1 "$pid"
-
-      # Wait a brief moment for the signal to take effect
-      sleep 0.1
-
-      # Try listing sessions again
-      LS_OUT=$(tmux ls 2>&1)
-      if ! [[ $LS_OUT =~ "failed to connect to server" ]]; then
-        echo "Tmux server is now responding after sending signal to PID $pid."
-        return 0
-      fi
-    done
-
-    echo "Tmux server still not responding after trying all PIDs."
+  if [[ ${#pids[@]} -eq 0 ]]; then
+    echo "No tmux server process found."
     return 1
   fi
+
+  for pid in "${pids[@]}"; do
+    echo "Sending USR1 to tmux server (PID $pid)"
+    kill -USR1 "$pid"
+    sleep 0.2
+    if tmux ls &>/dev/null; then
+      echo "Server recovered."
+      return 0
+    fi
+  done
+
+  echo "Server still not responding."
+  return 1
 }
 
 _get_session_list() {
-  _fix-tmux-ls
   tmux ls 2>/dev/null | while read line; do
     session_name=$(echo "$line" | cut -d: -f1)
     session_info=$(echo "$line" | cut -d: -f2-)
@@ -50,8 +35,6 @@ tmuxn() {
     echo "Already in a tmux session"
     return 1
   fi
-
-  _fix-tmux-ls
 
   if [[ $# -eq 0 ]]; then
     # Interactive mode
@@ -100,8 +83,6 @@ $sessions_output"
 }
 
 tmuxk() {
-  _fix-tmux-ls
-
   if [[ $# -eq 0 ]]; then
     # Interactive mode
     local sessions_output=$(_get_session_list)

@@ -19,7 +19,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     exit 1
   fi
   
-  brew_packages=(git fzf zoxide tmux zsh neovim ghostty)
+  brew_packages=(git fzf zoxide tmux zsh neovim ghostty lazygit)
   for package in "${brew_packages[@]}"; do
     if ! brew list --formula | grep -q "^${package}\$"; then
       brew install "$package"
@@ -35,7 +35,7 @@ elif [[ -f "/etc/arch-release" ]]; then
       exit 1
   fi
   
-  pacman_packages=(git fzf zoxide tmux zsh neovim ghostty)
+  pacman_packages=(git fzf zoxide tmux zsh neovim ghostty lazygit)
   # Update pacman database
   sudo pacman -Syu --noconfirm
 
