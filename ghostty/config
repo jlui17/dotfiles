@@ -1,6 +1,3 @@
 font-family = JetBrainsMono NFM Medium
 font-size = 18
 theme = GitHub Dark
-keybind = super+enter=text:\x1b[13;5u
-# Send CSI u sequence for ctrl+enter so tmux can distinguish it from plain enter
-keybind = ctrl+enter=text:\x1b[13;5u
