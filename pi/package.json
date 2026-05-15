@@ -1,0 +1,11 @@
+{
+  "name": "dotfiles-pi",
+  "version": "1.0.0",
+  "description": "Justin's pi coding agent configuration — themes, skills, and package list",
+  "keywords": ["pi-package"],
+  "license": "MIT",
+  "pi": {
+    "themes": ["./themes"],
+    "skills": ["./skills"]
+  }
+}

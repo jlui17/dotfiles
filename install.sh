@@ -198,6 +198,68 @@ fi
 echo "Creating symlink for OpenCode configuration..."
 ln -sf "$DOTFILES_DIR/opencode/opencode.json" "$OPENCODE_CONF_DIR/opencode.json"
 
+# --- Pi Coding Agent ---
+echo "Setting up Pi coding agent configuration..."
+PI_AGENT_DIR="$HOME/.pi/agent"
+
+# Symlink themes
+if [ ! -d "$PI_AGENT_DIR/themes" ]; then
+  mkdir -p "$PI_AGENT_DIR/themes"
+fi
+for theme_file in "$DOTFILES_DIR/pi/themes/"*.json; do
+  theme_name="$(basename "$theme_file")"
+  if [ -f "$PI_AGENT_DIR/themes/$theme_name" ] && [ ! -L "$PI_AGENT_DIR/themes/$theme_name" ]; then
+    echo "  Backing up existing theme: $theme_name"
+    mv "$PI_AGENT_DIR/themes/$theme_name" "$PI_AGENT_DIR/themes/$theme_name.bak"
+  fi
+  ln -sf "$theme_file" "$PI_AGENT_DIR/themes/$theme_name"
+  echo "  Linked theme: $theme_name"
+done
+
+# Symlink skills
+for skill_dir in "$DOTFILES_DIR/pi/skills/"*/; do
+  [ -d "$skill_dir" ] || continue
+  skill_name="$(basename "$skill_dir")"
+  target="$PI_AGENT_DIR/skills/$skill_name"
+  if [ -d "$target" ] && [ ! -L "$target" ]; then
+    echo "  Backing up existing skill: $skill_name"
+    mv "$target" "$target.bak"
+  fi
+  ln -sfn "$skill_dir" "$target"
+  echo "  Linked skill: $skill_name"
+done
+
+# Symlink project-level pi settings
+PI_PROJECT_DIR="$DOTFILES_DIR/.pi"
+if [ ! -d "$PI_PROJECT_DIR" ]; then
+  mkdir -p "$PI_PROJECT_DIR"
+fi
+ln -sf "$DOTFILES_DIR/pi/settings.json" "$PI_PROJECT_DIR/settings.json"
+
+# Install pi packages
+if command_exists pi; then
+  while IFS= read -r pkg_source; do
+    # Skip empty lines and comments
+    [[ -z "$pkg_source" || "$pkg_source" == \#* ]] && continue
+    # Trim whitespace
+    pkg_source="${pkg_source## }"
+    pkg_source="${pkg_source%% }"
+    [ -z "$pkg_source" ] && continue
+    echo "  Installing pi package: $pkg_source"
+    pi install "$pkg_source" 2>/dev/null || echo "  ⚠️  Failed to install $pkg_source (already installed?)"
+  done < "$DOTFILES_DIR/pi/packages.txt"
+else
+  echo "  ⚠️  pi CLI not found. Install pi first: https://pi.dev"
+  echo "     Packages to install manually:"
+  while IFS= read -r pkg_source; do
+    [[ -z "$pkg_source" || "$pkg_source" == \#* ]] && continue
+    pkg_source="${pkg_source## }"
+    pkg_source="${pkg_source%% }"
+    [ -z "$pkg_source" ] && continue
+    echo "       pi install $pkg_source"
+  done < "$DOTFILES_DIR/pi/packages.txt"
+fi
+
 echo ""
 echo "✅ Dotfiles installation complete!"
 echo ""
@@ -206,3 +268,4 @@ echo "- Zsh plugins will be automatically installed the first time you open zsh.
 echo "- To install tmux plugins, start tmux and press 'prefix + I' (Ctrl+b + I)."
 echo "- Neovim configuration is now linked. Run 'nvim' to start using it. Also run :MasonInstallAll"
 echo "- Ghostty configuration is now linked to the platform-appropriate config location."
+echo "- Pi theme and skills are linked. Select the theme in pi via /settings or set it in settings.json"

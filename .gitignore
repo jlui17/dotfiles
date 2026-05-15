@@ -1,1 +1,7 @@
 opencode/env
+
+# Pi coding agent - project-local artifacts (keep settings.json tracked)
+.pi/sessions/
+.pi/git/
+.pi/npm/
+.pi/node_modules/
