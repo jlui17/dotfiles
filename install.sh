@@ -183,6 +183,21 @@ setup_omarchy_keybindings() {
 }
 run_if_os "arch" setup_omarchy_keybindings
 
+# opencode
+echo "Setting up OpenCode configuration..."
+OPENCODE_CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+if [ ! -d "$OPENCODE_CONF_DIR" ]; then
+  mkdir -p "$OPENCODE_CONF_DIR"
+fi
+
+if [ -f "$OPENCODE_CONF_DIR/opencode.json" ] && [ ! -L "$OPENCODE_CONF_DIR/opencode.json" ]; then
+    echo "Backing up existing OpenCode configuration..."
+    mv "$OPENCODE_CONF_DIR/opencode.json" "$OPENCODE_CONF_DIR/opencode.json.bak"
+fi
+
+echo "Creating symlink for OpenCode configuration..."
+ln -sf "$DOTFILES_DIR/opencode/opencode.json" "$OPENCODE_CONF_DIR/opencode.json"
+
 echo ""
 echo "✅ Dotfiles installation complete!"
 echo ""

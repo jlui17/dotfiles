@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "google-sheets": {
+      "type": "local",
+      "command": ["uvx", "mcp-google-sheets@latest"],
+      "environment": {
+        "SERVICE_ACCOUNT_PATH": "${HOME}/.config/opencode/env/sheets-service-account-key.json",
+        "DRIVE_FOLDER_ID": "1Kz6twLjCX8OMIu8d_H16W5oqEdE0UGZm"
+      }
+    }
+  }
+}
