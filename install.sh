@@ -283,6 +283,20 @@ setup_pi() {
     echo "  Linked skill: $skill_name"
   done
 
+  # -- Extensions ------------------------------------------------------------
+  ensure_dir "$pi_agent_dir/extensions"
+  for ext_file in "$DOTFILES_DIR/pi/extensions/"*.ts; do
+    [[ -f "$ext_file" ]] || continue
+    local ext_name="$(basename "$ext_file")"
+    local target="$pi_agent_dir/extensions/$ext_name"
+    if [[ -f "$target" && ! -L "$target" ]]; then
+      echo "  Backing up existing extension: $ext_name"
+      mv "$target" "$target.bak"
+    fi
+    ln -sf "$ext_file" "$target"
+    echo "  Linked extension: $ext_name"
+  done
+
   # -- Project-level settings symlink ---------------------------------------
   local pi_project_dir="$DOTFILES_DIR/.pi"
   ensure_dir "$pi_project_dir"
