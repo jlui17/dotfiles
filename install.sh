@@ -1,271 +1,348 @@
 #!/bin/zsh
 
-# Function to check if a command exists
-command_exists() {
-  command -v "$1" >/dev/null 2>&1
-}
+# ──────────────────────────────────────────────────────────────
+#  dotfiles — install.sh
+#  One script, two platforms. Clean phases, single source of
+#  truth for packages, no inline function definitions.
+# ──────────────────────────────────────────────────────────────
 
-# OS Detection
-OS=""
+# set -euo pipefail          # opt-in; not enabled to preserve
+                             # existing error-handling style
 
-detect_os() {
-    if [[ "$(uname)" == "Darwin" ]]; then
-        OS="macos"
-    elif [[ -f "/etc/arch-release" ]]; then
-        OS="arch"
-    else
-        OS="unknown"
-    fi
-}
+# ──────────────────────────────────────────────
+#  GLOBALS & OS DETECTION
+# ──────────────────────────────────────────────
 
-# Run command if current OS is in the comma-separated list
-run_if_os() {
-    local os_list="$1"
-    shift
-    [[ ",$os_list," == *",$OS,"* ]] && "$@"
-}
-
+DOTFILES_DIR="${0:A:h}"
 CURRENT_USER="$(whoami)"
 IS_WORK_COMPUTER=false
 [[ "$CURRENT_USER" == "juslui" ]] && IS_WORK_COMPUTER=true
 
-# Detect OS early
-detect_os
-
-# --- Dependency Installation ---
-echo "Checking and installing dependencies..."
-
-# macOS package installation
-run_if_os "macos" check_brew_and_install
-
-check_brew_and_install() {
-    if ! command_exists brew; then
-        echo "Homebrew not found. Please install it first: https://brew.sh/"
-        exit 1
+# -- OS detection -----------------------------------------------------------
+OS=""
+case "$(uname)" in
+  Darwin) OS="macos" ;;
+  Linux)
+    if [[ -f /etc/arch-release ]]; then
+      OS="arch"
+    else
+      OS="unknown"
     fi
-    
-    brew_packages=(git fzf zoxide tmux zsh neovim ghostty lazygit)
-    for package in "${brew_packages[@]}"; do
-        if ! brew list --formula | grep -q "^${package}\$"; then
-            brew install "$package"
-        else
-            echo "$package is already installed."
-        fi
-    done
+    ;;
+  *) OS="unknown" ;;
+esac
+
+# -- Platform package configuration -----------------------------------------
+# Single source of truth — add new tools here, not in two places.
+COMMON_PACKAGES=(git fzf zoxide tmux zsh neovim ghostty lazygit)
+
+case "$OS" in
+  macos)
+    PKG_MANAGER="brew"
+    PKG_INSTALL=(brew install)
+    PKG_QUERY=(brew list --formula)
+    PKG_UPDATE=(brew update)
+    ;;
+  arch)
+    PKG_MANAGER="pacman"
+    PKG_INSTALL=(sudo pacman -S --noconfirm)
+    PKG_QUERY=(pacman -Qs)
+    PKG_UPDATE=(sudo pacman -Syu --noconfirm)
+    ;;
+esac
+
+# ──────────────────────────────────────────────
+#  HELPERS
+# ──────────────────────────────────────────────
+
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
 }
 
-# Arch Linux package installation  
-run_if_os "arch" check_sudo_and_install
-
-check_sudo_and_install() {
-    if ! command_exists sudo; then
-        echo "sudo is required to install packages on Arch Linux."
-        exit 1
-    fi
-    
-    pacman_packages=(git fzf zoxide tmux zsh neovim ghostty lazygit)
-    sudo pacman -Syu --noconfirm
-
-    for package in "${pacman_packages[@]}"; do
-        if ! pacman -Qs "^${package}\$" > /dev/null; then
-            sudo pacman -S --noconfirm "$package"
-        else
-            echo "$package is already installed."
-        fi
-    done
+# Run a command only when the current OS matches one of the
+# comma-separated values in $1.
+run_if_os() {
+  local os_list="$1"
+  shift
+  [[ ",$os_list," == *",$OS,"* ]] && "$@"
 }
 
-# Handle unsupported OS
-run_if_os "unknown" unsupported_os
+ensure_dir() {
+  [[ -d "$1" ]] || mkdir -p "$1"
+}
 
-unsupported_os() {
+# Back up an existing file (not a symlink) and symlink in its place.
+backup_and_link() {
+  local src="$1" dst="$2"
+  if [[ -f "$dst" && ! -L "$dst" ]]; then
+    echo "  Backing up existing $(basename "$dst")..."
+    mv "$dst" "$dst.bak"
+  fi
+  ln -sf "$src" "$dst"
+  echo "  Linked $(basename "$dst")."
+}
+
+# ──────────────────────────────────────────────
+#  PHASE 1 — OS packages
+# ──────────────────────────────────────────────
+
+install_packages() {
+  echo "==> Installing packages..."
+
+  if [[ "$OS" == "unknown" ]]; then
     echo "Unsupported OS. This script supports macOS and Arch Linux."
     exit 1
+  fi
+
+  # Ensure the package manager itself is available
+  if [[ "$OS" == "macos" ]] && ! command_exists brew; then
+    echo "Homebrew not found. Install it first: https://brew.sh/"
+    exit 1
+  fi
+  if [[ "$OS" == "arch" ]] && ! command_exists sudo; then
+    echo "sudo is required to install packages on Arch Linux."
+    exit 1
+  fi
+
+  echo "  Updating $PKG_MANAGER..."
+  "$PKG_UPDATE[@]"
+
+  for package in "${COMMON_PACKAGES[@]}"; do
+    if "$PKG_QUERY[@]" "^${package}\$" >/dev/null 2>&1; then
+      echo "  $package is already installed."
+    else
+      echo "  Installing $package..."
+      "$PKG_INSTALL[@]" "$package"
+    fi
+  done
+  echo ""
 }
 
-# --- TPM (Tmux Plugin Manager) ---
-TPM_DIR="$HOME/.tmux/plugins/tpm"
-if [ ! -d "$TPM_DIR" ]; then
-  echo "Cloning Tmux Plugin Manager (tpm)..."
-  git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
-else
-  echo "Tmux Plugin Manager (tpm) is already installed."
-fi
+# ──────────────────────────────────────────────
+#  PHASE 2 — Tmux Plugin Manager
+# ──────────────────────────────────────────────
 
-
-DOTFILES_DIR="${0:A:h}"
-
-# --- Symlinking ---
-echo "Backing up and creating symlinks..."
-
-# zshrc
-if [[ "$IS_WORK_COMPUTER" == true ]]; then
-  echo "Work computer detected — skipping zshrc symlink."
-else
-  if [ -f "$HOME/.zshrc" ]; then
-      mv "$HOME/.zshrc" "$HOME/.zshrc.bak"
+setup_tpm() {
+  echo "==> Tmux Plugin Manager (tpm)..."
+  TPM_DIR="$HOME/.tmux/plugins/tpm"
+  if [[ -d "$TPM_DIR" ]]; then
+    echo "  tpm is already installed."
+  else
+    echo "  Cloning tpm..."
+    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
   fi
-  ln -sf "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"
-fi
+  echo ""
+}
 
-# tmux.conf
-TMUX_CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tmux"
-if [ ! -d "$TMUX_CONF_DIR" ]; then
-  mkdir -p "$TMUX_CONF_DIR"
-fi
-if [ -f "$TMUX_CONF_DIR/tmux.conf" ]; then
-    mv "$TMUX_CONF_DIR/tmux.conf" "$TMUX_CONF_DIR/tmux.conf.bak"
-fi
-ln -sf "$DOTFILES_DIR/tmux.conf" "$TMUX_CONF_DIR/tmux.conf"
+# ──────────────────────────────────────────────
+#  PHASE 3 — Shell & terminal symlinks
+# ──────────────────────────────────────────────
 
-# nvim
-echo "Setting up Neovim configuration..."
-NVIM_CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/nvim"
+setup_zshrc() {
+  echo "==> zshrc..."
+  if [[ "$IS_WORK_COMPUTER" == true ]]; then
+    echo "  Work computer detected — skipping zshrc symlink."
+  else
+    backup_and_link "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"
+  fi
+  echo ""
+}
 
-# Check if neovim is installed
-if ! command_exists nvim; then
-    echo "Neovim not found. Installing..."
+setup_tmux() {
+  echo "==> tmux.conf..."
+  local tmux_dir="${XDG_CONFIG_HOME:-$HOME/.config}/tmux"
+  ensure_dir "$tmux_dir"
+  backup_and_link "$DOTFILES_DIR/tmux.conf" "$tmux_dir/tmux.conf"
+  echo ""
+}
+
+setup_nvim() {
+  echo "==> Neovim configuration..."
+  local nvim_dir="${XDG_CONFIG_HOME:-$HOME/.config}/nvim"
+
+  # Safety net: ensure nvim is installed (normally handled by install_packages)
+  if ! command_exists nvim; then
+    echo "  Neovim not found. Installing..."
     run_if_os "macos" brew install neovim
     run_if_os "arch" sudo pacman -S --noconfirm neovim
-else
-    echo "Neovim is already installed."
-fi
+  else
+    echo "  Neovim is already installed."
+  fi
 
-# Check if nvim config already exists and is a symlink to our dotfiles
-if [ -L "$NVIM_CONF_DIR" ] && [ "$(readlink "$NVIM_CONF_DIR")" = "$DOTFILES_DIR/nvim" ]; then
-    echo "Neovim configuration is already linked to dotfiles."
-elif [ -d "$NVIM_CONF_DIR" ] || [ -e "$NVIM_CONF_DIR" ]; then
-    echo "⚠️  Existing Neovim configuration found at $NVIM_CONF_DIR"
-    echo "   Skipping nvim setup. Please back it up or remove it, then re-run this script."
-else
-    echo "Creating symlink for Neovim configuration..."
-    ln -sf "$DOTFILES_DIR/nvim" "$NVIM_CONF_DIR"
-fi
+  if [[ -L "$nvim_dir" && "$(readlink "$nvim_dir")" == "$DOTFILES_DIR/nvim" ]]; then
+    echo "  Neovim configuration is already linked to dotfiles."
+  elif [[ -d "$nvim_dir" || -e "$nvim_dir" ]]; then
+    echo "  ⚠️  Existing Neovim configuration found at $nvim_dir"
+    echo "     Skipping nvim setup. Please back it up or remove it, then re-run."
+  else
+    echo "  Creating symlink for Neovim configuration..."
+    ln -sf "$DOTFILES_DIR/nvim" "$nvim_dir"
+  fi
+  echo ""
+}
 
-# ghostty config
-set_ghostty_dir() {
-    if [[ "$OS" == "macos" ]]; then
-        echo "$HOME/Library/Application Support/com.mitchellh.ghostty"
+setup_ghostty() {
+  echo "==> Ghostty configuration..."
+  case "$OS" in
+    macos)
+      ghostty_dir="$HOME/Library/Application Support/com.mitchellh.ghostty"
+      ;;
+    *)
+      ghostty_dir="${XDG_CONFIG_HOME:-$HOME/.config}/ghostty"
+      ;;
+  esac
+  ensure_dir "$ghostty_dir"
+  backup_and_link "$DOTFILES_DIR/ghostty/config" "$ghostty_dir/config"
+  echo ""
+}
+
+# ──────────────────────────────────────────────
+#  PHASE 4 — Omarchy (Arch Linux only)
+# ──────────────────────────────────────────────
+
+setup_omarchy() {
+  if [[ "$OS" != "arch" ]]; then
+    return
+  fi
+  echo "==> Omarchy macOS keybindings..."
+  if command_exists omarchy-update; then
+    local hypr_dir="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
+    ensure_dir "$hypr_dir"
+
+    ln -sf "$DOTFILES_DIR/omarchy/hypr/bindings-override.conf" \
+           "$hypr_dir/bindings-override.conf"
+    echo "  Linked bindings-override.conf."
+
+    if ! grep -q "source = bindings-override.conf" "$hypr_dir/hyprland.conf" 2>/dev/null; then
+      {
+        echo ""
+        echo "# macOS-style keybindings"
+        echo "source = bindings-override.conf"
+      } >> "$hypr_dir/hyprland.conf"
+      echo "  Added source directive to hyprland.conf."
     else
-        echo "${XDG_CONFIG_HOME:-$HOME/.config}/ghostty"
+      echo "  hyprland.conf already sources bindings-override.conf."
     fi
+  else
+    echo "  omarchy-update not found — skipping Omarchy setup."
+  fi
+  echo ""
 }
-GHOSTTY_CONF_DIR=$(set_ghostty_dir)
-if [ ! -d "$GHOSTTY_CONF_DIR" ]; then
-  mkdir -p "$GHOSTTY_CONF_DIR"
-fi
-if [ -f "$GHOSTTY_CONF_DIR/config" ]; then
-    mv "$GHOSTTY_CONF_DIR/config" "$GHOSTTY_CONF_DIR/config.bak"
-fi
-ln -sf "$DOTFILES_DIR/ghostty/config" "$GHOSTTY_CONF_DIR/config"
 
-# --- Omarchy Setup (macOS keybindings) ---
-setup_omarchy_keybindings() {
-    if command_exists omarchy-update; then
-        echo "Omarchy detected - setting up macOS keybindings..."
-        
-        # Ensure hypr config directory exists
-        HYPR_CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
-        mkdir -p "$HYPR_CONF_DIR"
-        
-        # Symlink macOS bindings override file
-        ln -sf "$DOTFILES_DIR/omarchy/hypr/bindings-override.conf" "$HYPR_CONF_DIR/bindings-override.conf"
-        
-        # Ensure bindings-override.conf is sourced in hyprland.conf
-        if ! grep -q "source = bindings-override.conf" "$HYPR_CONF_DIR/hyprland.conf"; then
-            echo "" >> "$HYPR_CONF_DIR/hyprland.conf"
-            echo "# macOS-style keybindings" >> "$HYPR_CONF_DIR/hyprland.conf"
-            echo "source = bindings-override.conf" >> "$HYPR_CONF_DIR/hyprland.conf"
-        fi
-        
-        echo "macOS keybindings configured for Omarchy."
+# ──────────────────────────────────────────────
+#  PHASE 5 — OpenCode
+# ──────────────────────────────────────────────
+
+setup_opencode() {
+  echo "==> OpenCode configuration..."
+  local opencode_dir="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+  ensure_dir "$opencode_dir"
+
+  if [[ -f "$opencode_dir/opencode.json" && ! -L "$opencode_dir/opencode.json" ]]; then
+    echo "  Backing up existing OpenCode configuration..."
+    mv "$opencode_dir/opencode.json" "$opencode_dir/opencode.json.bak"
+  fi
+
+  ln -sf "$DOTFILES_DIR/opencode/opencode.json" "$opencode_dir/opencode.json"
+  echo "  Linked opencode.json."
+  echo ""
+}
+
+# ──────────────────────────────────────────────
+#  PHASE 6 — Pi coding agent
+# ──────────────────────────────────────────────
+
+setup_pi() {
+  echo "==> Pi coding agent configuration..."
+  local pi_agent_dir="$HOME/.pi/agent"
+
+  # -- Themes ---------------------------------------------------------------
+  ensure_dir "$pi_agent_dir/themes"
+  for theme_file in "$DOTFILES_DIR/pi/themes/"*.json;  do
+    [[ -f "$theme_file" ]] || continue
+    local theme_name="$(basename "$theme_file")"
+    local target="$pi_agent_dir/themes/$theme_name"
+    if [[ -f "$target" && ! -L "$target" ]]; then
+      echo "  Backing up existing theme: $theme_name"
+      mv "$target" "$target.bak"
     fi
+    ln -sf "$theme_file" "$target"
+    echo "  Linked theme: $theme_name"
+  done
+
+  # -- Skills ---------------------------------------------------------------
+  for skill_dir in "$DOTFILES_DIR/pi/skills/"*/; do
+    [[ -d "$skill_dir" ]] || continue
+    local skill_name="$(basename "$skill_dir")"
+    local target="$pi_agent_dir/skills/$skill_name"
+    if [[ -d "$target" && ! -L "$target" ]]; then
+      echo "  Backing up existing skill: $skill_name"
+      mv "$target" "$target.bak"
+    fi
+    ln -sfn "$skill_dir" "$target"
+    echo "  Linked skill: $skill_name"
+  done
+
+  # -- Project-level settings symlink ---------------------------------------
+  local pi_project_dir="$DOTFILES_DIR/.pi"
+  ensure_dir "$pi_project_dir"
+  ln -sf "$DOTFILES_DIR/pi/settings.json" "$pi_project_dir/settings.json"
+  echo "  Linked project-level settings."
+
+  # -- Pi packages ----------------------------------------------------------
+  if command_exists pi; then
+    while IFS= read -r pkg_source; do
+      # Skip empty lines and comments
+      [[ -z "$pkg_source" || "$pkg_source" == \#* ]] && continue
+      # Trim whitespace
+      pkg_source="${pkg_source## }"
+      pkg_source="${pkg_source%% }"
+      [[ -z "$pkg_source" ]] && continue
+      echo "  Installing pi package: $pkg_source"
+      pi install "$pkg_source" 2>/dev/null || echo "  ⚠️  Failed to install $pkg_source (already installed?)"
+    done < "$DOTFILES_DIR/pi/packages.txt"
+  else
+    echo "  ⚠️  pi CLI not found. Install pi first: https://pi.dev"
+    echo "     Packages to install manually:"
+    while IFS= read -r pkg_source; do
+      [[ -z "$pkg_source" || "$pkg_source" == \#* ]] && continue
+      pkg_source="${pkg_source## }"
+      pkg_source="${pkg_source%% }"
+      [[ -z "$pkg_source" ]] && continue
+      echo "       pi install $pkg_source"
+    done < "$DOTFILES_DIR/pi/packages.txt"
+  fi
+  echo ""
 }
-run_if_os "arch" setup_omarchy_keybindings
 
-# opencode
-echo "Setting up OpenCode configuration..."
-OPENCODE_CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
-if [ ! -d "$OPENCODE_CONF_DIR" ]; then
-  mkdir -p "$OPENCODE_CONF_DIR"
-fi
+# ──────────────────────────────────────────────
+#  MAIN
+# ──────────────────────────────────────────────
 
-if [ -f "$OPENCODE_CONF_DIR/opencode.json" ] && [ ! -L "$OPENCODE_CONF_DIR/opencode.json" ]; then
-    echo "Backing up existing OpenCode configuration..."
-    mv "$OPENCODE_CONF_DIR/opencode.json" "$OPENCODE_CONF_DIR/opencode.json.bak"
-fi
+main() {
+  echo "───────────────────────────────────────"
+  echo "  dotfiles — $OS ($CURRENT_USER)"
+  echo "───────────────────────────────────────"
+  echo ""
 
-echo "Creating symlink for OpenCode configuration..."
-ln -sf "$DOTFILES_DIR/opencode/opencode.json" "$OPENCODE_CONF_DIR/opencode.json"
+  install_packages
+  setup_tpm
+  setup_zshrc
+  setup_tmux
+  setup_nvim
+  setup_ghostty
+  setup_omarchy
+  setup_opencode
+  setup_pi
 
-# --- Pi Coding Agent ---
-echo "Setting up Pi coding agent configuration..."
-PI_AGENT_DIR="$HOME/.pi/agent"
+  echo "✅ Dotfiles installation complete!"
+  echo ""
+  echo "Notes:"
+  echo "- Zsh plugins will be installed automatically the first time you open zsh."
+  echo "- To install tmux plugins, start tmux and press prefix + I (Ctrl+b, then I)."
+  echo "- Neovim: run nvim + lazy sync (or :Lazy sync) and :MasonInstallAll."
+  echo "- Ghostty config is linked to the platform-appropriate path."
+  echo "- Pi theme is linked. Select it in pi via /settings or edit settings.json."
+}
 
-# Symlink themes
-if [ ! -d "$PI_AGENT_DIR/themes" ]; then
-  mkdir -p "$PI_AGENT_DIR/themes"
-fi
-for theme_file in "$DOTFILES_DIR/pi/themes/"*.json; do
-  theme_name="$(basename "$theme_file")"
-  if [ -f "$PI_AGENT_DIR/themes/$theme_name" ] && [ ! -L "$PI_AGENT_DIR/themes/$theme_name" ]; then
-    echo "  Backing up existing theme: $theme_name"
-    mv "$PI_AGENT_DIR/themes/$theme_name" "$PI_AGENT_DIR/themes/$theme_name.bak"
-  fi
-  ln -sf "$theme_file" "$PI_AGENT_DIR/themes/$theme_name"
-  echo "  Linked theme: $theme_name"
-done
-
-# Symlink skills
-for skill_dir in "$DOTFILES_DIR/pi/skills/"*/; do
-  [ -d "$skill_dir" ] || continue
-  skill_name="$(basename "$skill_dir")"
-  target="$PI_AGENT_DIR/skills/$skill_name"
-  if [ -d "$target" ] && [ ! -L "$target" ]; then
-    echo "  Backing up existing skill: $skill_name"
-    mv "$target" "$target.bak"
-  fi
-  ln -sfn "$skill_dir" "$target"
-  echo "  Linked skill: $skill_name"
-done
-
-# Symlink project-level pi settings
-PI_PROJECT_DIR="$DOTFILES_DIR/.pi"
-if [ ! -d "$PI_PROJECT_DIR" ]; then
-  mkdir -p "$PI_PROJECT_DIR"
-fi
-ln -sf "$DOTFILES_DIR/pi/settings.json" "$PI_PROJECT_DIR/settings.json"
-
-# Install pi packages
-if command_exists pi; then
-  while IFS= read -r pkg_source; do
-    # Skip empty lines and comments
-    [[ -z "$pkg_source" || "$pkg_source" == \#* ]] && continue
-    # Trim whitespace
-    pkg_source="${pkg_source## }"
-    pkg_source="${pkg_source%% }"
-    [ -z "$pkg_source" ] && continue
-    echo "  Installing pi package: $pkg_source"
-    pi install "$pkg_source" 2>/dev/null || echo "  ⚠️  Failed to install $pkg_source (already installed?)"
-  done < "$DOTFILES_DIR/pi/packages.txt"
-else
-  echo "  ⚠️  pi CLI not found. Install pi first: https://pi.dev"
-  echo "     Packages to install manually:"
-  while IFS= read -r pkg_source; do
-    [[ -z "$pkg_source" || "$pkg_source" == \#* ]] && continue
-    pkg_source="${pkg_source## }"
-    pkg_source="${pkg_source%% }"
-    [ -z "$pkg_source" ] && continue
-    echo "       pi install $pkg_source"
-  done < "$DOTFILES_DIR/pi/packages.txt"
-fi
-
-echo ""
-echo "✅ Dotfiles installation complete!"
-echo ""
-echo "Notes:"
-echo "- Zsh plugins will be automatically installed the first time you open zsh."
-echo "- To install tmux plugins, start tmux and press 'prefix + I' (Ctrl+b + I)."
-echo "- Neovim configuration is now linked. Run 'nvim' to start using it. Also run :MasonInstallAll"
-echo "- Ghostty configuration is now linked to the platform-appropriate config location."
-echo "- Pi theme and skills are linked. Select the theme in pi via /settings or set it in settings.json"
+main "$@"
