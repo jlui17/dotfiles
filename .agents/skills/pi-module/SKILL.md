@@ -15,10 +15,7 @@ pi/
 ├── settings.json            # Project-level config (selects theme)
 ├── packages.txt             # Declarative list of pi packages (one per line)
 ├── themes/
-│   └── github-dark-default.json
 └── skills/
-    └── helium/
-        └── SKILL.md
 ```
 
 Project-local pi config is at `.pi/settings.json` (symlink to `pi/settings.json`).
