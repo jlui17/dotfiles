@@ -316,6 +316,39 @@ setup_pi() {
 }
 
 # ──────────────────────────────────────────────
+#  PHASE 7 — Hunk (review-first terminal diff viewer)
+# ──────────────────────────────────────────────
+
+setup_hunk() {
+  echo "==> Hunk (terminal diff viewer)..."
+  case "$OS" in
+    macos)
+      if command_exists hunk; then
+        echo "  Hunk is already installed."
+      else
+        echo "  Tapping modem-dev/tap..."
+        brew tap modem-dev/tap 2>/dev/null || true
+        echo "  Installing hunk..."
+        brew install hunk
+      fi
+      ;;
+    arch)
+      if command_exists hunk; then
+        echo "  Hunk is already installed."
+      else
+        if command_exists npm; then
+          echo "  Installing hunk via npm (hunkdiff)..."
+          npm i -g hunkdiff
+        else
+          echo "  ⚠️  npm not found. Install Node.js first, then run: npm i -g hunkdiff"
+        fi
+      fi
+      ;;
+  esac
+  echo ""
+}
+
+# ──────────────────────────────────────────────
 #  MAIN
 # ──────────────────────────────────────────────
 
@@ -334,6 +367,7 @@ main() {
   setup_omarchy
   setup_opencode
   setup_pi
+  setup_hunk
 
   echo "✅ Dotfiles installation complete!"
   echo ""
