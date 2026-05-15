@@ -1,37 +1,36 @@
-# AGENTS.md
+# Dotfiles
 
-## Project Overview
-Personal dotfiles repository for shell and terminal configuration across macOS and Arch Linux.
+Canonical config source. Single setup across macOS (Homebrew) and Arch Linux (Pacman). All coding/terminal config changes go here.
 
-## Project Structure
-- `install.sh` - Cross-platform installation script with dependency management
-- `zshrc` - Zsh configuration with plugin management via Zinit
-- `tmux.conf` - Tmux configuration with plugin management via TPM
-- `pi/` - Pi coding agent module (themes, skills, package list, project settings)
-  - `themes/` - Theme JSON files (e.g. github-dark-default)
-  - `skills/` - Local skill definitions (e.g. helium browser skill)
-  - `packages.txt` - Declarative list of pi packages to install via CLI
-  - `settings.json` - Project-local pi config (symlinked to .pi/settings.json)
-  - `package.json` - Pi package manifest for auto-discovery
+## Principles
 
-## Key Patterns
-- **Installation**: Single script handles OS detection and package management
-- **Symlinking**: Configs are symlinked from repo to standard locations
-- **Plugin Management**: Auto-installation of plugin managers (Zinit, TPM)
-- **Cross-platform**: Supports both Homebrew (macOS) and Pacman (Arch Linux)
-- **Pi Module**: Declarative package list in `pi/packages.txt`; themes and skills symlinked to `~/.pi/agent/`
+- **Canonical**: This repo is the source of truth. Every config change lands here first, then propagates via install.sh.
+- **Cross-platform**: Single `install.sh` detects OS → picks right package manager.
+- **Symlinks**: Configs symlinked from repo → standard paths. No copies.
+- **Declarative**: Package lists and manifests over imperative scripts.
+- **Minimal friction**: Plugin managers auto-install. One command setup.
 
-## Testing Approach
-No automated tests. Manual verification:
-- New shell session for zsh changes
-- New tmux session for tmux changes
-- Check plugin functionality after installation
+## Design
 
-## Common Operations
-- **Install/Update**: `./install.sh`
-- **Test zsh config**: Start new shell or `source ~/.zshrc`
-- **Test tmux config**: `tmux source-file ~/.config/tmux/tmux.conf`
-- **Install tmux plugins**: `prefix + I` in tmux session
-- **Select pi theme**: Theme is set from `.pi/settings.json`, or change it via `/settings` in pi
-- **Install pi packages**: Read `pi/packages.txt` and run `pi install <source>` for each
-- **Reload pi config**: Run `/reload` in pi or just restart
+- `install.sh` — OS detection → packages → symlinks → plugin managers. Each section idempotent.
+- Module dirs — Each subsystem owns a directory (`pi/`, `nvim/`, `opencode/`, `ghostty/`, `omarchy/`, `zsh-functions/`).
+- Root files — `zshrc`, `tmux.conf`. Single-file configs documented here.
+
+## Rules
+
+- New module: create dir at repo root, add symlink + deps to `install.sh`.
+- Names: lowercase, hyphens, no spaces.
+- Symlinks: use XDG paths (`~/.config/`). Backup existing files before replacing.
+- Test: new shell for zsh, new tmux session for tmux, manual for other tools.
+- Run `./install.sh` to bootstrap or update.
+
+## Root-level Configs
+
+### `install.sh`
+Cross-platform installer. Detects OS, installs packages, symlinks configs, provisions plugin managers.
+
+### `zshrc`
+Zsh with Zinit plugin manager. Reload: new shell or `source ~/.zshrc`.
+
+### `tmux.conf`
+Tmux with TPM plugin manager. Reload: new session or `tmux source-file ~/.config/tmux/tmux.conf`. Install plugins: `prefix + I`.
