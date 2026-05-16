@@ -102,3 +102,4 @@ for file in "$DOTFILES_DIR/zsh-functions"/*.sh; do
   [[ -f "$file" ]] && source "$file"
 done
 unsetopt NULL_GLOB
+source /Users/justinlui/.config/op/plugins.sh
