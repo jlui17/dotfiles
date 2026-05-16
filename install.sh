@@ -173,7 +173,17 @@ setup_nvim() {
     echo "  Neovim configuration is already linked to dotfiles."
   elif [[ -d "$nvim_dir" || -e "$nvim_dir" ]]; then
     echo "  ⚠️  Existing Neovim configuration found at $nvim_dir"
-    echo "     Skipping nvim setup. Please back it up or remove it, then re-run."
+    echo ""
+    read -r -p "  Backup existing config and replace with symlink? [y/N] " response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+      local backup_dir="$DOTFILES_DIR/nvim-bak.$(date +%Y%m%d-%H%M%S)"
+      echo "  Backing up to $backup_dir..."
+      mv "$nvim_dir" "$backup_dir"
+      echo "  Creating symlink for Neovim configuration..."
+      ln -sf "$DOTFILES_DIR/nvim" "$nvim_dir"
+    else
+      echo "  Skipping nvim setup."
+    fi
   else
     echo "  Creating symlink for Neovim configuration..."
     ln -sf "$DOTFILES_DIR/nvim" "$nvim_dir"
@@ -401,7 +411,7 @@ main() {
   echo "Notes:"
   echo "- Zsh plugins will be installed automatically the first time you open zsh."
   echo "- To install tmux plugins, start tmux and press prefix + I (Ctrl+b, then I)."
-  echo "- Neovim: run nvim + lazy sync (or :Lazy sync) and :MasonInstallAll."
+  echo "- Neovim: open nvim and wait for vim.pack to install plugins, then run :checkhealth."
   echo "- Ghostty config is linked to the platform-appropriate path."
   echo "- Pi theme is linked. Select it in pi via /settings or edit settings.json."
 }

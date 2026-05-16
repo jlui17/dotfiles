@@ -1,0 +1,11 @@
+tags
+test.sh
+.luarc.json
+nvim
+
+spell/
+
+# Track nvim-pack-lock.json for reproducible plugin installs
+# nvim-pack-lock.json
+
+.DS_Store
