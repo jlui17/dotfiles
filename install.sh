@@ -330,7 +330,19 @@ setup_pi() {
 }
 
 # ──────────────────────────────────────────────
-#  PHASE 7 — Hunk (review-first terminal diff viewer)
+#  PHASE 7 — Global gitignore
+# ──────────────────────────────────────────────
+
+setup_gitignore() {
+  echo "==> Global gitignore..."
+  local git_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/git"
+  ensure_dir "$git_config_dir"
+  backup_and_link "$DOTFILES_DIR/gitignore/ignore" "$git_config_dir/ignore"
+  echo ""
+}
+
+# ──────────────────────────────────────────────
+#  PHASE 8 — Hunk (review-first terminal diff viewer)
 # ──────────────────────────────────────────────
 
 setup_hunk() {
@@ -381,6 +393,7 @@ main() {
   setup_omarchy
   setup_opencode
   setup_pi
+  setup_gitignore
   setup_hunk
 
   echo "✅ Dotfiles installation complete!"

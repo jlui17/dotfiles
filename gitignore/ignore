@@ -1,0 +1,19 @@
+# ──────────────────────────────────────────────
+#  Global gitignore
+#  Managed by dotfiles — edit here, not in ~/.config/git/ignore
+# ──────────────────────────────────────────────
+
+# 1Password CLI session files
+.op
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editor/IDE leftovers
+*.swp
+*.swo
+*~
+.nfs*
