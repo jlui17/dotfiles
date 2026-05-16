@@ -92,9 +92,6 @@ eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
 enable-fzf-tab
 
-# Added by Antigravity
-export PATH="/Users/justinlui/.antigravity/antigravity/bin:$PATH"
-
 # Custom functions
 DOTFILES_DIR="${${(%):-%x}:A:h}"
 setopt NULL_GLOB
@@ -102,4 +99,6 @@ for file in "$DOTFILES_DIR/zsh-functions"/*.sh; do
   [[ -f "$file" ]] && source "$file"
 done
 unsetopt NULL_GLOB
+
+# Setup 1password-cli
 source /Users/justinlui/.config/op/plugins.sh
