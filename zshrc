@@ -94,11 +94,13 @@ enable-fzf-tab
 
 # Custom functions
 DOTFILES_DIR="${${(%):-%x}:A:h}"
+
+# 1Password CLI plugins (aliases for op plugin run -- ...)
+source /Users/justinlui/.config/op/plugins.sh
+
+# Dotfiles-managed shell functions (sourced after plugins.sh so functions
 setopt NULL_GLOB
 for file in "$DOTFILES_DIR/zsh-functions"/*.sh; do
   [[ -f "$file" ]] && source "$file"
 done
 unsetopt NULL_GLOB
-
-# Setup 1password-cli
-source /Users/justinlui/.config/op/plugins.sh
