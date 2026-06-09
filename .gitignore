@@ -6,6 +6,5 @@ opencode/env
 .pi/npm/
 .pi/node_modules/
 
-# Machine-specific zsh functions live in subdirs (e.g. zsh-functions/scorecard/);
-# top-level *.sh files are shared.
-zsh-functions/*/
+# Scorecard (work) — never track work-specific files in this shared repo.
+*scorecard*
