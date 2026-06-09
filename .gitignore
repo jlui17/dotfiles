@@ -5,3 +5,6 @@ opencode/env
 .pi/git/
 .pi/npm/
 .pi/node_modules/
+
+# Machine-specific zsh functions (work-only, host-only, etc.)
+zsh-functions-*/

@@ -96,11 +96,15 @@ enable-fzf-tab
 DOTFILES_DIR="${${(%):-%x}:A:h}"
 
 # 1Password CLI plugins (aliases for op plugin run -- ...)
-source /Users/justinlui/.config/op/plugins.sh
+[[ -f "$HOME/.config/op/plugins.sh" ]] && source "$HOME/.config/op/plugins.sh"
 
 # Dotfiles-managed shell functions (sourced after plugins.sh so functions
+# can shadow op-plugin aliases if needed). Machine-specific dirs (e.g.
+# zsh-functions-scorecard) are gitignored and only present on the relevant host.
 setopt NULL_GLOB
-for file in "$DOTFILES_DIR/zsh-functions"/*.sh; do
-  [[ -f "$file" ]] && source "$file"
+for dir in "$DOTFILES_DIR/zsh-functions" "$DOTFILES_DIR"/zsh-functions-*; do
+  for file in "$dir"/*.sh; do
+    [[ -f "$file" ]] && source "$file"
+  done
 done
 unsetopt NULL_GLOB
