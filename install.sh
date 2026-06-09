@@ -62,6 +62,19 @@ case "$OS" in
     ;;
 esac
 
+# GUI / extra tools that aren't simple cross-platform CLI packages. Declarative
+# table — add a row, no new function or main() wiring needed.
+#   name | check (is it installed?) | macOS install | Arch install
+# An empty install cell means "not available on that OS" (skipped). Arch AUR
+# installs use yay, which Omarchy ships by default.
+GUI_APPS=(
+  "Raycast|brew list --cask raycast|brew install --cask raycast|"
+  "AltTab|brew list --cask alt-tab|brew install --cask alt-tab|"
+  "Zed|command -v zed|brew install --cask zed|sudo pacman -S --noconfirm zed"
+  "1Password CLI|command -v op|brew install --cask 1password-cli|yay -S --noconfirm 1password-cli"
+  "Hunk|command -v hunk|brew tap modem-dev/tap 2>/dev/null; brew install hunk|npm i -g hunkdiff"
+)
+
 # ──────────────────────────────────────────────
 #  HELPERS
 # ──────────────────────────────────────────────
@@ -383,43 +396,32 @@ setup_gitignore() {
 }
 
 # ──────────────────────────────────────────────
-#  PHASE 8 — Raycast (macOS only)
+#  PHASE 8 — GUI / extra apps (declarative table)
 # ──────────────────────────────────────────────
 
-setup_raycast() {
-  if [[ "$OS" != "macos" ]]; then
-    return
-  fi
-  echo "==> Raycast..."
-  if brew list --cask raycast >/dev/null 2>&1; then
-    echo "  Raycast is already installed."
-  else
-    echo "  Installing Raycast..."
-    brew install --cask raycast
-  fi
+setup_apps() {
+  echo "==> GUI apps..."
+  for row in "${GUI_APPS[@]}"; do
+    local name check macos_cmd arch_cmd
+    IFS='|' read -r name check macos_cmd arch_cmd <<< "$row"
+    local cmd
+    case "$OS" in
+      macos) cmd="$macos_cmd" ;;
+      arch)  cmd="$arch_cmd" ;;
+    esac
+    [[ -z "$cmd" ]] && continue          # not available on this OS
+    if eval "$check" >/dev/null 2>&1; then
+      echo "  $name already installed."
+    else
+      echo "  Installing $name..."
+      track "install $name" eval "$cmd"
+    fi
+  done
   echo ""
 }
 
 # ──────────────────────────────────────────────
-#  PHASE 9 — AltTab (macOS only)
-# ──────────────────────────────────────────────
-
-setup_alttab() {
-  if [[ "$OS" != "macos" ]]; then
-    return
-  fi
-  echo "==> AltTab..."
-  if brew list --cask alt-tab >/dev/null 2>&1; then
-    echo "  AltTab is already installed."
-  else
-    echo "  Installing AltTab..."
-    brew install --cask alt-tab
-  fi
-  echo ""
-}
-
-# ──────────────────────────────────────────────
-#  PHASE 10 — macOS defaults
+#  PHASE 9 — macOS defaults
 # ──────────────────────────────────────────────
 
 setup_macos_defaults() {
@@ -434,98 +436,6 @@ setup_macos_defaults() {
   defaults write com.apple.dock autohide-time-modifier -float 0.1
   killall Dock 2>/dev/null || true
   echo "  Dock set to auto-hide with 0.1s animation."
-  echo ""
-}
-
-# ──────────────────────────────────────────────
-#  PHASE 11 — Zed IDE
-# ──────────────────────────────────────────────
-
-setup_zed() {
-  echo "==> Zed IDE..."
-  case "$OS" in
-    macos)
-      if brew list --cask zed >/dev/null 2>&1; then
-        echo "  Zed is already installed."
-      else
-        echo "  Installing Zed..."
-        brew install --cask zed
-      fi
-      ;;
-    arch)
-      if command_exists zed; then
-        echo "  Zed is already installed."
-      else
-        echo "  Installing Zed..."
-        sudo pacman -S --noconfirm zed
-      fi
-      ;;
-  esac
-  echo ""
-}
-
-# ──────────────────────────────────────────────
-#  PHASE 12 — 1Password CLI
-# ──────────────────────────────────────────────
-
-setup_op() {
-  echo "==> 1Password CLI (op)..."
-  if command_exists op; then
-    echo "  op is already installed."
-    echo ""
-    return
-  fi
-  case "$OS" in
-    macos)
-      echo "  Installing 1password-cli..."
-      brew install --cask 1password-cli
-      ;;
-    arch)
-      if command_exists yay; then
-        echo "  Installing 1password-cli via yay (AUR)..."
-        yay -S --noconfirm 1password-cli
-      elif command_exists paru; then
-        echo "  Installing 1password-cli via paru (AUR)..."
-        paru -S --noconfirm 1password-cli
-      else
-        echo "  ⚠️  No AUR helper found (yay/paru). Install manually:"
-        echo "     https://developer.1password.com/docs/cli/get-started/#install"
-      fi
-      ;;
-  esac
-  echo ""
-}
-
-# ──────────────────────────────────────────────
-#  PHASE 13 — Hunk (review-first terminal diff viewer)
-# ──────────────────────────────────────────────
-
-setup_hunk() {
-  echo "==> Hunk (terminal diff viewer)..."
-  case "$OS" in
-    macos)
-      if command_exists hunk; then
-        echo "  Hunk is already installed."
-      else
-        echo "  Tapping modem-dev/tap..."
-        brew tap modem-dev/tap 2>/dev/null || true
-        echo "  Installing hunk..."
-        brew install hunk
-      fi
-      ;;
-    arch)
-      if command_exists hunk; then
-        echo "  Hunk is already installed."
-      else
-        if command_exists npm; then
-          echo "  Installing hunk via npm (hunkdiff)..."
-          npm i -g hunkdiff
-        else
-          echo "  ⚠️  npm not found. Install Node.js first, then run: npm i -g hunkdiff"
-        fi
-      fi
-      ;;
-  esac
   echo ""
 }
 
@@ -549,12 +459,8 @@ main() {
   setup_opencode
   setup_pi
   setup_gitignore
-  setup_raycast
-  setup_alttab
+  setup_apps
   setup_macos_defaults
-  setup_zed
-  setup_op
-  setup_hunk
 
   if (( ${#FAILURES[@]} )); then
     echo "⚠️  Dotfiles installation finished with ${#FAILURES[@]} issue(s):"
