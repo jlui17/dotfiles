@@ -22,6 +22,13 @@ CURRENT_USER="$(whoami)"
 DOTFILES_LOCAL_CONFIG="$DOTFILES_DIR/.dotfiles-local"
 IS_WORK_COMPUTER=false
 
+# Collects human-readable labels of steps that failed. A bootstrap script
+# shouldn't abort because one package was unavailable, but it also shouldn't
+# claim success when it didn't. We track failures and report them at the end
+# (and exit non-zero), instead of using `set -e` — much of this script relies
+# on non-zero exit codes as normal control flow (presence checks, greps).
+FAILURES=()
+
 # -- OS detection -----------------------------------------------------------
 OS=""
 case "$(uname)" in
@@ -73,6 +80,20 @@ run_if_os() {
 
 ensure_dir() {
   [[ -d "$1" ]] || mkdir -p "$1"
+}
+
+# Run a fallible command without aborting the install. On failure, record a
+# human-readable label in FAILURES (surfaced in the final summary) and return
+# the command's exit code so callers can branch if they want.
+track() {
+  local label="$1"; shift
+  # `&&` (not `if`) so $? still holds the command's real exit code on failure —
+  # an `if` with no `else` resets $? to 0 when the condition is false.
+  "$@" && return 0
+  local rc=$?
+  echo "  ⚠️  $label failed (exit $rc)."
+  FAILURES+=("$label")
+  return $rc
 }
 
 # Resolve whether this is a work computer. Reads the gitignored local config
@@ -137,14 +158,14 @@ install_packages() {
   fi
 
   echo "  Updating $PKG_MANAGER..."
-  "$PKG_UPDATE[@]"
+  track "update $PKG_MANAGER" "$PKG_UPDATE[@]"
 
   for package in "${COMMON_PACKAGES[@]}"; do
     if "$PKG_QUERY[@]" "^${package}\$" >/dev/null 2>&1; then
       echo "  $package is already installed."
     else
       echo "  Installing $package..."
-      "$PKG_INSTALL[@]" "$package"
+      track "install $package" "$PKG_INSTALL[@]" "$package"
     fi
   done
   echo ""
@@ -161,7 +182,7 @@ setup_tpm() {
     echo "  tpm is already installed."
   else
     echo "  Cloning tpm..."
-    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+    track "clone tpm" git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
   fi
   echo ""
 }
@@ -331,7 +352,9 @@ setup_pi() {
       pkg_source="${pkg_source%% }"
       [[ -z "$pkg_source" ]] && continue
       echo "  Installing pi package: $pkg_source"
-      pi install "$pkg_source" 2>/dev/null || echo "  ⚠️  Failed to install $pkg_source (already installed?)"
+      # Show real errors (no 2>/dev/null) and record genuine failures rather
+      # than assuming every failure means "already installed."
+      track "pi package $pkg_source" pi install "$pkg_source"
     done < "$DOTFILES_DIR/pi/packages.txt"
   else
     echo "  ⚠️  pi CLI not found. Install pi first: https://pi.dev"
@@ -533,7 +556,14 @@ main() {
   setup_op
   setup_hunk
 
-  echo "✅ Dotfiles installation complete!"
+  if (( ${#FAILURES[@]} )); then
+    echo "⚠️  Dotfiles installation finished with ${#FAILURES[@]} issue(s):"
+    for f in "${FAILURES[@]}"; do
+      echo "   - $f"
+    done
+  else
+    echo "✅ Dotfiles installation complete!"
+  fi
   echo ""
   echo "Notes:"
   echo "- Zsh plugins will be installed automatically the first time you open zsh."
@@ -541,6 +571,9 @@ main() {
   echo "- Neovim: open nvim and wait for vim.pack to install plugins, then run :checkhealth."
   echo "- Ghostty config is linked to the platform-appropriate path."
   echo "- Pi theme is linked. Select it in pi via /settings or edit settings.json."
+
+  # Non-zero exit if anything failed, so callers/CI can detect a partial install.
+  (( ${#FAILURES[@]} == 0 ))
 }
 
 main "$@"
