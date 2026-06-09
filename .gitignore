@@ -1,10 +1,12 @@
 opencode/env
 
-# Pi coding agent - project-local artifacts (keep settings.json tracked)
-.pi/sessions/
-.pi/git/
-.pi/npm/
-.pi/node_modules/
+# Machine-local install answers (work-computer flag, etc.) — never shared.
+.dotfiles-local
+
+# Pi coding agent — project-local artifacts.
+# Global settings now live at ~/.pi/agent/settings.json (linked by
+# install.sh). Any .pi/ that pi creates inside this repo is local-only.
+.pi/
 
 # Scorecard (work) — never track work-specific files in this shared repo.
 *scorecard*

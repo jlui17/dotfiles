@@ -15,8 +15,12 @@
 
 DOTFILES_DIR="${0:A:h}"
 CURRENT_USER="$(whoami)"
+
+# Machine-local config (gitignored) — holds machine-specific answers such as
+# whether this is a work computer. Created on first run via a prompt; edit or
+# delete it to change the answer. Never tracked in this shared repo.
+DOTFILES_LOCAL_CONFIG="$DOTFILES_DIR/.dotfiles-local"
 IS_WORK_COMPUTER=false
-[[ "$CURRENT_USER" == "juslui" ]] && IS_WORK_COMPUTER=true
 
 # -- OS detection -----------------------------------------------------------
 OS=""
@@ -71,14 +75,42 @@ ensure_dir() {
   [[ -d "$1" ]] || mkdir -p "$1"
 }
 
-# Back up an existing file (not a symlink) and symlink in its place.
+# Resolve whether this is a work computer. Reads the gitignored local config
+# if present; otherwise prompts once and persists the answer. Work computers
+# skip the personal zshrc symlink.
+resolve_work_computer() {
+  if [[ -f "$DOTFILES_LOCAL_CONFIG" ]]; then
+    source "$DOTFILES_LOCAL_CONFIG"
+    return
+  fi
+  local response
+  read -r -p "  Is this a work computer? (skips personal zshrc symlink) [y/N] " response
+  [[ "$response" =~ ^[Yy]$ ]] && IS_WORK_COMPUTER=true || IS_WORK_COMPUTER=false
+  {
+    echo "# dotfiles machine-local config — gitignored, never committed."
+    echo "# Delete this file to be prompted again on the next install."
+    echo "IS_WORK_COMPUTER=$IS_WORK_COMPUTER"
+  } > "$DOTFILES_LOCAL_CONFIG"
+  echo "  Saved this machine's answer to ${DOTFILES_LOCAL_CONFIG:t}."
+}
+
+# Symlink src → dst, backing up whatever was there first. The single backup
+# primitive for the whole installer — handles files, directories, and symlinks:
+#   - already linked to src      → no-op (idempotent re-runs stay quiet)
+#   - real file/dir OR foreign    → moved to dst.bak before linking
+#     symlink (points elsewhere)
+# Uses `ln -sfn` so an existing dst directory is replaced, not linked into.
 backup_and_link() {
   local src="$1" dst="$2"
-  if [[ -f "$dst" && ! -L "$dst" ]]; then
+  if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
+    echo "  $(basename "$dst") already linked."
+    return
+  fi
+  if [[ -e "$dst" || -L "$dst" ]]; then
     echo "  Backing up existing $(basename "$dst")..."
     mv "$dst" "$dst.bak"
   fi
-  ln -sf "$src" "$dst"
+  ln -sfn "$src" "$dst"
   echo "  Linked $(basename "$dst")."
 }
 
@@ -140,6 +172,7 @@ setup_tpm() {
 
 setup_zshrc() {
   echo "==> zshrc..."
+  resolve_work_computer
   if [[ "$IS_WORK_COMPUTER" == true ]]; then
     echo "  Work computer detected — skipping zshrc symlink."
   else
@@ -248,13 +281,7 @@ setup_opencode() {
   local opencode_dir="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
   ensure_dir "$opencode_dir"
 
-  if [[ -f "$opencode_dir/opencode.json" && ! -L "$opencode_dir/opencode.json" ]]; then
-    echo "  Backing up existing OpenCode configuration..."
-    mv "$opencode_dir/opencode.json" "$opencode_dir/opencode.json.bak"
-  fi
-
-  ln -sf "$DOTFILES_DIR/opencode/opencode.json" "$opencode_dir/opencode.json"
-  echo "  Linked opencode.json."
+  backup_and_link "$DOTFILES_DIR/opencode/opencode.json" "$opencode_dir/opencode.json"
   echo ""
 }
 
@@ -268,50 +295,31 @@ setup_pi() {
 
   # -- Themes ---------------------------------------------------------------
   ensure_dir "$pi_agent_dir/themes"
-  for theme_file in "$DOTFILES_DIR/pi/themes/"*.json;  do
+  for theme_file in "$DOTFILES_DIR/pi/themes/"*.json; do
     [[ -f "$theme_file" ]] || continue
-    local theme_name="$(basename "$theme_file")"
-    local target="$pi_agent_dir/themes/$theme_name"
-    if [[ -f "$target" && ! -L "$target" ]]; then
-      echo "  Backing up existing theme: $theme_name"
-      mv "$target" "$target.bak"
-    fi
-    ln -sf "$theme_file" "$target"
-    echo "  Linked theme: $theme_name"
+    backup_and_link "$theme_file" "$pi_agent_dir/themes/$(basename "$theme_file")"
   done
 
   # -- Skills ---------------------------------------------------------------
+  ensure_dir "$pi_agent_dir/skills"
   for skill_dir in "$DOTFILES_DIR/pi/skills/"*/; do
     [[ -d "$skill_dir" ]] || continue
-    local skill_name="$(basename "$skill_dir")"
-    local target="$pi_agent_dir/skills/$skill_name"
-    if [[ -d "$target" && ! -L "$target" ]]; then
-      echo "  Backing up existing skill: $skill_name"
-      mv "$target" "$target.bak"
-    fi
-    ln -sfn "$skill_dir" "$target"
-    echo "  Linked skill: $skill_name"
+    backup_and_link "${skill_dir%/}" "$pi_agent_dir/skills/$(basename "$skill_dir")"
   done
 
   # -- Extensions ------------------------------------------------------------
   ensure_dir "$pi_agent_dir/extensions"
   for ext_file in "$DOTFILES_DIR/pi/extensions/"*.ts; do
     [[ -f "$ext_file" ]] || continue
-    local ext_name="$(basename "$ext_file")"
-    local target="$pi_agent_dir/extensions/$ext_name"
-    if [[ -f "$target" && ! -L "$target" ]]; then
-      echo "  Backing up existing extension: $ext_name"
-      mv "$target" "$target.bak"
-    fi
-    ln -sf "$ext_file" "$target"
-    echo "  Linked extension: $ext_name"
+    backup_and_link "$ext_file" "$pi_agent_dir/extensions/$(basename "$ext_file")"
   done
 
-  # -- Project-level settings symlink ---------------------------------------
-  local pi_project_dir="$DOTFILES_DIR/.pi"
-  ensure_dir "$pi_project_dir"
-  ln -sf "$DOTFILES_DIR/pi/settings.json" "$pi_project_dir/settings.json"
-  echo "  Linked project-level settings."
+  # -- Global settings ------------------------------------------------------
+  # Lives at the global scope (~/.pi/agent/settings.json) so the theme and
+  # other preferences apply in every project, not just the dotfiles repo.
+  ensure_dir "$pi_agent_dir"
+  ln -sf "$DOTFILES_DIR/pi/settings.json" "$pi_agent_dir/settings.json"
+  echo "  Linked global pi settings."
 
   # -- Pi packages ----------------------------------------------------------
   if command_exists pi; then
