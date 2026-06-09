@@ -6,5 +6,6 @@ opencode/env
 .pi/npm/
 .pi/node_modules/
 
-# Machine-specific zsh functions (work-only, host-only, etc.)
-zsh-functions-*/
+# Machine-specific zsh functions live in subdirs (e.g. zsh-functions/scorecard/);
+# top-level *.sh files are shared.
+zsh-functions/*/

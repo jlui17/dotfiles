@@ -98,13 +98,11 @@ DOTFILES_DIR="${${(%):-%x}:A:h}"
 # 1Password CLI plugins (aliases for op plugin run -- ...)
 [[ -f "$HOME/.config/op/plugins.sh" ]] && source "$HOME/.config/op/plugins.sh"
 
-# Dotfiles-managed shell functions (sourced after plugins.sh so functions
-# can shadow op-plugin aliases if needed). Machine-specific dirs (e.g.
-# zsh-functions-scorecard) are gitignored and only present on the relevant host.
+# Dotfiles-managed shell functions. Top-level *.sh files are shared across
+# all machines; subdirs (e.g. zsh-functions/scorecard/) are gitignored and
+# only present on the relevant host.
 setopt NULL_GLOB
-for dir in "$DOTFILES_DIR/zsh-functions" "$DOTFILES_DIR"/zsh-functions-*; do
-  for file in "$dir"/*.sh; do
-    [[ -f "$file" ]] && source "$file"
-  done
+for file in "$DOTFILES_DIR/zsh-functions"/*.sh "$DOTFILES_DIR/zsh-functions"/*/*.sh; do
+  [[ -f "$file" ]] && source "$file"
 done
 unsetopt NULL_GLOB
