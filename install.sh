@@ -396,6 +396,45 @@ setup_gitignore() {
 }
 
 # ──────────────────────────────────────────────
+#  PHASE 7b — Git user config & personal identity
+# ──────────────────────────────────────────────
+
+setup_git_config() {
+  echo "==> Git user config..."
+  local git_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/git"
+  ensure_dir "$git_config_dir"
+  local git_config="$git_config_dir/config"
+  local git_config_personal="$git_config_dir/config-personal"
+
+  if [[ ! -f "$git_config" ]]; then
+    local primary_email
+    read -r -p "  Primary git email: " primary_email
+    cat > "$git_config" <<EOF
+[user]
+	name = Justin Lui
+	email = $primary_email
+
+[includeIf "gitdir:~/src/personal/"]
+	path = ~/.config/git/config-personal
+EOF
+    echo "  Created $git_config."
+  else
+    echo "  $git_config already exists — skipping."
+  fi
+
+  if [[ ! -f "$git_config_personal" ]]; then
+    local personal_email
+    read -r -p "  Personal git email (for ~/src/personal/): " personal_email
+    printf '[user]\n\temail = %s\n' "$personal_email" > "$git_config_personal"
+    echo "  Created config-personal."
+  else
+    echo "  config-personal already exists — skipping."
+  fi
+
+  echo ""
+}
+
+# ──────────────────────────────────────────────
 #  PHASE 8 — GUI / extra apps (declarative table)
 # ──────────────────────────────────────────────
 
@@ -459,6 +498,7 @@ main() {
   setup_opencode
   setup_pi
   setup_gitignore
+  setup_git_config
   setup_apps
   setup_macos_defaults
 
