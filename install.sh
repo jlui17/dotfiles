@@ -384,6 +384,22 @@ setup_pi() {
 }
 
 # ──────────────────────────────────────────────
+#  PHASE 6b — Claude Code
+# ──────────────────────────────────────────────
+
+setup_claude_code() {
+  echo "==> Claude Code configuration..."
+  local claude_commands_dir="$HOME/.claude/commands"
+  ensure_dir "$claude_commands_dir"
+
+  for cmd_file in "$DOTFILES_DIR/claude-code/commands/"*.md; do
+    [[ -f "$cmd_file" ]] || continue
+    backup_and_link "$cmd_file" "$claude_commands_dir/$(basename "$cmd_file")"
+  done
+  echo ""
+}
+
+# ──────────────────────────────────────────────
 #  PHASE 7 — Global gitignore
 # ──────────────────────────────────────────────
 
@@ -497,6 +513,7 @@ main() {
   setup_omarchy
   setup_opencode
   setup_pi
+  setup_claude_code
   setup_gitignore
   setup_git_config
   setup_apps
