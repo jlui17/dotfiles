@@ -396,6 +396,14 @@ setup_claude_code() {
     [[ -f "$cmd_file" ]] || continue
     backup_and_link "$cmd_file" "$claude_commands_dir/$(basename "$cmd_file")"
   done
+
+  local claude_skills_dir="$HOME/.claude/skills"
+  ensure_dir "$claude_skills_dir"
+
+  for skill_dir in "$DOTFILES_DIR/claude-code/skills/"*/; do
+    [[ -d "$skill_dir" ]] || continue
+    backup_and_link "${skill_dir%/}" "$claude_skills_dir/$(basename "$skill_dir")"
+  done
   echo ""
 }
 
