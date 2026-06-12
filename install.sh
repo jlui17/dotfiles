@@ -384,25 +384,33 @@ setup_pi() {
 }
 
 # ──────────────────────────────────────────────
-#  PHASE 6b — Claude Code
+#  PHASE 6b — Agent skills & commands
 # ──────────────────────────────────────────────
 
-setup_claude_code() {
-  echo "==> Claude Code configuration..."
-  local claude_commands_dir="$HOME/.claude/commands"
-  ensure_dir "$claude_commands_dir"
+# Fan the agent-skills module out to every agent root. ~/.claude wires up
+# Claude Code; ~/.agents wires up other coding agents that read the same
+# layout. Same source, multiple consumers — add a root here and it inherits
+# the whole module.
+setup_agent_skills() {
+  echo "==> Agent skills & commands..."
+  local module_dir="$DOTFILES_DIR/agent-skills"
+  local agent_roots=("$HOME/.claude" "$HOME/.agents")
+  local root
 
-  for cmd_file in "$DOTFILES_DIR/claude-code/commands/"*.md; do
-    [[ -f "$cmd_file" ]] || continue
-    backup_and_link "$cmd_file" "$claude_commands_dir/$(basename "$cmd_file")"
-  done
+  for root in "${agent_roots[@]}"; do
+    local commands_dir="$root/commands"
+    ensure_dir "$commands_dir"
+    for cmd_file in "$module_dir/commands/"*.md; do
+      [[ -f "$cmd_file" ]] || continue
+      backup_and_link "$cmd_file" "$commands_dir/$(basename "$cmd_file")"
+    done
 
-  local claude_skills_dir="$HOME/.claude/skills"
-  ensure_dir "$claude_skills_dir"
-
-  for skill_dir in "$DOTFILES_DIR/claude-code/skills/"*/; do
-    [[ -d "$skill_dir" ]] || continue
-    backup_and_link "${skill_dir%/}" "$claude_skills_dir/$(basename "$skill_dir")"
+    local skills_dir="$root/skills"
+    ensure_dir "$skills_dir"
+    for skill_dir in "$module_dir/skills/"*/; do
+      [[ -d "$skill_dir" ]] || continue
+      backup_and_link "${skill_dir%/}" "$skills_dir/$(basename "$skill_dir")"
+    done
   done
   echo ""
 }
@@ -521,7 +529,7 @@ main() {
   setup_omarchy
   setup_opencode
   setup_pi
-  setup_claude_code
+  setup_agent_skills
   setup_gitignore
   setup_git_config
   setup_apps
