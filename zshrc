@@ -105,3 +105,8 @@ for file in "$DOTFILES_DIR/zsh-functions"/*.sh; do
   [[ -f "$file" ]] && source "$file"
 done
 unsetopt NULL_GLOB
+
+# Machine-local overrides (gitignored, never committed). Sourced last so it wins
+# over everything above. Must come after ~/.p10k.zsh, which wipes all
+# POWERLEVEL9K_* vars on load — e.g. POWERLEVEL9K_DISABLE_GITSTATUS lives here.
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
