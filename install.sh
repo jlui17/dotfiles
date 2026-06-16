@@ -412,6 +412,10 @@ setup_agent_skills() {
       backup_and_link "${skill_dir%/}" "$skills_dir/$(basename "$skill_dir")"
     done
   done
+
+  # One canonical rules file, surfaced under both names agents look for in $HOME.
+  backup_and_link "$module_dir/global-rules.md" "$HOME/CLAUDE.md"
+  backup_and_link "$module_dir/global-rules.md" "$HOME/AGENTS.md"
   echo ""
 }
 
