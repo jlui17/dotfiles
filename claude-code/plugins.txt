@@ -1,0 +1,10 @@
+# Claude Code plugins, installed via the `claude` CLI on each machine.
+# Plugin state lives in ~/.claude/plugins/ with machine-specific paths and
+# pinned commit SHAs, so it can't be symlinked — install.sh replays these
+# instead (the CLI calls are idempotent and no-op when already installed).
+#
+# Format per line:  <github-owner/repo>  <plugin@marketplace> [<plugin@marketplace> ...]
+# install.sh adds the marketplace from the repo, then installs each listed plugin.
+# Lines starting with # are ignored.
+
+JuliusBrussee/caveman  caveman@caveman

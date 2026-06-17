@@ -160,10 +160,20 @@ install_packages() {
     exit 1
   fi
 
-  # Ensure the package manager itself is available
+  # Ensure the package manager itself is available. On macOS we bootstrap
+  # Homebrew when missing, then load it into this run's PATH so the package
+  # installs below can see it (Apple Silicon and Intel use different prefixes).
   if [[ "$OS" == "macos" ]] && ! command_exists brew; then
-    echo "Homebrew not found. Install it first: https://brew.sh/"
-    exit 1
+    echo "  Homebrew not found. Installing..."
+    track "install Homebrew" /bin/bash -c \
+      "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+      [[ -x "$brew_bin" ]] && eval "$("$brew_bin" shellenv)" && break
+    done
+    if ! command_exists brew; then
+      echo "Homebrew installation failed. Install it manually: https://brew.sh/"
+      exit 1
+    fi
   fi
   if [[ "$OS" == "arch" ]] && ! command_exists sudo; then
     echo "sudo is required to install packages on Arch Linux."
@@ -181,6 +191,28 @@ install_packages() {
       track "install $package" "$PKG_INSTALL[@]" "$package"
     fi
   done
+  echo ""
+}
+
+# ──────────────────────────────────────────────
+#  PHASE 1b — mise global runtimes
+# ──────────────────────────────────────────────
+
+# Link the global runtime manifest and realize it. Without global versions of
+# node/go, nvim's Mason can't build the language servers it auto-installs on
+# first launch (gopls needs Go; ts_ls and pyright need Node).
+setup_mise() {
+  echo "==> mise global runtimes..."
+  local mise_dir="${XDG_CONFIG_HOME:-$HOME/.config}/mise"
+  ensure_dir "$mise_dir"
+  backup_and_link "$DOTFILES_DIR/mise/config.toml" "$mise_dir/config.toml"
+
+  if command_exists mise; then
+    echo "  Installing global tool versions (node, go, python)..."
+    track "mise install" mise install
+  else
+    echo "  ⚠️  mise not found — skipping global runtime install."
+  fi
   echo ""
 }
 
@@ -420,6 +452,39 @@ setup_agent_skills() {
 }
 
 # ──────────────────────────────────────────────
+#  PHASE 6c — Claude Code plugins
+# ──────────────────────────────────────────────
+
+# Claude Code plugins are installed through the `claude` CLI rather than
+# symlinked — their on-disk state carries machine-specific paths and pinned
+# commit SHAs. We replay the marketplace+install commands from the manifest;
+# both no-op cleanly when the plugin is already present.
+setup_claude_plugins() {
+  echo "==> Claude Code plugins..."
+  local manifest="$DOTFILES_DIR/claude-code/plugins.txt"
+
+  if ! command_exists claude; then
+    echo "  ⚠️  claude CLI not found — skipping. Install Claude Code and re-run."
+    echo "     Plugins are declared in claude-code/plugins.txt."
+    echo ""
+    return
+  fi
+
+  local line repo plugin
+  while IFS= read -r line; do
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    repo="${line%%[[:space:]]*}"          # first token: the marketplace repo
+    echo "  Adding marketplace: $repo"
+    track "claude marketplace $repo" claude plugin marketplace add "$repo"
+    for plugin in ${=line#$repo}; do      # remaining tokens: plugin@marketplace
+      echo "  Installing plugin: $plugin"
+      track "claude plugin $plugin" claude plugin install "$plugin"
+    done
+  done < "$manifest"
+  echo ""
+}
+
+# ──────────────────────────────────────────────
 #  PHASE 7 — Global gitignore
 # ──────────────────────────────────────────────
 
@@ -525,6 +590,7 @@ main() {
   echo ""
 
   install_packages
+  setup_mise
   setup_tpm
   setup_zshrc
   setup_tmux
@@ -534,6 +600,7 @@ main() {
   setup_opencode
   setup_pi
   setup_agent_skills
+  setup_claude_plugins
   setup_gitignore
   setup_git_config
   setup_apps

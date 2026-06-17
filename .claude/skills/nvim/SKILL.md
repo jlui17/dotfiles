@@ -23,6 +23,8 @@ Uses [kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim) as a starting 
 
 **Install flow** (install.sh): symlinks entire `nvim/` → `~/.config/nvim`. Warns if dir exists and isn't our symlink. Post-install: open nvim and wait for vim.pack to fetch plugins, then `:checkhealth`.
 
+Mason builds the active servers from runtimes that must be on PATH first — `gopls` from Go, `ts_ls`/`pyright` from Node. Those global runtimes are provisioned by the [[mise]] module, so on a fresh machine run install.sh before the first nvim launch.
+
 **Design decisions:**
 - **Treesitter (2026-05-16):** `nvim-treesitter` plugin is archived but still kept for parser `install()` rather than fully manual parser management. Neovim 0.10+ handles highlighting auto-attach natively — no need for the plugin's old attach logic. `nvim-treesitter` also provides the `indentexpr()` function and is expected by `render-markdown.nvim`. Documented inline in Section 8.
 
