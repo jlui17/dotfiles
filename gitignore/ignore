@@ -12,6 +12,13 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
+# Python virtual environments
+.venv/
+.venv-*/
+venv/
+venv-*/
+.virtualenv/
+
 # Editor/IDE leftovers
 *.swp
 *.swo
