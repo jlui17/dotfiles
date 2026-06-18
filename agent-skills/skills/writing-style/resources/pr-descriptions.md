@@ -1,47 +1,41 @@
 # PR descriptions
 
-The body makes a reviewer fast and confident — not a restage of the diff. The diff shows *what changed*. The description carries what it can't: **why** the change exists, **how** it works (design decisions, invariants), **what impact** on users/callers. Spend words there. Cut everything readable straight from the code.
+The body makes a reviewer fast and confident — not a restage of the diff. The diff shows *what changed*. The description carries what it can't: **what was happening** (the behavior, in plain terms), and **what we're doing about it conceptually**. Spend words there. Cut everything readable straight from the code.
 
-## The shape
+## Lead in plain English, behavior first
 
-Lead with the problem in user-visible terms, before naming the fix.
+Write so someone who has never seen the code understands the problem and the idea. Two beats, in order:
 
-- Open on current pain / wrong behavior, anchored against status quo ("Today X / Currently Y"). Reviewer needs the problem to judge the solution.
-- One sentence: "This PR does Z."
-- Design decisions and invariants (**Key Changes** list, below).
-- Non-goals: what you deliberately didn't do, why deferred.
-- Test plan: flat declarative bullets, each = subject + what it proves.
+1. **What's happening** — the current behavior and why it's wrong, in user-visible terms. No internals yet. ("The worker hands the model a session's entire transcript. A few very large sessions don't fit the input limit, so the call fails and those annotations never get processed.")
+2. **What we're doing about it** — the *idea*, conceptually. Why it works, not how it's wired. ("The model doesn't need the whole conversation to read an annotation — just what was happening around it. So we send the slices near each annotation plus a bit of the start and end.")
 
-Weak drafts open on the solution ("Adds tooling to…") and assume the problem. Flip it.
+Then stop and let the code talk. The mechanism — data structures, parameters, caps, flags, the call sequence — lives in the **code and tests**, not the prose. If a reviewer needs the description to follow the mechanism, the code isn't self-documenting; fix the code, not the writing.
 
-## Always use a Key Changes list
+Weak drafts open on the solution ("Adds windowing to…") or dump a feature list of internals ("short-circuits when under budget, hard cap with a warning, sentinel turns, retro widening…"). That's the mumbo-jumbo to cut. Flip it: behavior, then concept, then point at the code.
 
-Every PR gets a **Key Changes** list (numbered or bold-lead-in bullets) naming the load-bearing *decisions* — choices and invariants a reviewer must agree with. Not a file-by-file changelog.
+## What earns prose vs. what stays in the code
 
-An entry states a property the code now holds and why:
-> 1. **The attribution source is easy to re-point.** The binding lives in one place, so re-attributing later (e.g. to an end-user id) is a small change, not a refactor.
-> 2. **A creator is set once, at creation (first-writer-wins).** Later merges leave the original owner untouched, matching how `org_id` is already handled.
+Prose, yes:
+- The wrong behavior and who/what it hurts.
+- The conceptual fix and why it's sound.
+- What's deliberately unchanged or out of scope, and why it's safe ("normal-sized sessions still get the full transcript, so this only touches the ones already failing").
 
-Does NOT belong: "`processTrace` reads `api_key_user_id` into `traceUserId` and passes it to `createRun`." That's code flow — the diff shows it, and it rots on a rename.
+Code's job, not prose:
+- How turns are selected, the exact window size, the cap value, the parameter names.
+- The data threading and call order.
+- Anything a behavior-preserving rename or refactor would obsolete — that's mechanism. Cut it.
 
-## Don't narrate code flow — make the code self-documenting
-
-If the description must spell out the call sequence / data threading / exact edits to be understood, the **code** isn't self-documenting — fix the code, not the prose. Name functions and variables so the flow reads itself. Then the description is free for why and impact.
-
-Test: if a line would be obsoleted by a behavior-preserving rename/refactor, it's mechanism, not design. Cut it or push the clarity into the code.
-
-Exception: one short narrative pass when a mechanism genuinely needs framing (see "Mechanism then components" in tech-plans.md). One pass, then re-list by decision.
-
-## Why / How / Impact
-
-- **Why** — the user-visible problem and who it hurts. "Trace records show their creator as **'Anonymous'**… so you can't filter by who's doing what."
-- **How** — design decisions, trust assumptions, invariants. "The Collector verifies the key against Clerk server-side, so the creator is trusted, not a spoofable client value."
-- **Impact** — what callers/users see now, and what's explicitly unchanged. "Does **not** change the read/list API; that's a follow-up after a backfill migration, which keeps that change much simpler."
+A load-bearing *decision* (e.g. "we keep the original turn numbers so the model's citations stay valid") can earn one plain sentence when a reviewer must agree with it and the code alone won't surface the why. State it as a plain property + reason — never a jargon checklist. When the code and tests already make it obvious, skip it.
 
 ## Define the proper nouns
 
-Spell out the unfamiliar term inline on first use: "a git worktree (a separate checkout of the same repo on its own branch)", "the Collector (the service that ingests traces)", "Clerk (our auth provider)". Skip what's dead-obvious.
+Spell out an unfamiliar term inline on first use: "a git worktree (a separate checkout of the same repo on its own branch)", "the Collector (the service that ingests traces)". Skip what's dead-obvious.
+
+## Test plan and non-goals
+
+- **Test plan** — flat declarative bullets, each = subject + what it proves. Already verifiable, rarely needs rework; leave a good one alone.
+- **Non-goals** — what you didn't do and why deferred. Keep the next problem visible without scope-creeping this PR.
 
 ## Where effort goes
 
-Test plans rarely need rework — already verifiable. The weak part is missing motivation plus too much mechanism. Put effort on the opening problem statement and the Key Changes decisions; leave a good test plan alone.
+The weak part is almost always a missing plain-English problem statement plus too much internal mechanism. Put the effort on the opening "what's happening / what we're doing" beats. Trust the code for the rest.

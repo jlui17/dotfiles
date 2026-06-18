@@ -74,7 +74,7 @@ Same voice, different density. Read the matching resource first.
 | Artifact | Density | Read first |
 |----------|---------|------------|
 | **Tech plan / design doc / RFC** | Formal, spacious. Numbered sections, fixed schemas, tradeoff tables, named alternatives. | `resources/tech-plans.md` |
-| **PR description** | Denser. More devices per sentence (`→`, `/`, italics), bold lead-ins, tight test-plan bullets. | `resources/pr-descriptions.md` |
+| **PR description** | Plain English, behavior first. Lead with what's happening + the conceptual fix; push mechanism into the code. Dense prose is fine, jargon dumps aren't. | `resources/pr-descriptions.md` |
 | **Design critique / UX walkthrough** | First-person, experiential. Actor flips from code to *you*. Fixed schema, captioned screenshots, priority up front. | `resources/design-critiques.md` |
 | **Code comment / Slack / review** | Most compressed. One claim per line, point at the artifact, drop scaffolding. Still: actor-as-subject, append-reason, no hype. | (inline — this row is the guidance) |
 
