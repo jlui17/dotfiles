@@ -24,3 +24,6 @@ venv-*/
 *.swo
 *~
 .nfs*
+
+# Personal notes
+.luidocs/
