@@ -51,6 +51,19 @@ bindkey -e
 bindkey '^p' history-search-backward
 bindkey '^n' history-search-forward
 
+# Note: These CSI escape sequences (^[[1;5D etc.) are Linux/xterm specific.
+# macOS Terminal/iTerm2 don't send these sequences, so these bindings only
+# apply to Linux terminals (Alacritty, Kitty, etc.). Safe to use on both OSes.
+
+# Ctrl+Arrow for macOS-style line navigation (beginning/end of line)
+bindkey '^[[1;5D' beginning-of-line   # Ctrl+Left - beginning of line
+bindkey '^[[1;5C' end-of-line         # Ctrl+Right - end of line
+bindkey '^H' kill-whole-line          # Ctrl+Backspace - delete whole line
+
+# Alt+Arrow for word navigation
+bindkey '^[[1;3D' backward-word       # Alt+Left - word back
+bindkey '^[[1;3C' forward-word        # Alt+Right - word forward
+
 # History
 HISTSIZE=5000
 HISTFILE=~/.zsh_history
