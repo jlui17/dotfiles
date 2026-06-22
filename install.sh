@@ -15,6 +15,7 @@
 
 DOTFILES_DIR="${0:A:h}"
 CURRENT_USER="$(whoami)"
+SCRIPT_ARGS=("$@")
 
 # Machine-local config (gitignored) — holds machine-specific answers such as
 # whether this is a work computer. Created on first run via a prompt; edit or
@@ -555,6 +556,8 @@ setup_git_config() {
   local git_config="$git_config_dir/config"
   local git_config_personal="$git_config_dir/config-personal"
 
+  ensure_dir "$HOME/src/personal"
+
   if [[ ! -f "$git_config" ]]; then
     local primary_email
     read -r -p "  Primary git email: " primary_email
@@ -631,12 +634,42 @@ setup_macos_defaults() {
 #  MAIN
 # ──────────────────────────────────────────────
 
+maybe_relocate_dotfiles() {
+  local desired="$HOME/src/personal/dotfiles"
+  [[ "$DOTFILES_DIR" == "$desired" ]] && return
+
+  echo "==> Dotfiles at $DOTFILES_DIR, expected $desired. Relocating..."
+
+  if [[ -e "$desired" ]]; then
+    echo "  ERROR: $desired already exists. Move or remove it, then re-run."
+    exit 1
+  fi
+
+  ensure_dir "$HOME/src/personal"
+  mv "$DOTFILES_DIR" "$desired"
+  echo "  Moved to $desired."
+
+  local old="$DOTFILES_DIR"
+  find "$HOME" -maxdepth 6 -type l 2>/dev/null | while read -r link; do
+    local target
+    target=$(readlink "$link")
+    if [[ "$target" == "$old"* ]]; then
+      ln -sfn "${target/$old/$desired}" "$link"
+      echo "  Relinked: $link"
+    fi
+  done
+
+  echo "  Re-executing from new location..."
+  exec "$desired/install.sh" "${SCRIPT_ARGS[@]}"
+}
+
 main() {
   echo "───────────────────────────────────────"
   echo "  dotfiles — $OS ($CURRENT_USER)"
   echo "───────────────────────────────────────"
   echo ""
 
+  maybe_relocate_dotfiles
   install_packages
   setup_mise
   setup_tpm
