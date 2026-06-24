@@ -9,6 +9,8 @@ Voice constant across every artifact. Density flexes by type (see Registers).
 
 **Default: concise to the bone, smooth to read.** Cut every word that doesn't change meaning; keep every word the reader needs to follow. Full sentences, not clipped fragments — tight, not terse. When in doubt, plainer and shorter.
 
+**Never a wall of text.** Say it in one sentence before you spend a paragraph. Break long blocks into short paragraphs, bullets, or line breaks: readers skim, and a dense block gets skipped. Spacious (sectioned, with whitespace) is the goal; dense (unbroken) is the failure.
+
 ## The voice (constant)
 
 Holds everywhere — plan, PR, comment, Slack.
@@ -94,6 +96,7 @@ Same voice, different density. Read the matching resource first.
 - Marketing tone, exclamation, praising the design.
 - Claims with no artifact to point at.
 - Em-dashes for asides → recast as parenthetical/colon/comma/separate sentence.
+- Wall of text — a paragraph where one sentence works, or an unbroken block that should be bullets/short paragraphs.
 
 ## Self-check
 
@@ -105,4 +108,5 @@ Same voice, different density. Read the matching resource first.
 - Honest about limits and what's *not* covered?
 - No em-dashes — asides recast?
 - One idea per sentence — clause-stacks split?
+- No wall of text — shortest form used, long blocks broken into paragraphs/bullets?
 - A newcomer could follow — context added where needed, dead-obvious cut?
