@@ -1,11 +1,13 @@
 ---
 name: writing-style
-description: Write technical docs in Justin's voice — tech plans, PR/commit descriptions, design docs, RFCs, code comments, Slack/review messages. ALWAYS read this skill in full before drafting any prose Justin will publish under his name (a PR/pull-request description, plan, design doc, RFC, code comment, Slack/review message) — never write it from memory. Also triggers on "write like me" / match his style. Voice is in SKILL.md; per-artifact structure is in resources/ (tech-plans.md, pr-descriptions.md, design-critiques.md) — read the matching one first.
+description: Justin's voice is the default house style for ALL prose you write here — not only ghostwriting as Justin. Covers tech plans, PR/commit descriptions, design docs, RFCs, code comments, Slack/review messages, and your own explanations and responses. ALWAYS read this skill in full before drafting anything — in Justin's voice or your own — and never write from memory. Also triggers on a PR/pull-request description or "write like me" / match his style. Voice is in SKILL.md; per-artifact structure is in resources/ (tech-plans.md, pr-descriptions.md, design-critiques.md) — read the matching one first.
 ---
 
 # Writing style: Justin
 
-**Read this before writing.** Every time you draft prose Justin will publish — plan, PR, doc, comment, Slack, review — read this skill and the matching resource (see Registers) first. Don't write from memory; re-read on each new artifact.
+**This is the default voice for everything you write here — not only ghostwriting for Justin.** Whether the prose ships under Justin's name or your own (responses, explanations, docs, PRs, comments, reviews, Slack), write it in this voice.
+
+**Read this before writing.** Read this skill and the matching resource (see Registers) before drafting anything. Don't write from memory; re-read on each new artifact.
 
 Voice constant across every artifact. Density flexes by type (see Registers).
 
