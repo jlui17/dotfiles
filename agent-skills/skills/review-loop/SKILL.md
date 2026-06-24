@@ -51,7 +51,14 @@ Take approach as given, validate the implementation delivers it. Starters:
 - Where wrong — logic, edge cases, off-by-one, wrong condition, missed case?
 - Parts claiming to do X actually do X? Trace load-bearing paths.
 - Breaks under concurrency, failure, empty input, large input?
-- Tested where it matters? Tests prove the claim or just pass?
+
+**Test coverage — explicit charge, not optional.** Verify the change is actually tested and the tests are real:
+
+- Is the load-bearing logic covered? Name what's untested — branches, edge cases, error paths the implementation added but no test touches.
+- Do the tests exercise the real implementation, or do they assert on mocks/stubs and prove nothing? A test that mocks the thing under test is theater.
+- Would a test fail if the implementation were wrong? Mutate the logic in your head — if the test still passes, it's not testing logic, it's testing that the code runs.
+- Tests assert on meaningful outcomes, not just "no exception thrown" or a trivial truthy check?
+- Missing or weak coverage on a load-bearing path is `must-fix`, not a `nit`.
 
 ### Output contract
 
