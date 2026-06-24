@@ -102,7 +102,6 @@ fi
 
 # Shell integrations
 eval "$(fzf --zsh)"
-eval "$(zoxide init --cmd cd zsh)"
 enable-fzf-tab
 
 # Custom functions
@@ -123,3 +122,5 @@ unsetopt NULL_GLOB
 # over everything above. Must come after ~/.p10k.zsh, which wipes all
 # POWERLEVEL9K_* vars on load — e.g. POWERLEVEL9K_DISABLE_GITSTATUS lives here.
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+
+eval "$(zoxide init --cmd cd zsh)"
