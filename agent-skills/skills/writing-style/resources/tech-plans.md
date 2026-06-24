@@ -1,10 +1,10 @@
 # Tech plans / design docs / RFCs
 
-Voice (main doc) holds. This is the structure layer: more formal and spacious than a PR. Numbered sections, fixed schemas, tradeoff tables, named alternatives, room to explain.
+Voice (main doc) holds. This is the structure layer: more formal and spacious than a PR — numbered sections, fixed schemas, tradeoff tables, named alternatives, room to explain.
 
 ## Mechanism then components
 
-Explain the mechanism once narratively, then re-list by component. Numbered flow for understanding; per-system "Key Changes" list for implementation. Redundancy deliberate — narrative builds the model, list makes it actionable.
+Explain the mechanism once narratively, then re-list by component. Numbered flow for understanding; per-system "Key Changes" list for implementation. Redundancy deliberate: narrative builds the model, list makes it actionable.
 
 Each step = actor + action + grounding. "X already does Y (`file:line`). Today it only does Z. We will also do W."
 

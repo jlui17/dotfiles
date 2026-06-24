@@ -1,19 +1,19 @@
 # PR descriptions
 
-The body makes a reviewer fast and confident — not a restage of the diff. The diff shows *what changed*. The description carries what it can't: **what was happening** (the behavior, in plain terms), and **what we're doing about it conceptually**. Spend words there. Cut everything readable straight from the code.
+The body makes a reviewer fast and confident, not a restage of the diff. The diff shows *what changed*; the description carries what it can't: **what was happening** (the behavior, in plain terms) and **what we're doing about it conceptually**. Spend words there. Cut anything readable straight from the code.
 
 ## Lead in plain English, behavior first
 
-Write so someone who has never seen the code understands the problem and the idea. Two beats, in order:
+Write so someone who's never seen the code gets the problem and the idea. Two beats, in order:
 
-1. **What's happening** — the current behavior and why it's wrong, in user-visible terms. No internals yet. ("The worker hands the model a session's entire transcript. A few very large sessions don't fit the input limit, so the call fails and those annotations never get processed.")
+1. **What's happening** — current behavior and why it's wrong, in user-visible terms. No internals yet. ("The worker hands the model a session's entire transcript. A few very large sessions don't fit the input limit, so the call fails and those annotations never get processed.")
 2. **What we're doing about it** — the *idea*, conceptually. Why it works, not how it's wired. ("The model doesn't need the whole conversation to read an annotation — just what was happening around it. So we send the slices near each annotation plus a bit of the start and end.")
 
-Then stop and let the code talk. The mechanism — data structures, parameters, caps, flags, the call sequence — lives in the **code and tests**, not the prose. If a reviewer needs the description to follow the mechanism, the code isn't self-documenting; fix the code, not the writing.
+Then stop and let the code talk. The mechanism (data structures, parameters, caps, flags, call sequence) lives in the **code and tests**, not the prose. If a reviewer needs the description to follow the mechanism, the code isn't self-documenting — fix the code, not the writing.
 
-Weak drafts open on the solution ("Adds windowing to…") or dump a feature list of internals ("short-circuits when under budget, hard cap with a warning, sentinel turns, retro widening…"). That's the mumbo-jumbo to cut. Flip it: behavior, then concept, then point at the code.
+Weak drafts open on the solution ("Adds windowing to…") or dump a feature list of internals ("short-circuits when under budget, hard cap with a warning, sentinel turns, retro widening…"). Cut that. Flip it: behavior, then concept, then point at the code.
 
-## What earns prose vs. what stays in the code
+## What earns prose vs. stays in the code
 
 Prose, yes:
 - The wrong behavior and who/what it hurts.
@@ -21,11 +21,11 @@ Prose, yes:
 - What's deliberately unchanged or out of scope, and why it's safe ("normal-sized sessions still get the full transcript, so this only touches the ones already failing").
 
 Code's job, not prose:
-- How turns are selected, the exact window size, the cap value, the parameter names.
-- The data threading and call order.
+- How turns are selected, exact window size, cap value, parameter names.
+- Data threading and call order.
 - Anything a behavior-preserving rename or refactor would obsolete — that's mechanism. Cut it.
 
-A load-bearing *decision* (e.g. "we keep the original turn numbers so the model's citations stay valid") can earn one plain sentence when a reviewer must agree with it and the code alone won't surface the why. State it as a plain property + reason — never a jargon checklist. When the code and tests already make it obvious, skip it.
+A load-bearing *decision* (e.g. "we keep the original turn numbers so the model's citations stay valid") earns one plain sentence when a reviewer must agree with it and the code won't surface the why. State it as a property + reason, never a jargon checklist. When the code and tests already make it obvious, skip it.
 
 ## Define the proper nouns
 
