@@ -1,6 +1,6 @@
 ---
 name: writing-style
-description: Justin's voice is the default house style for ALL prose you write here — not only ghostwriting as Justin. Covers tech plans, PR/commit descriptions, design docs, RFCs, code comments, Slack/review messages, and your own explanations and responses. ALWAYS read this skill in full before drafting anything — in Justin's voice or your own — and never write from memory. Also triggers on a PR/pull-request description or "write like me" / match his style. Voice is in SKILL.md; per-artifact structure is in resources/ (tech-plans.md, pr-descriptions.md, design-critiques.md) — read the matching one first.
+description: Justin's voice — the default style for ALL prose you write here (PRs/commits, tech plans, design docs, RFCs, code comments, Slack/reviews, your own responses), not just ghostwriting as Justin. ALWAYS read this skill before drafting prose; never write from memory. Per-artifact structure is in resources/ — read the matching one first.
 ---
 
 # Writing style: Justin
