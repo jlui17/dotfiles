@@ -62,6 +62,10 @@ Holds everywhere — plan, PR, comment, Slack.
     - Yes: "Counts all annotation text now. The old script read `created_at` not `applicable_when`, so the span looked like 3 days."
     - No: "Switched the annotations span query from `created_at` to `applicable_when`." (mechanism, no behavior)
 
+13. **State your confidence, and the assumption it rests on.** When you're not certain, say the confidence level out loud and make it conditional on the assumption you're relying on, so the reader can correct the *assumption* instead of just the conclusion. This is inviting the correction, not hedging.
+    - Yes: "as long as I'm reading it right that a set `ctx.pr_number` means the model must use that number, then I'm quite confident this fixes it."
+    - No: "this fixes it." (overclaims, hides the assumption) / "this might possibly help in some cases." (vague hedge with nothing for the reader to check)
+
 ## Punctuation & emphasis
 
 - **Bold** = the one load-bearing claim/decision per paragraph (the skimmable thing). Often a bold lead-in: "**Attribution is forward-looking / source-agnostic:** ..."
@@ -76,7 +80,7 @@ Holds everywhere — plan, PR, comment, Slack.
 
 ## Structure (general)
 
-- **Open straight on the problem.** No throat-clearing. "Trace records show 'Created By' as **'Anonymous'** instead of the user who created them."
+- **Open straight on the problem.** No throat-clearing. "Trace records show 'Created By' as **'Anonymous'** instead of the user who created them." (A one-word chat greeting like "Hey," is not throat-clearing: the rule bans content preamble, not saying hello.)
 
 Artifact-specific structure lives in the per-scenario resource files — see Registers.
 
@@ -89,7 +93,8 @@ Same voice, different density. Read the matching resource first.
 | **Tech plan / design doc / RFC** | Formal, spacious. Numbered sections, fixed schemas, tradeoff tables, named alternatives. | `resources/tech-plans.md` |
 | **PR description** | Plain English, behavior first. Lead with what's happening + the conceptual fix; push mechanism into the code. Dense prose fine, jargon dumps aren't. | `resources/pr-descriptions.md` |
 | **Design critique / UX walkthrough** | First-person, experiential. Actor flips from code to *you*. Fixed schema, captioned screenshots, priority up front. | `resources/design-critiques.md` |
-| **Code comment / Slack / review** | Most compressed. One claim per line, point at the artifact, drop scaffolding. Still: actor-as-subject, append-reason, no hype. Describing a change? Behavior first (#12), mechanism only if needed. | (inline — this row is the guidance) |
+| **Slack / peer message** (chat ping, DM, thread) | Casual, conversational, flows like speech (not telegraphic). Light greeting OK. Link the one artifact; name only the central identifier(s); state confidence + its assumption (#13). | `resources/slack.md` |
+| **Code comment / inline review** | Most compressed. One claim per line, point at the artifact, drop scaffolding. Still: actor-as-subject, append-reason, no hype. Describing a change? Behavior first (#12), mechanism only if needed. | (inline — this row is the guidance) |
 
 ## Anti-patterns
 
@@ -99,6 +104,8 @@ Same voice, different density. Read the matching resource first.
 - Paraphrasing code logic when an operator is clearer.
 - Marketing tone, exclamation, praising the design.
 - Claims with no artifact to point at.
+- Over-citation: enumerating every file, test, and pass-count when one link plus the central identifier would do. Reads as AI over-justification, especially in chat.
+- Telegraphing a casual message into one-claim-per-line fragments. In chat, write the way you'd say it (see `resources/slack.md`).
 - Em-dashes for asides → recast as parenthetical/colon/comma/separate sentence.
 - Wall of text — a paragraph where one sentence works, or an unbroken block that should be bullets/short paragraphs.
 
@@ -111,6 +118,8 @@ Same voice, different density. Read the matching resource first.
 - Cut every "just/really/basically" and politeness hedge?
 - Honest about limits and what's *not* covered?
 - No em-dashes — asides recast?
-- One idea per sentence — clause-stacks split?
+- One idea per sentence — clause-stacks split? (Exception: casual chat flows; see `resources/slack.md`.)
 - No wall of text — shortest form used, long blocks broken into paragraphs/bullets?
 - A newcomer could follow — context added where needed, dead-obvious cut?
+- Stated confidence with the assumption it depends on, rather than over- or under-claiming?
+- In chat: linked the one artifact and named only the central identifier(s), not a catalog of files/tests/counts?
