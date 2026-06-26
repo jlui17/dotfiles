@@ -74,6 +74,8 @@ GUI_APPS=(
   "Zed|command -v zed|brew install --cask zed|sudo pacman -S --noconfirm zed"
   "1Password CLI|command -v op|brew install --cask 1password-cli|yay -S --noconfirm 1password-cli"
   "Hunk|command -v hunk|brew tap modem-dev/tap 2>/dev/null; brew install hunk|npm i -g hunkdiff"
+  "OpenCode|command -v opencode|brew install opencode|"
+  "Pi|command -v pi|brew install pi-coding-agent|"
 )
 
 # ──────────────────────────────────────────────
