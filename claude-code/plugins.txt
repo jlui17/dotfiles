@@ -6,5 +6,3 @@
 # Format per line:  <github-owner/repo>  <plugin@marketplace> [<plugin@marketplace> ...]
 # install.sh adds the marketplace from the repo, then installs each listed plugin.
 # Lines starting with # are ignored.
-
-JuliusBrussee/caveman  caveman@caveman
