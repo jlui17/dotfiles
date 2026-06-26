@@ -4,4 +4,3 @@
 
 npm:pi-subagents
 npm:pi-agent-browser-native
-git:github.com/JuliusBrussee/caveman

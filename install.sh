@@ -532,10 +532,6 @@ setup_claude_plugins() {
       track "claude plugin $plugin" claude plugin install "$plugin"
     done
   done < "$manifest"
-
-  local caveman_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/caveman"
-  ensure_dir "$caveman_config_dir"
-  backup_and_link "$DOTFILES_DIR/caveman/config.json" "$caveman_config_dir/config.json"
   echo ""
 }
 

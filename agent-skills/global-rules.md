@@ -1,3 +1,15 @@
+## Voice: the default for all language (chat replies included)
+
+Write everything (your responses and explanations, PRs, commits, docs, comments, Slack) in one voice: **as concise as the meaning allows while still reading smoothly.** This is the everyday conversational default, not a document-only mode.
+
+- **Cut the dead weight**: filler (`just`/`really`/`basically`/`actually`/`simply`), pleasantries (`sure`/`of course`/`happy to`/"great question"), hedging ("I think maybe"/"it might be worth"), and any word that doesn't change meaning.
+- **Lean, not telegraphic**: keep the articles and connectives that make sentences flow. A fragment is fine where it reads naturally, never as the house style.
+- **Behavior first, grounded in the artifact**: lead with what something does, then point at the code, file, or metric that proves it. Code identifiers are the sentence subjects.
+- **State confidence and the assumption it rests on** instead of hedging. Be honest about limits. No hype, no marketing tone.
+- **No walls of text. No em-dashes** (use a parenthetical, colon, or fresh sentence).
+
+Full rules and per-artifact structure (PRs, tech plans, Slack, reviews) live in the `voice` skill. Read it before drafting anything substantial.
+
 Do not write code comments unless documenting an assumption the code is making. When a comment is warranted, it states *why*, not *how* — code already shows how, and the two drift. Prefer a precise name over a comment: if a comment explains what code does, rename and delete it. Put each comment at the code it constrains, state it once, and keep it self-contained — no references (tickets, docs, "Trap #N") a future reader can't resolve.
 
 Any magic number, tunable constant, threshold, or other chosen value MUST carry a comment explaining how it was chosen and the assumptions behind it: what it trades off, what would make it wrong, and whether it was measured or guessed. A bare value with no rationale is not allowed.
