@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "model": "opus[1m]",
+  "enabledPlugins": {
+    "slack@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {},
+  "fastMode": true,
+  "skipWorkflowUsageWarning": true,
+  "theme": "dark-daltonized",
+  "inputNeededNotifEnabled": true
+}

@@ -503,15 +503,21 @@ setup_agent_skills() {
 }
 
 # ──────────────────────────────────────────────
-#  PHASE 6c — Claude Code plugins
+#  PHASE 6c — Claude Code config
 # ──────────────────────────────────────────────
 
-# Claude Code plugins are installed through the `claude` CLI rather than
-# symlinked — their on-disk state carries machine-specific paths and pinned
-# commit SHAs. We replay the marketplace+install commands from the manifest;
-# both no-op cleanly when the plugin is already present.
+# settings.json links like any other config. Plugins can't be linked — their
+# on-disk state carries machine-specific paths and pinned commit SHAs — so we
+# replay the marketplace+install commands from the manifest; both no-op cleanly
+# when the plugin is already present.
 setup_claude_plugins() {
-  echo "==> Claude Code plugins..."
+  echo "==> Claude Code config..."
+
+  # User-level settings.json is the shareable layer (machine-specific or secret
+  # values belong in the gitignored settings.local.json). Link it like any other
+  # config; plugins below can't be linked and are replayed instead.
+  backup_and_link "$DOTFILES_DIR/claude-code/settings.json" "$HOME/.claude/settings.json"
+
   local manifest="$DOTFILES_DIR/claude-code/plugins.txt"
 
   if ! command_exists claude; then

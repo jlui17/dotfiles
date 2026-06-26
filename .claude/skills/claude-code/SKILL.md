@@ -1,9 +1,11 @@
 ---
 name: claude-code
-description: Claude Code plugins — marketplaces and plugins replayed via the `claude` CLI from claude-code/plugins.txt.
+description: Claude Code config — user-level settings.json symlinked, plus plugins replayed via the `claude` CLI from claude-code/plugins.txt.
 ---
 
-Claude-Code-specific config. Today that's plugins; the cross-agent skills, commands, and global rules live in the [[agent-skills]] module instead (those apply to every coding agent, not just Claude Code).
+Claude-Code-specific config: user-level `settings.json` plus plugins. The cross-agent skills, commands, and global rules live in the [[agent-skills]] module instead (those apply to every coding agent, not just Claude Code).
+
+**settings.json** — `claude-code/settings.json`, symlinked to `~/.claude/settings.json` by install.sh (PHASE 6c). This is the shareable settings layer (model, theme, permissions, enabled plugins). Anything machine-specific or secret belongs in `~/.claude/settings.local.json`, which Claude Code merges on top and which stays untracked. Claude Code edits settings.json in place when you toggle things (`/fast`, theme, model), so those edits surface as diffs in the repo: commit the ones worth keeping.
 
 Plugins can't be symlinked. Their on-disk state in `~/.claude/plugins/` (`known_marketplaces.json`, `installed_plugins.json`, cloned `marketplaces/`, cached versions) carries machine-specific absolute paths, timestamps, and pinned commit SHAs. So instead of linking files, install.sh replays the install commands from a manifest — the `claude` CLI calls are idempotent and no-op when a plugin is already present.
 
