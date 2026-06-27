@@ -527,7 +527,28 @@ setup_claude_plugins() {
     return
   fi
 
+  # Collect wanted plugins from manifest.
+  local -a wanted_plugins=()
   local line repo plugin
+  while IFS= read -r line; do
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    repo="${line%%[[:space:]]*}"
+    for plugin in ${=line#$repo}; do
+      wanted_plugins+=("$plugin")
+    done
+  done < "$manifest"
+
+  # Uninstall plugins present on this machine but removed from the manifest.
+  local installed
+  while IFS= read -r installed; do
+    [[ -z "$installed" ]] && continue
+    if (( ! ${wanted_plugins[(Ie)$installed]} )); then
+      echo "  Uninstalling removed plugin: $installed"
+      track "claude plugins uninstall $installed" claude plugins uninstall "$installed"
+    fi
+  done < <(claude plugins list 2>/dev/null | awk '/❯/{print $NF}')
+
+  # Install/no-op wanted plugins.
   while IFS= read -r line; do
     [[ -z "$line" || "$line" == \#* ]] && continue
     repo="${line%%[[:space:]]*}"          # first token: the marketplace repo
