@@ -205,9 +205,11 @@ install_packages() {
 # stable line. Used by both providers (uv pin / mise tool version).
 MISE_PYTHON_VERSION="3.12"
 
-# Link the shared runtime manifest and realize it. Without global node/go,
-# nvim's Mason can't build the servers it auto-installs (gopls needs Go; ts_ls
-# and pyright need Node).
+# Seed a machine-local runtime config from the tracked example and realize it.
+# config.toml is untracked (per-machine tools like bun stay out of the shared
+# repo); mise/config.toml.example carries the node/go baseline a fresh machine
+# needs. Without global node/go, nvim's Mason can't build the servers it
+# auto-installs (gopls needs Go; ts_ls and pyright need Node).
 #
 # Python is machine-local. PYTHON_PROVIDER in .dotfiles-local picks the strategy:
 #   uv     (default) — mise installs uv; uv owns Python (install + global pin).
@@ -217,15 +219,19 @@ MISE_PYTHON_VERSION="3.12"
 #                      AND mise's own Python (mise uses python-build-standalone),
 #                      so on those machines neither uv nor mise-managed Python
 #                      can run; the notarized Homebrew/pacman build does.
-# The uv provider writes a conf.d/ overlay that mise merges on top of the shared
-# config, keeping the committed manifest machine-agnostic. `mise exec` resolves
+# The uv provider writes a conf.d/ overlay that mise merges on top of the
+# machine-local config, keeping the committed example machine-agnostic. `mise exec` resolves
 # uv without depending on mise shims being on PATH here. pyright/ts_ls/gopls are
 # Node/Go-based, so nvim's LSP works under either provider.
 setup_mise() {
   echo "==> mise global runtimes..."
   local mise_dir="${XDG_CONFIG_HOME:-$HOME/.config}/mise"
   ensure_dir "$mise_dir"
-  backup_and_link "$DOTFILES_DIR/mise/config.toml" "$mise_dir/config.toml"
+  # config.toml is machine-local (untracked). Seed it from the tracked example
+  # on a fresh machine; never clobber an existing one so per-machine edits stick.
+  if [[ ! -e "$mise_dir/config.toml" ]]; then
+    cp "$DOTFILES_DIR/mise/config.toml.example" "$mise_dir/config.toml"
+  fi
 
   local python_provider="uv"
   [[ -f "$DOTFILES_LOCAL_CONFIG" ]] && source "$DOTFILES_LOCAL_CONFIG"

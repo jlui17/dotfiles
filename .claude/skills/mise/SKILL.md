@@ -1,9 +1,9 @@
 ---
 name: mise
-description: Global language runtimes (node, go) managed by mise + a machine-local Python provider (uv or system). Manifest symlinked to ~/.config/mise/config.toml.
+description: Global language runtimes (node, go) managed by mise + a machine-local Python provider (uv or system). The live ~/.config/mise/config.toml is machine-local (untracked), seeded from a tracked mise/config.toml.example on install.
 ---
 
-[mise](https://mise.jdx.dev) manages global language runtime versions. The shared manifest `mise/config.toml` (node, go) is symlinked to `~/.config/mise/config.toml`. `install.sh` runs `mise install` to realize it.
+[mise](https://mise.jdx.dev) manages global language runtime versions. `~/.config/mise/config.toml` (node, go) is machine-local and untracked: `install.sh` seeds it from the tracked `mise/config.toml.example` on a fresh machine (never clobbering an existing one), so per-machine tools stay out of the shared repo. `install.sh` then runs `mise install` to realize it.
 
 **Why this exists:** nvim's Mason auto-installs language servers on first launch, and several are built from a runtime that must already be on PATH — `gopls` needs Go, `ts_ls` and `pyright` need Node. Without global versions set, those installs fail. Pinning runtimes here makes a fresh machine's first `nvim` launch succeed. See [[nvim]].
 
@@ -13,13 +13,14 @@ description: Global language runtimes (node, go) managed by mise + a machine-loc
 
 Either way pyright/ts_ls/gopls are Node/Go-based, so nvim's LSP is unaffected by the Python choice.
 
-**conf.d overlays:** mise merges every `~/.config/mise/conf.d/*.toml` on top of the global config. The overlay is generated per-machine and never committed, keeping the shared manifest machine-agnostic.
+**conf.d overlays:** mise merges every `~/.config/mise/conf.d/*.toml` on top of the global config. The overlay is generated per-machine and never committed, keeping the tracked example machine-agnostic.
 
-**Install flow** (install.sh, PHASE 1b): symlink `mise/config.toml`, resolve `PYTHON_PROVIDER`, write/remove the overlay, `mise install`, then the provider-specific Python step. Runs after `install_packages` (installs the `mise` binary). zsh activates mise via `eval "$(mise activate zsh)"` in `zshrc`.
+**Install flow** (install.sh, PHASE 1b): seed `~/.config/mise/config.toml` from `mise/config.toml.example` if absent, resolve `PYTHON_PROVIDER`, write/remove the overlay, `mise install`, then the provider-specific Python step. Runs after `install_packages` (installs the `mise` binary). zsh activates mise via `eval "$(mise activate zsh)"` in `zshrc`.
 
 **Tasks:**
 - Switch a machine off uv: set `PYTHON_PROVIDER=system` in `.dotfiles-local`, re-run install.sh
-- Add/bump a shared runtime: edit `mise/config.toml`, re-run install.sh (or `mise install`)
+- Add/bump a tool on this machine: edit `~/.config/mise/config.toml`, then `mise install`
+- Change the baseline new machines get: edit `mise/config.toml.example` (only affects machines seeded later)
 - Bump Python: edit `MISE_PYTHON_VERSION` in `install.sh`
 - List installed versions: `mise ls` · what's active here: `mise current`
 - Project-local override: `mise use node@22` in the project dir (writes a local `mise.toml`, not the shared file)

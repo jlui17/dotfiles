@@ -1,9 +1,0 @@
-# Shared global runtime versions, symlinked to ~/.config/mise/config.toml.
-# These exist so language servers that ship as runtime packages install on first
-# nvim launch: Mason builds gopls with Go, and ts_ls/pyright with Node.
-#
-# The Python toolchain is machine-local, NOT here: install.sh writes a
-# conf.d/ overlay picking uv (default) or mise per machine. See the mise skill.
-[tools]
-node = "lts"
-go = "latest"

@@ -10,3 +10,8 @@ opencode/env
 
 # Scorecard (work) — never track work-specific files in this shared repo.
 *scorecard*
+
+# mise runtimes are machine-local: install.sh seeds this from
+# mise/config.toml.example, then the machine owns it. Per-machine tool choices
+# (e.g. bun on one box) stay out of the shared repo.
+mise/config.toml
