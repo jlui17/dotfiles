@@ -27,6 +27,14 @@ Reviewers lack your conversation history. Packet must stand alone. Both get the 
 - **Implementation.** The change. `git diff` + paths to read in full. Enough to verify, not a tour.
 - **Constraints.** What bounds the solution: compat, perf budget, deadline, "can't touch X", patterns to match.
 
+Example packet (the bar: enough to verify, not a tour):
+
+- **Problem:** Trace records show "Created By" as "Anonymous" instead of the user who created them.
+- **Desired outcome:** the record's creator resolves to the real user wherever we have one.
+- **Approach:** resolve attribution in `processTrace` at ingest, preferring the label's `user_id` and falling back to the run owner. Chose ingest-time over a read-time join because the Collector already has both IDs in hand (rejected: backfill, doesn't help new records).
+- **Implementation:** `git diff main` touches `activities.ts` and `runs.ts`; read `processTrace` and `createRun` in full.
+- **Constraints:** can't touch the Collector; existing records won't be backfilled.
+
 ## Step 2 — Spawn two reviewers
 
 Both at once, read-only. Neither sees the other's output — independence is the point, else they anchor.
@@ -71,6 +79,14 @@ Findings in this shape so triage is mechanical:
 - **direction** — where to take it, not the exact patch.
 
 No `must-fix`/`should-fix` → reviewer says **"no actionable feedback"** outright. No praise, no padding. That phrase ends the loop.
+
+Example finding (one filled-in shape; `direction` points where to go, not the patch, and `why` is the consequence, not a restatement of `what`):
+
+- **severity:** must-fix
+- **location:** `processTrace` (`activities.ts:1108`)
+- **what:** reads `labels.user_id` but never falls back to `run.user_id`, so trace records with labels-only attribution get a null creator.
+- **why:** the "Created By" column renders "Anonymous" for every labeled record, the exact bug this change set out to fix.
+- **direction:** fall back to the run's owner when the label has no user; don't hardcode a sentinel.
 
 ## Step 3 — Triage and fix
 
