@@ -205,10 +205,9 @@ install_packages() {
 # stable line. Used by both providers (uv pin / mise tool version).
 MISE_PYTHON_VERSION="3.12"
 
-# Seed a machine-local runtime config from the tracked example and realize it.
-# config.toml is untracked (per-machine tools like bun stay out of the shared
-# repo); mise/config.toml.example carries the node/go baseline a fresh machine
-# needs. Without global node/go, nvim's Mason can't build the servers it
+# Seed a machine-local runtime config (node/go) on a fresh machine and realize
+# it. config.toml is untracked, so per-machine tools like bun stay out of the
+# shared repo. Without global node/go, nvim's Mason can't build the servers it
 # auto-installs (gopls needs Go; ts_ls and pyright need Node).
 #
 # Python is machine-local. PYTHON_PROVIDER in .dotfiles-local picks the strategy:
@@ -220,17 +219,22 @@ MISE_PYTHON_VERSION="3.12"
 #                      so on those machines neither uv nor mise-managed Python
 #                      can run; the notarized Homebrew/pacman build does.
 # The uv provider writes a conf.d/ overlay that mise merges on top of the
-# machine-local config, keeping the committed example machine-agnostic. `mise exec` resolves
+# machine-local config, keeping the seeded baseline machine-agnostic. `mise exec` resolves
 # uv without depending on mise shims being on PATH here. pyright/ts_ls/gopls are
 # Node/Go-based, so nvim's LSP works under either provider.
 setup_mise() {
   echo "==> mise global runtimes..."
   local mise_dir="${XDG_CONFIG_HOME:-$HOME/.config}/mise"
   ensure_dir "$mise_dir"
-  # config.toml is machine-local (untracked). Seed it from the tracked example
-  # on a fresh machine; never clobber an existing one so per-machine edits stick.
+  # config.toml is machine-local (untracked). Seed a node/go baseline on a fresh
+  # machine; never clobber an existing one so per-machine edits stick.
   if [[ ! -e "$mise_dir/config.toml" ]]; then
-    cp "$DOTFILES_DIR/mise/config.toml.example" "$mise_dir/config.toml"
+    cat > "$mise_dir/config.toml" <<'TOML'
+# Machine-local mise runtimes (not tracked by dotfiles). Edit freely.
+[tools]
+node = "lts"
+go = "latest"
+TOML
   fi
 
   local python_provider="uv"
