@@ -118,6 +118,8 @@ Same voice, different density. Read the matching resource first.
 - Telegraphing a casual message into one-claim-per-line fragments. In chat, write the way you'd say it (see `resources/slack.md`).
 - Em-dashes for asides → recast as parenthetical/colon/comma/separate sentence.
 - Wall of text — a paragraph where one sentence works, or an unbroken block that should be bullets/short paragraphs.
+- Bare file/symbol name-drops ("same pattern in `foo.py` and `bar.py`") with no clause saying what they are or why they matter. Name for findability, but define and justify.
+- A verification/test section as a flat activity log ("ran X, then Y") instead of method → what it proves → why that method, grouped by the claim it addresses.
 
 ## Self-check
 
@@ -131,5 +133,6 @@ Same voice, different density. Read the matching resource first.
 - One idea per sentence — clause-stacks split? (Exception: casual chat flows; see `resources/slack.md`.)
 - No wall of text — shortest form used, long blocks broken into paragraphs/bullets?
 - A newcomer could follow — context added where needed, dead-obvious cut?
+- Stands alone for someone without the ticket — system oriented up front, and every cited file/symbol defined and justified, not bare-named?
 - Stated confidence with the assumption it depends on, rather than over- or under-claiming?
 - In chat: linked the one artifact and named only the central identifier(s), not a catalog of files/tests/counts?

@@ -48,13 +48,18 @@ Always worth prose:
 - The conceptual fix and why it's sound.
 - What's deliberately unchanged or out of scope, and why it's safe ("normal-sized sessions still get the full transcript, so this only touches the ones already failing").
 
-## Define the proper nouns
+## Make it stand alone for a cold reviewer
 
-Spell out an unfamiliar term inline on first use: "a git worktree (a separate checkout of the same repo on its own branch)", "the Collector (the service that ingests traces)". Skip what's dead-obvious.
+Assume the reviewer hasn't read the ticket and doesn't know this corner of the system. The body has to carry them top to bottom on its own.
+
+- **Open with one line of orientation when the system isn't self-evident** — what the component is, what it's for, what breaks when it breaks ("a colony-vm build packs the prod databases into one image the eval platform boots; if it fails, no new eval environment ships"), then the behavior.
+- **Spell out an unfamiliar term inline on first use:** "a git worktree (a separate checkout of the same repo on its own branch)", "the Collector (the service that ingests traces)". Skip what's dead-obvious.
+- **A cited file or symbol needs a one-clause definition and why it's relevant, not a bare name.** "Same pattern in `vm_warm.py` and `vm_snapshot.py`" tells a stranger nothing; "both build layers that push images (`vm_warm` = warm base, `vm_snapshot` = data restored in), so the fix lands in both" does. Name it for findability, but earn the name.
+- **Even a single internal helper or flag is mechanism leak.** Naming `_run` or `check=True` makes the reader chase code; state the behavior instead ("a rejected push fails the build"). Architecture-vs-mechanism applies at the smallest scale too.
 
 ## Test plan and non-goals
 
-- **Test plan** — flat declarative bullets, each = subject + what it proves. This is part of 2b: the tests are the proof the behavior holds. Already verifiable, rarely needs rework; leave a good one alone.
+- **Test plan / verification** — tie each method to the claim it proves, not a flat log of what you ran. A single behavior gets flat bullets (subject + what it proves). When the change has several claims (e.g. multiple root causes) or mixes methods (unit test vs live run vs a logic-only check), group by the claim and make each entry carry three things: which fix it proves, how you checked it, and *why that method fit* ("pure logic, so a unit test pins it with no infra"; "shell against a live service, so it can't be unit-tested"; "the real failure only reproduces in prod, so verify the decision directly"). "We ran X, then Y" doesn't tell the reviewer what's proven or why the method is trustworthy.
 - **Non-goals** — what you didn't do and why deferred. Part of limitations (#3). Keep the next problem visible without scope-creeping this PR.
 
 ## Where effort goes
