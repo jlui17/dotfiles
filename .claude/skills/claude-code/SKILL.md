@@ -1,11 +1,13 @@
 ---
 name: claude-code
-description: Claude Code config — user-level settings.json symlinked, plus plugins replayed via the `claude` CLI from claude-code/plugins.txt.
+description: Claude Code config — user-level settings.json deep-merged, plus plugins replayed via the `claude` CLI from claude-code/plugins.txt.
 ---
 
 Claude-Code-specific config: user-level `settings.json` plus plugins. The cross-agent skills, commands, and global rules live in the [[agent-skills]] module instead (those apply to every coding agent, not just Claude Code).
 
-**settings.json** — `claude-code/settings.json`, symlinked to `~/.claude/settings.json` by install.sh (PHASE 6c). This is the shareable settings layer (model, theme, permissions, enabled plugins). Anything machine-specific or secret belongs in `~/.claude/settings.local.json`, which Claude Code merges on top and which stays untracked. Claude Code edits settings.json in place when you toggle things (`/fast`, theme, model), so those edits surface as diffs in the repo: commit the ones worth keeping.
+**settings.json** — not symlinked, because Claude Code rewrites `~/.claude/settings.json` at runtime (theme, model, `/fast`). It stays a real machine-local file; install.sh (PHASE 6c) deep-merges the repo's tracked keys into it with `jq -s '.[0] * .[1]'`, **repo winning on conflicts**. So `claude-code/settings.json` is the source of truth for the keys it declares (model, theme, permissions, enabled plugins) and they propagate on re-run, while machine-only keys the repo doesn't declare are preserved. Secrets and per-machine values go in `~/.claude/settings.local.json`, which Claude Code merges on top and which stays untracked.
+
+To change a shared setting: edit `claude-code/settings.json`, re-run install.sh. To keep a setting machine-local, don't add its key to the repo file (and if needed, put it in settings.local.json).
 
 Plugins can't be symlinked. Their on-disk state in `~/.claude/plugins/` (`known_marketplaces.json`, `installed_plugins.json`, cloned `marketplaces/`, cached versions) carries machine-specific absolute paths, timestamps, and pinned commit SHAs. So instead of linking files, install.sh replays the install commands from a manifest — the `claude` CLI calls are idempotent and no-op when a plugin is already present.
 

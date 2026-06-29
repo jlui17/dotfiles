@@ -46,7 +46,7 @@ esac
 
 # -- Platform package configuration -----------------------------------------
 # Single source of truth — add new tools here, not in two places.
-COMMON_PACKAGES=(git fzf zoxide tmux zsh neovim ghostty lazygit mise tree-sitter-cli)
+COMMON_PACKAGES=(git fzf zoxide tmux zsh neovim ghostty lazygit mise tree-sitter-cli jq)
 
 case "$OS" in
   macos)
@@ -149,6 +149,38 @@ backup_and_link() {
   fi
   ln -sfn "$src" "$dst"
   echo "  Linked $(basename "$dst")."
+}
+
+# Deep-merge a tracked JSON file into a machine-local one, repo values winning
+# on conflicting keys (jq's `*` recurses into nested objects). Used instead of a
+# symlink when the tool rewrites the file at runtime (e.g. Claude Code's
+# settings.json): dst stays a real file the tool owns, and only the keys the repo
+# declares get re-asserted each install. Machine-only keys survive. Plain-copies
+# when dst is absent; refuses to touch an existing dst if jq is missing rather
+# than clobber it.
+merge_json() {
+  local src="$1" dst="$2"
+  if [[ ! -f "$dst" ]]; then
+    ensure_dir "$(dirname "$dst")"
+    cp "$src" "$dst"
+    echo "  Created $(basename "$dst")."
+    return
+  fi
+  if ! command_exists jq; then
+    echo "  ⚠️  jq not found — left $(basename "$dst") untouched. Merge $src by hand."
+    FAILURES+=("merge $(basename "$dst")")
+    return
+  fi
+  local tmp
+  tmp="$(mktemp)"
+  if jq -s '.[0] * .[1]' "$dst" "$src" > "$tmp" && [[ -s "$tmp" ]]; then
+    mv "$tmp" "$dst"
+    echo "  Merged repo settings into $(basename "$dst")."
+  else
+    rm -f "$tmp"
+    echo "  ⚠️  Failed to merge $(basename "$dst") — left unchanged."
+    FAILURES+=("merge $(basename "$dst")")
+  fi
 }
 
 # ──────────────────────────────────────────────
@@ -523,10 +555,12 @@ setup_agent_skills() {
 setup_claude_plugins() {
   echo "==> Claude Code config..."
 
-  # User-level settings.json is the shareable layer (machine-specific or secret
-  # values belong in the gitignored settings.local.json). Link it like any other
-  # config; plugins below can't be linked and are replayed instead.
-  backup_and_link "$DOTFILES_DIR/claude-code/settings.json" "$HOME/.claude/settings.json"
+  # settings.json stays a real machine-local file because Claude Code rewrites it
+  # at runtime (theme, model, /fast). Deep-merge the repo's tracked keys in, repo
+  # winning on conflicts, so shared settings propagate without clobbering
+  # machine-only keys. Secrets and per-machine values go in the untracked
+  # settings.local.json, which Claude Code merges on top.
+  merge_json "$DOTFILES_DIR/claude-code/settings.json" "$HOME/.claude/settings.json"
 
   local manifest="$DOTFILES_DIR/claude-code/plugins.txt"
 
