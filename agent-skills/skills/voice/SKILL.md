@@ -76,6 +76,10 @@ Holds everywhere — plan, PR, comment, Slack.
     - Yes: "as long as I'm reading it right that a set `ctx.pr_number` means the model must use that number, then I'm quite confident this fixes it."
     - No: "this fixes it." (overclaims, hides the assumption) / "this might possibly help in some cases." (vague hedge with nothing for the reader to check)
 
+14. **Precise on the load-bearing word; an evocative term that imports the wrong default is a bug, not shorthand.** When one word or phrase carries the meaning, it must mean exactly what the reader will infer, or be defined inline. Don't borrow an ambient/familiar phrase for a precise technical condition — the reader will resolve it to the common meaning, not yours. State the actual condition.
+    - Yes: "the runner whose local build artifact is gone while the registry tag survives"
+    - No: "on a clean host" (reads as a fresh machine; the real condition was a long-lived runner missing one cached file, the opposite of "fresh")
+
 ## Punctuation & emphasis
 
 - **Bold** = the one load-bearing claim/decision per paragraph (the skimmable thing). Often a bold lead-in: "**Attribution is forward-looking / source-agnostic:** ..."
@@ -120,6 +124,7 @@ Same voice, different density. Read the matching resource first.
 - Wall of text — a paragraph where one sentence works, or an unbroken block that should be bullets/short paragraphs.
 - Bare file/symbol name-drops ("same pattern in `foo.py` and `bar.py`") with no clause saying what they are or why they matter. Name for findability, but define and justify.
 - A verification/test section as a flat activity log ("ran X, then Y") instead of method → what it proves → why that method, grouped by the claim it addresses.
+- A load-bearing word that imports the wrong default ("clean host" read as a fresh machine when it meant a long-lived runner missing one cached file). The reader leans on that word; name the exact condition or define it inline.
 
 ## Self-check
 
@@ -134,5 +139,6 @@ Same voice, different density. Read the matching resource first.
 - No wall of text — shortest form used, long blocks broken into paragraphs/bullets?
 - A newcomer could follow — context added where needed, dead-obvious cut?
 - Stands alone for someone without the ticket — system oriented up front, and every cited file/symbol defined and justified, not bare-named?
+- Does each load-bearing word mean what the reader will assume (or is it defined inline)? No evocative term standing in for a precise condition?
 - Stated confidence with the assumption it depends on, rather than over- or under-claiming?
 - In chat: linked the one artifact and named only the central identifier(s), not a catalog of files/tests/counts?
