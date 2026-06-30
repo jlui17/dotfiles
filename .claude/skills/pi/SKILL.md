@@ -14,4 +14,4 @@ Manages pi agent config via declarative files. All changes land here, symlinked 
 - Add package: add line to packages.txt (npm:foo, git:github.com/user/repo), run install.sh
 - Remove package: comment/delete line in packages.txt, `pi remove <source>` (install.sh never removes)
 
-**Default voice:** pi inherits Justin's base voice from `~/AGENTS.md` (symlinked from `agent-skills/global-rules.md`); the full `voice` skill carries the per-artifact detail. No pi-specific extension.
+**Default voice:** pi inherits Justin's base voice from `~/AGENTS.md` (symlinked from `agent-skills/global-rules.md`); the full `style` skill carries the per-artifact detail. No pi-specific extension.

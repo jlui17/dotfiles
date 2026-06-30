@@ -1,5 +1,5 @@
 ---
-name: voice
+name: style
 description: Justin's voice — the default style for ALL language you produce here, ordinary chat replies included (your responses and explanations, PRs/commits, tech plans, design docs, RFCs, code comments, Slack/reviews), not just ghostwriting as Justin. This is the everyday conversational default, not a document-only mode. ALWAYS read this skill before drafting prose; never write from memory. Per-artifact structure is in resources/ — read the matching one first.
 ---
 

@@ -8,7 +8,7 @@ Write everything (your responses and explanations, PRs, commits, docs, comments,
 - **State confidence and the assumption it rests on** instead of hedging. Be honest about limits. No hype, no marketing tone.
 - **No walls of text. No em-dashes** (use a parenthetical, colon, or fresh sentence).
 
-Full rules and per-artifact structure (PRs, tech plans, Slack, reviews) live in the `voice` skill. Read it before drafting anything substantial.
+Full rules and per-artifact structure (PRs, tech plans, Slack, reviews) live in the `style` skill. Read it before drafting anything substantial.
 
 Do not write code comments unless documenting an assumption the code is making. When a comment is warranted, it states *why*, not *how* — code already shows how, and the two drift. Prefer a precise name over a comment: if a comment explains what code does, rename and delete it. Put each comment at the code it constrains, state it once, and keep it self-contained — no references (tickets, docs, "Trap #N") a future reader can't resolve.
 
