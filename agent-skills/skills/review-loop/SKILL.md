@@ -59,6 +59,7 @@ Take approach as given, validate the implementation delivers it. Starters:
 - Where wrong — logic, edge cases, off-by-one, wrong condition, missed case?
 - Parts claiming to do X actually do X? Trace load-bearing paths.
 - Breaks under concurrency, failure, empty input, large input?
+- **Same value defined in more than one place, and did they all move together?** When the diff changes a constant, version pin, default, fallback (`${VAR:-default}`), or a value mirrored across sibling configs, grep the whole repo for the concept (not just the diff) and confirm no other copy was left at the old value. A fix applied to one location while a parallel hardcoded copy silently keeps the old value is a recurring miss — the drift lives *outside* the diff, so a reviewer who only reads the changed lines can't see it. Verify either every copy moved, or a mechanism (shared source, generation, a drift-guard test) makes divergence impossible.
 
 **Test coverage — explicit charge, not optional.** Verify the change is actually tested and the tests are real:
 
