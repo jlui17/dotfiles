@@ -46,7 +46,7 @@ esac
 
 # -- Platform package configuration -----------------------------------------
 # Single source of truth — add new tools here, not in two places.
-COMMON_PACKAGES=(git fzf zoxide tmux zsh neovim ghostty lazygit mise tree-sitter-cli jq)
+COMMON_PACKAGES=(git fzf zoxide tmux zsh neovim ghostty lazygit mise tree-sitter-cli jq ripgrep)
 
 case "$OS" in
   macos)
