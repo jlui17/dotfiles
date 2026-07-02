@@ -454,21 +454,21 @@ setup_pi() {
 
   # -- Themes ---------------------------------------------------------------
   ensure_dir "$pi_agent_dir/themes"
-  for theme_file in "$DOTFILES_DIR/pi/themes/"*.json; do
+  for theme_file in "$DOTFILES_DIR/pi/themes/"*.json(N); do
     [[ -f "$theme_file" ]] || continue
     backup_and_link "$theme_file" "$pi_agent_dir/themes/$(basename "$theme_file")"
   done
 
   # -- Skills ---------------------------------------------------------------
   ensure_dir "$pi_agent_dir/skills"
-  for skill_dir in "$DOTFILES_DIR/pi/skills/"*/; do
+  for skill_dir in "$DOTFILES_DIR/pi/skills/"*/(N); do
     [[ -d "$skill_dir" ]] || continue
     backup_and_link "${skill_dir%/}" "$pi_agent_dir/skills/$(basename "$skill_dir")"
   done
 
   # -- Extensions ------------------------------------------------------------
   ensure_dir "$pi_agent_dir/extensions"
-  for ext_file in "$DOTFILES_DIR/pi/extensions/"*.ts; do
+  for ext_file in "$DOTFILES_DIR/pi/extensions/"*.ts(N); do
     [[ -f "$ext_file" ]] || continue
     backup_and_link "$ext_file" "$pi_agent_dir/extensions/$(basename "$ext_file")"
   done
@@ -525,14 +525,14 @@ setup_agent_skills() {
   for root in "${agent_roots[@]}"; do
     local commands_dir="$root/commands"
     ensure_dir "$commands_dir"
-    for cmd_file in "$module_dir/commands/"*.md; do
+    for cmd_file in "$module_dir/commands/"*.md(N); do
       [[ -f "$cmd_file" ]] || continue
       backup_and_link "$cmd_file" "$commands_dir/$(basename "$cmd_file")"
     done
 
     local skills_dir="$root/skills"
     ensure_dir "$skills_dir"
-    for skill_dir in "$module_dir/skills/"*/; do
+    for skill_dir in "$module_dir/skills/"*/(N); do
       [[ -d "$skill_dir" ]] || continue
       backup_and_link "${skill_dir%/}" "$skills_dir/$(basename "$skill_dir")"
     done
