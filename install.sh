@@ -17,11 +17,25 @@ DOTFILES_DIR="${0:A:h}"
 CURRENT_USER="$(whoami)"
 SCRIPT_ARGS=("$@")
 
-# Machine-local config (gitignored) — holds machine-specific answers such as
-# whether this is a work computer. Created on first run via a prompt; edit or
-# delete it to change the answer. Never tracked in this shared repo.
+# Machine-local config (gitignored) — this machine's profile: work-computer
+# flag, Python provider, and skip lists for modules/packages/apps the machine
+# can't or shouldn't install. Created on first run via a prompt; edit or delete
+# it to change answers. Never tracked in this shared repo.
 DOTFILES_LOCAL_CONFIG="$DOTFILES_DIR/.dotfiles-local"
 IS_WORK_COMPUTER=false
+
+# Skip lists, overridable from .dotfiles-local. Opt-out (not opt-in) because
+# machines want almost everything: a fresh personal machine needs zero config,
+# and new modules added to the repo reach every machine by default.
+#   SKIP_MODULES  — names from the MODULES registry below (whole phases)
+#   SKIP_PACKAGES — entries in COMMON_PACKAGES
+#   SKIP_APPS     — name column of GUI_APPS
+#   KEEP_PLUGINS  — machine-local Claude Code plugins (plugin@marketplace) the
+#                   manifest sync must not uninstall
+SKIP_MODULES=()
+SKIP_PACKAGES=()
+SKIP_APPS=()
+KEEP_PLUGINS=()
 
 # Collects human-readable labels of steps that failed. A bootstrap script
 # shouldn't abort because one package was unavailable, but it also shouldn't
@@ -78,6 +92,29 @@ GUI_APPS=(
   "Pi|command -v pi|brew install pi-coding-agent|"
 )
 
+# Ordered module registry: name:function. main() runs every entry through
+# run_module, which honors SKIP_MODULES. The knob template appended to
+# .dotfiles-local derives its module list from here too (as a snapshot at
+# append time), so this is the single place a module is named.
+MODULES=(
+  packages:install_packages
+  mise:setup_mise
+  tpm:setup_tpm
+  zshrc:setup_zshrc
+  tmux:setup_tmux
+  nvim:setup_nvim
+  ghostty:setup_ghostty
+  omarchy:setup_omarchy
+  opencode:setup_opencode
+  pi:setup_pi
+  agent-skills:setup_agent_skills
+  claude-code:setup_claude_plugins
+  gitignore:setup_gitignore
+  git-config:setup_git_config
+  apps:setup_apps
+  macos-defaults:setup_macos_defaults
+)
+
 # ──────────────────────────────────────────────
 #  HELPERS
 # ──────────────────────────────────────────────
@@ -112,23 +149,83 @@ track() {
   return $rc
 }
 
-# Resolve whether this is a work computer. Reads the gitignored local config
-# if present; otherwise prompts once and persists the answer. Work computers
-# skip the personal zshrc symlink.
-resolve_work_computer() {
-  if [[ -f "$DOTFILES_LOCAL_CONFIG" ]]; then
-    source "$DOTFILES_LOCAL_CONFIG"
-    return
+# Run one module through the skip list. A skipped module prints why (so an
+# install log never looks like a phase silently vanished) and still succeeds.
+run_module() {
+  local name="$1" fn="$2"
+  if (( ${SKIP_MODULES[(Ie)$name]} )); then
+    echo "==> $name — skipped (SKIP_MODULES in ${DOTFILES_LOCAL_CONFIG:t})."
+    echo ""
+    return 0
   fi
-  local response
-  read -r -p "  Is this a work computer? (skips personal zshrc symlink) [y/N] " response
-  [[ "$response" =~ ^[Yy]$ ]] && IS_WORK_COMPUTER=true || IS_WORK_COMPUTER=false
-  {
-    echo "# dotfiles machine-local config — gitignored, never committed."
-    echo "# Delete this file to be prompted again on the next install."
-    echo "IS_WORK_COMPUTER=$IS_WORK_COMPUTER"
-  } > "$DOTFILES_LOCAL_CONFIG"
-  echo "  Saved this machine's answer to ${DOTFILES_LOCAL_CONFIG:t}."
+  "$fn"
+}
+
+# Append the commented knob block to a local config that predates it, guarded
+# by a grep so re-runs stay quiet. Existing machines (the restricted work
+# laptop is one) get the same "uncomment a line" affordance as fresh installs
+# without their saved answers being touched. The embedded module list is a
+# snapshot at append time — modules added to the registry later show up in
+# install.sh, not in configs already carrying the block.
+append_local_config_knobs() {
+  grep -q "SKIP_MODULES" "$DOTFILES_LOCAL_CONFIG" 2>/dev/null && return
+  cat >> "$DOTFILES_LOCAL_CONFIG" <<EOF
+
+# Python provider: uv (default) or system. Use system on locked-down machines
+# that kill Astral's standalone binaries (see setup_mise in install.sh).
+#PYTHON_PROVIDER=system
+
+# Skip whole install phases. Available modules:
+#   ${(j: :)${(@)MODULES%%:*}}
+#SKIP_MODULES=(omarchy pi)
+
+# Skip individual entries from COMMON_PACKAGES / the name column of GUI_APPS.
+#SKIP_PACKAGES=(lazygit)
+#SKIP_APPS=(AltTab Raycast)
+
+# Claude Code plugins installed only on this machine. The manifest sync
+# uninstalls plugins missing from claude-code/plugins.txt unless listed here.
+#KEEP_PLUGINS=(some-plugin@some-marketplace)
+EOF
+  echo "  Added the skip-list template to ${DOTFILES_LOCAL_CONFIG:t} — edit it to skip modules, packages, or apps."
+}
+
+# Load this machine's profile from the gitignored local config. First run asks
+# only the work-computer question; the commented knob template is appended to
+# fresh AND pre-existing configs, so configuring a restricted machine is
+# "uncomment a line", not answering a prompt per module.
+# Note: `read -r "var?prompt"` is the zsh prompt idiom; bash's `read -p` means
+# "read from coprocess" in zsh and silently returns empty.
+resolve_local_config() {
+  if [[ ! -f "$DOTFILES_LOCAL_CONFIG" ]]; then
+    local response
+    read -r "response?  Is this a work computer? (skips personal zshrc symlink) [y/N] "
+    [[ "$response" =~ ^[Yy]$ ]] && IS_WORK_COMPUTER=true || IS_WORK_COMPUTER=false
+    cat > "$DOTFILES_LOCAL_CONFIG" <<EOF
+# dotfiles machine-local config — gitignored, never committed.
+# Delete this file to be prompted again on the next install.
+IS_WORK_COMPUTER=$IS_WORK_COMPUTER
+EOF
+    echo "  Saved machine config to ${DOTFILES_LOCAL_CONFIG:t}."
+  fi
+  append_local_config_knobs
+  source "$DOTFILES_LOCAL_CONFIG"
+}
+
+# Catch typos at the top of the run: a skip entry that matches nothing is
+# otherwise silently ignored and the item installs anyway. KEEP_PLUGINS isn't
+# validated — its valid values depend on what's installed on this machine.
+validate_skip_lists() {
+  local entry module_names=("${(@)MODULES%%:*}") app_names=("${(@)GUI_APPS%%|*}")
+  for entry in "${SKIP_MODULES[@]}"; do
+    (( ${module_names[(Ie)$entry]} )) || echo "⚠️  SKIP_MODULES: unknown module '$entry' (ignored)."
+  done
+  for entry in "${SKIP_PACKAGES[@]}"; do
+    (( ${COMMON_PACKAGES[(Ie)$entry]} )) || echo "⚠️  SKIP_PACKAGES: unknown package '$entry' (ignored)."
+  done
+  for entry in "${SKIP_APPS[@]}"; do
+    (( ${app_names[(Ie)$entry]} )) || echo "⚠️  SKIP_APPS: unknown app '$entry' (ignored)."
+  done
 }
 
 # Symlink src → dst, backing up whatever was there first. The single backup
@@ -219,7 +316,9 @@ install_packages() {
   track "update $PKG_MANAGER" "$PKG_UPDATE[@]"
 
   for package in "${COMMON_PACKAGES[@]}"; do
-    if "$PKG_QUERY[@]" "^${package}\$" >/dev/null 2>&1; then
+    if (( ${SKIP_PACKAGES[(Ie)$package]} )); then
+      echo "  $package skipped (SKIP_PACKAGES)."
+    elif "$PKG_QUERY[@]" "^${package}\$" >/dev/null 2>&1; then
       echo "  $package is already installed."
     else
       echo "  Installing $package..."
@@ -258,6 +357,14 @@ setup_mise() {
   echo "==> mise global runtimes..."
   local mise_dir="${XDG_CONFIG_HOME:-$HOME/.config}/mise"
   ensure_dir "$mise_dir"
+  # A dangling config.toml symlink is a leftover from when this repo tracked
+  # mise config (the target left the repo when config went machine-local).
+  # Clear it so the seed below writes a real file instead of failing through
+  # the dead link.
+  if [[ -L "$mise_dir/config.toml" && ! -e "$mise_dir/config.toml" ]]; then
+    rm "$mise_dir/config.toml"
+    echo "  Removed dangling config.toml symlink."
+  fi
   # config.toml is machine-local (untracked). Seed a node/go baseline on a fresh
   # machine; never clobber an existing one so per-machine edits stick.
   if [[ ! -e "$mise_dir/config.toml" ]]; then
@@ -269,9 +376,9 @@ go = "latest"
 TOML
   fi
 
-  local python_provider="uv"
-  [[ -f "$DOTFILES_LOCAL_CONFIG" ]] && source "$DOTFILES_LOCAL_CONFIG"
-  [[ -n "$PYTHON_PROVIDER" ]] && python_provider="$PYTHON_PROVIDER"
+  # PYTHON_PROVIDER comes from the local config, sourced once in
+  # resolve_local_config before any module runs.
+  local python_provider="${PYTHON_PROVIDER:-uv}"
   echo "  Python provider: $python_provider."
 
   # uv → add uv to mise via overlay; system → no mise-managed Python at all.
@@ -331,7 +438,6 @@ setup_tpm() {
 
 setup_zshrc() {
   echo "==> zshrc..."
-  resolve_work_computer
   if [[ "$IS_WORK_COMPUTER" == true ]]; then
     echo "  Work computer detected — skipping zshrc symlink."
   else
@@ -366,7 +472,7 @@ setup_nvim() {
   elif [[ -d "$nvim_dir" || -e "$nvim_dir" ]]; then
     echo "  ⚠️  Existing Neovim configuration found at $nvim_dir"
     echo ""
-    read -r -p "  Backup existing config and replace with symlink? [y/N] " response
+    read -r "response?  Backup existing config and replace with symlink? [y/N] "
     if [[ "$response" =~ ^[Yy]$ ]]; then
       local backup_dir="$DOTFILES_DIR/nvim-bak.$(date +%Y%m%d-%H%M%S)"
       echo "  Backing up to $backup_dir..."
@@ -454,6 +560,8 @@ setup_pi() {
 
   # -- Themes ---------------------------------------------------------------
   ensure_dir "$pi_agent_dir/themes"
+  # (N) = nullglob: an empty match skips the loop; zsh's default aborts the
+  # whole script on a glob with no matches.
   for theme_file in "$DOTFILES_DIR/pi/themes/"*.json(N); do
     [[ -f "$theme_file" ]] || continue
     backup_and_link "$theme_file" "$pi_agent_dir/themes/$(basename "$theme_file")"
@@ -583,10 +691,14 @@ setup_claude_plugins() {
   done < "$manifest"
 
   # Uninstall plugins present on this machine but removed from the manifest.
+  # KEEP_PLUGINS (machine-local config) exempts plugins this machine installed
+  # by hand, so the shared manifest doesn't have to list every machine's extras.
   local installed
   while IFS= read -r installed; do
     [[ -z "$installed" ]] && continue
-    if (( ! ${wanted_plugins[(Ie)$installed]} )); then
+    if (( ${KEEP_PLUGINS[(Ie)$installed]} )); then
+      echo "  Keeping machine-local plugin: $installed"
+    elif (( ! ${wanted_plugins[(Ie)$installed]} )); then
       echo "  Uninstalling removed plugin: $installed"
       track "claude plugins uninstall $installed" claude plugins uninstall "$installed"
     fi
@@ -633,7 +745,7 @@ setup_git_config() {
 
   if [[ ! -f "$git_config" ]]; then
     local primary_email
-    read -r -p "  Primary git email: " primary_email
+    read -r "primary_email?  Primary git email: "
     cat > "$git_config" <<EOF
 [user]
 	name = Justin Lui
@@ -649,7 +761,7 @@ EOF
 
   if [[ ! -f "$git_config_personal" ]]; then
     local personal_email
-    read -r -p "  Personal git email (for ~/src/personal/): " personal_email
+    read -r "personal_email?  Personal git email (for ~/src/personal/): "
     printf '[user]\n\temail = %s\n' "$personal_email" > "$git_config_personal"
     echo "  Created config-personal."
   else
@@ -665,15 +777,20 @@ EOF
 
 setup_apps() {
   echo "==> GUI apps..."
+  # Declared once, outside the loop: zsh's `local` on an already-local name
+  # prints its value, so re-declaring per iteration spams the output.
+  local row name check macos_cmd arch_cmd cmd
   for row in "${GUI_APPS[@]}"; do
-    local name check macos_cmd arch_cmd
     IFS='|' read -r name check macos_cmd arch_cmd <<< "$row"
-    local cmd
     case "$OS" in
       macos) cmd="$macos_cmd" ;;
       arch)  cmd="$arch_cmd" ;;
     esac
     [[ -z "$cmd" ]] && continue          # not available on this OS
+    if (( ${SKIP_APPS[(Ie)$name]} )); then
+      echo "  $name skipped (SKIP_APPS)."
+      continue
+    fi
     if eval "$check" >/dev/null 2>&1; then
       echo "  $name already installed."
     else
@@ -737,22 +854,13 @@ main() {
   echo ""
 
   maybe_relocate_dotfiles
-  install_packages
-  setup_mise
-  setup_tpm
-  setup_zshrc
-  setup_tmux
-  setup_nvim
-  setup_ghostty
-  setup_omarchy
-  setup_opencode
-  setup_pi
-  setup_agent_skills
-  setup_claude_plugins
-  setup_gitignore
-  setup_git_config
-  setup_apps
-  setup_macos_defaults
+  resolve_local_config
+  validate_skip_lists
+
+  local entry
+  for entry in "${MODULES[@]}"; do
+    run_module "${entry%%:*}" "${entry#*:}"
+  done
 
   if (( ${#FAILURES[@]} )); then
     echo "⚠️  Dotfiles installation finished with ${#FAILURES[@]} issue(s):"

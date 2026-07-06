@@ -14,6 +14,7 @@ Canonical config source. Single setup across macOS (Homebrew) and Arch Linux (Pa
 ## Design
 
 - `install.sh` — OS detection → packages → symlinks → plugin managers. Each section idempotent.
+- Machine profile — `.dotfiles-local` (gitignored) holds this machine's divergence from the shared setup: skip lists (`SKIP_MODULES`, `SKIP_PACKAGES`, `SKIP_APPS`), `KEEP_PLUGINS`, work-computer flag, Python provider. Opt-out, not opt-in, so a new module reaches every machine unless a machine says otherwise. install.sh appends a commented template listing every knob to fresh and pre-existing configs. The profile subtracts from the shared set; machine-only additions live in `KEEP_PLUGINS` and the machine-local mise config, deliberately, so the shared lists stay the only install source.
 - Module dirs — Each subsystem owns a directory at repo root. Single-file configs (`zshrc`, `tmux.conf`) live at root.
 - Agent skills — Each module has a maintenance skill under `.agents/skills/` with structure, install flow, and common tasks.
 

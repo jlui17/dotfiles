@@ -17,9 +17,12 @@ The first token is the marketplace repo; the rest are plugins to install from it
 
 **Install flow** (install.sh, PHASE 6c): for each line, `claude plugin marketplace add <repo>`, then `claude plugin install <plugin@marketplace>` for each plugin. Skips with a warning if the `claude` CLI isn't on PATH.
 
+**The sync uninstalls plugins missing from the manifest.** A plugin installed by hand on one machine gets removed on the next install.sh run unless it's listed in `KEEP_PLUGINS` in `.dotfiles-local` (gitignored) — that's the home for machine-only plugins the shared manifest shouldn't know about.
+
 **Tasks:**
 - Add a plugin: add (or extend) a line in `claude-code/plugins.txt`, re-run install.sh
 - See what's installed: `claude plugin list`
 - Inspect a plugin's components/cost: `claude plugin details <name>`
 - Update a plugin: `claude plugin update <plugin@marketplace>` (restart to apply)
-- Remove a plugin: `claude plugin uninstall <plugin@marketplace>` and delete its manifest entry
+- Remove a plugin: delete its manifest entry, re-run install.sh (the sync uninstalls it)
+- Keep a plugin on this machine only: install it by hand, add it to `KEEP_PLUGINS` in `.dotfiles-local`

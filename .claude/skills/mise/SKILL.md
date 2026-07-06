@@ -15,7 +15,7 @@ Either way pyright/ts_ls/gopls are Node/Go-based, so nvim's LSP is unaffected by
 
 **conf.d overlays:** mise merges every `~/.config/mise/conf.d/*.toml` on top of the global config. The overlay is generated per-machine and never committed, keeping the seeded baseline machine-agnostic.
 
-**Install flow** (install.sh, PHASE 1b): seed `~/.config/mise/config.toml` with a node/go baseline if absent, resolve `PYTHON_PROVIDER`, write/remove the overlay, `mise install`, then the provider-specific Python step. Runs after `install_packages` (installs the `mise` binary). zsh activates mise via `eval "$(mise activate zsh)"` in `zshrc`.
+**Install flow** (install.sh, PHASE 1b): seed `~/.config/mise/config.toml` with a node/go baseline if absent (clearing a dangling symlink left from when the repo tracked mise config), write/remove the overlay per `PYTHON_PROVIDER`, `mise install`, then the provider-specific Python step. `PYTHON_PROVIDER` itself is sourced from `.dotfiles-local` once in `resolve_local_config` (start of main); `setup_mise` only consumes it. Runs after `install_packages` (installs the `mise` binary). zsh activates mise via `eval "$(mise activate zsh)"` in `zshrc`.
 
 **Tasks:**
 - Switch a machine off uv: set `PYTHON_PROVIDER=system` in `.dotfiles-local`, re-run install.sh
