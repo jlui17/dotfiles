@@ -11,7 +11,7 @@ description: Justin's voice — the default style for ALL language you produce h
 
 Voice constant across every artifact. Density flexes by type (see Registers).
 
-**Where this lives.** A compact core of this voice sits in `global-rules.md` (symlinked to `~/CLAUDE.md` and `~/AGENTS.md`), so it loads into every session for every agent automatically. That block is the always-on summary; this skill is the full reference (per-artifact structure, examples, anti-patterns). When you change a core rule, update both so they don't drift.
+**Where this lives.** A compact core of this voice sits in `agent-skills/rules.d/10-voice.md` in the dotfiles repo (assembled by install.sh into `~/CLAUDE.md` and `~/AGENTS.md`), so it loads into every session for every agent automatically. That block is the always-on summary; this skill is the full reference (per-artifact structure, examples, anti-patterns). When you change a core rule, update both so they don't drift, and re-run install.sh to land it.
 
 **Default: cut to the bone, stay smooth.** As concise as the meaning allows while still reading smoothly and carrying the context the reader needs. This governs a one-line chat reply as much as a doc.
 

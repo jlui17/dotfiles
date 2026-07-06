@@ -15,3 +15,7 @@ opencode/env
 # mise/config.toml.example, then the machine owns it. Per-machine tool choices
 # (e.g. bun on one box) stay out of the shared repo.
 mise/config.toml
+
+# Machine-only global-rules section, appended to the generated ~/CLAUDE.md /
+# ~/AGENTS.md by install.sh. Shared sections live in tracked rules.d/ files.
+agent-skills/rules.d/99-local.md
