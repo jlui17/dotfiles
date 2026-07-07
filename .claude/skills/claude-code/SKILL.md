@@ -9,6 +9,8 @@ Claude-Code-specific config: user-level `settings.json` plus plugins. The cross-
 
 To change a shared setting: edit `claude-code/settings.json`, re-run install.sh. To keep a setting machine-local, don't add its key to the repo file (and if needed, put it in settings.local.json).
 
+**statusLine** — `claude-code/statusline-command.sh` is symlinked to `~/.claude/statusline-command.sh` (unlike settings.json, this file is never rewritten at runtime, so a plain symlink works). `settings.json` points `statusLine.command` at it. It reads the statusline JSON on stdin and renders model name, reasoning effort (`.effort.level`), worktree (`.worktree.name` or `.workspace.git_worktree`), and context-window usage.
+
 Plugins can't be symlinked. Their on-disk state in `~/.claude/plugins/` (`known_marketplaces.json`, `installed_plugins.json`, cloned `marketplaces/`, cached versions) carries machine-specific absolute paths, timestamps, and pinned commit SHAs. So instead of linking files, install.sh replays the install commands from a manifest — the `claude` CLI calls are idempotent and no-op when a plugin is already present.
 
 **Manifest** — `claude-code/plugins.txt`, one line per marketplace:

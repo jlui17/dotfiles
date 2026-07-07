@@ -735,6 +735,7 @@ setup_claude_plugins() {
   # machine-only keys. Secrets and per-machine values go in the untracked
   # settings.local.json, which Claude Code merges on top.
   merge_json "$DOTFILES_DIR/claude-code/settings.json" "$HOME/.claude/settings.json"
+  backup_and_link "$DOTFILES_DIR/claude-code/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
 
   local manifest="$DOTFILES_DIR/claude-code/plugins.txt"
 
