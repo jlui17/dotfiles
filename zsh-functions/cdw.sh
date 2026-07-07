@@ -9,7 +9,7 @@
 # Directories to search for worktrees, relative to the project root.
 # To add a location: append to this array before sourcing, or extend it here.
 typeset -ga _CDW_DIRS
-_CDW_DIRS=(.worktrees)
+_CDW_DIRS=(.worktrees .claude/worktrees)
 
 _cdw_find_root() {
   local d=$PWD dir
