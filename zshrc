@@ -95,7 +95,7 @@ alias src-zsh='source ~/.zshrc'
 alias vim-zsh='nvim ~/.zshrc'
 alias lg='lazygit'
 alias claude='claude --dangerously-skip-permissions'
-alias update_pkgs='brew update && brew upgrade && mise update && zinit update'
+alias update_pkgs='brew update && brew upgrade && mise up && zinit update'
 alias update_cc='brew update && brew upgrade claude-code@latest'
 
 # Mise (before shell integrations that depend on mise-managed tools)
