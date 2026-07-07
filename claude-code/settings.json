@@ -10,5 +10,10 @@
   "fastMode": true,
   "skipWorkflowUsageWarning": true,
   "theme": "dark-daltonized",
-  "inputNeededNotifEnabled": true
+  "inputNeededNotifEnabled": true,
+  "voiceEnabled": true,
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  }
 }
