@@ -12,6 +12,7 @@ Machine-specific tweaks that must not be committed go in `~/.zshrc.local` (outsi
 **Tasks:**
 - Add plugin: add `zinit light user/repo` to zshrc, source ~/.zshrc
 - Change prompt: `p10k configure` or edit ~/.p10k.zsh
+- Add a new shell shortcut: decide alias vs. function first. A static command or `&&`-chain with no arguments, conditionals, or variables is an alias — add it to zshrc's Aliases section. Only use a zsh-functions/ file when the task needs parameters, branching, or logic beyond a simple chain (e.g. `cdotfiles`/`budgeting`, which `cd` then launch `claude`).
 - Add alias or env var: edit zshrc, source ~/.zshrc
 - Add function: drop .sh file in zsh-functions/ — auto-sourced. Register completions with compdef inside the file if needed.
 - Modify function: edit file in zsh-functions/, update compdef lines if completions changed, source ~/.zshrc
