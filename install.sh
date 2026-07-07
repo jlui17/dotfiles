@@ -877,6 +877,9 @@ setup_macos_defaults() {
   fi
   echo "==> macOS defaults..."
 
+  defaults write com.apple.dock autohide -bool true
+  defaults write com.apple.dock autohide-time-modifier -float 0.2
+
   killall Dock 2>/dev/null || true
 }
 
