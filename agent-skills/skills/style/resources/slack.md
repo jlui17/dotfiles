@@ -1,13 +1,14 @@
 # Slack / peer messages
 
-Casual and conversational — closer to how you'd actually type to a teammate than to a PR description. Same voice (actor-as-subject, behavior-first, append-reason, no hype, no em-dashes), but it *flows*. Don't telegraph.
+Casual and conversational: closer to how you'd actually type to a teammate than to a PR description. Same voice (actor-as-subject, behavior-first, append-reason, no hype, no em-dashes), but it *flows*. Don't telegraph.
 
 - **A light greeting is fine.** "Hey," to open is normal chat, not throat-clearing.
 - **Full conversational sentences, clauses joined naturally** with `since` / `but` / `as long as` / `then`. The one-idea-per-sentence rule (voice #8) is for dense technical prose; in chat you write the way you'd say it out loud. One-claim-per-line bullets read as a robot.
-- **Link the one artifact the reader will open** (the PR URL, inline), and name only the 1-2 identifiers central to your point. Don't enumerate every test file, pass count, or "runs in CI" — that reads as AI over-justification. Trust them to click through.
+- **Link the one artifact the reader will open** (the PR URL, inline), and name only the 1-2 identifiers central to your point. Don't enumerate every test file, pass count, or "runs in CI" (that reads as AI over-justification). Trust them to click through.
 - **Say how the work was actually done**, plainly. "I got Claude to mock it locally by …" beats "I forced it." No inflation.
 - **State your confidence and the assumption it rests on** (voice #13), inviting correction rather than declaring victory.
 - **Scope to this reader's decision.** Cut tangents that don't bear on what they need now (leave the infra/CI flakiness on the PR, not in the ping).
+- **Pair the channel with the depth.** Full reasoning lands on the PR as a comment; the Slack ping to the teammate is the quick version. Post the finding on the PR, then DM a one-liner pointing at it.
 
 ## Worked example
 
@@ -20,7 +21,7 @@ Context: telling a teammate why a fix can't be verified in a live rollout, and h
 Why it lands:
 - one-word greeting, then straight into the point.
 - flowing sentences (`since` / `but` / `as long as` / `then`), not fragments.
-- links the PR and names only `submit_review` + `ctx.pr_number` — not the test suite, pass counts, or CI status.
+- links the PR and names only `submit_review` + `ctx.pr_number`, not the test suite, pass counts, or CI status.
 - says Claude did the mocking, plainly.
 - closes on confidence *conditional on a stated assumption*, which hands the reader the one thing to check.
 - says nothing about the deploy/infra side, because it doesn't bear on the point.
