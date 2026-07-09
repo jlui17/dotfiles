@@ -8,4 +8,4 @@ Pick the cheapest worker model that can do the subtask and set it when you spawn
 - **Opus** — genuinely hard slices only: subtle reasoning, tricky debugging, architecture calls, ambiguous requirements.
 - **Haiku** — trivial mechanical work: bulk renames, grep-and-report, formatting.
 
-Match the tier to the model you're orchestrating as. On Opus, keep workers at Sonnet, since a second Opus buys nothing over an orchestrator already reasoning at that level. On Fable (cheap orchestrator), spend the headroom: Sonnet by default, Opus for the hardest slices. Workers execute their slice and return; they don't re-delegate.
+Drive the tier off the subtask's difficulty, not the orchestrator's model. A genuinely hard slice gets Opus whether you're orchestrating on Opus or Fable; never cap a worker below what the task needs to save a tier. The orchestrator model is a floor on your own reasoning, not a ceiling on the workers'. Workers execute their slice and return; they don't re-delegate.
