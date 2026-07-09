@@ -9,6 +9,7 @@ One module, many agents. `agent-skills/` holds the global skills and slash comma
 - `agent-skills/commands/*.md` — global slash commands (one file per command).
 - `agent-skills/skills/<name>/SKILL.md` — global skills (one dir per skill).
 - `agent-skills/rules.d/NN-<slug>.md` — global instruction rules, one section per file (the `NN-` prefix orders them, the slug names them). install.sh assembles them into generated `~/CLAUDE.md` and `~/AGENTS.md`, skipping any slugs in this machine's `SKIP_RULES` (`.dotfiles-local`). Generated, not symlinked, because per-machine section exclusion needs a per-machine artifact. `99-local.md` is gitignored for machine-only rules.
+  - **Per-output composition:** both `~/CLAUDE.md` and `~/AGENTS.md` assemble the full `rules.d/` set, then each drops the slugs in its own repo-wide skip list (`CLAUDE_MD_SKIP_RULES` / `AGENTS_MD_SKIP_RULES` in install.sh). Opt-out, so a new fragment reaches both outputs unless a list excludes it. Use it for rules specific to one agent (e.g. `orchestration` names Claude model tiers and the Task tool, so it's in `AGENTS_MD_SKIP_RULES`). This is orthogonal to the per-machine `SKIP_RULES` in `.dotfiles-local`, which subtracts from both outputs on one box.
 
 **Why two roots:** `~/.claude` is where Claude Code discovers skills/commands; `~/.agents` is the shared root other coding agents read. Both get the identical module contents, so a capability added once is live in every agent. Adding a third agent later means adding its root to the install — not re-authoring anything.
 
