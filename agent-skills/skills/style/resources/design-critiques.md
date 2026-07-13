@@ -12,10 +12,10 @@ Voice (main doc) holds, with one inversion: **the actor flips from code to *you*
 
 ## Friction in first person, cause→effect
 
-Actor is *you*, not the code. Pattern: I did X → Y happened → so I couldn't tell Z.
+I did X → Y happened → so I couldn't tell Z.
 > I clicked `Records 3/3` and it collapsed to a `Complete` pill, so I couldn't tell it was expandable.
 
-## Recommendation bullets: bold imperative verb, then reason
+## Recommendations: bold imperative verb, then reason
 
 Verbs: Merge / Collapse / Hide / Fix / Add / Default-sort.
 > **Merge the status cards into one header**, and pull the cost data out of the sheet into it.
@@ -27,8 +27,7 @@ One line naming what the set optimizes for, pivot italicized:
 
 ## Tag speculative ideas by confidence
 
-Set low-confidence ideas apart so they don't dilute the firm asks:
-> **Side Suggestion (may not make sense):** ...
+Set low-confidence ideas apart so they don't dilute the firm asks: "**Side Suggestion (may not make sense):** ..."
 
 ## Caption screenshots with the defect, not the label
 
@@ -37,7 +36,4 @@ Say what to look at and what's wrong, never "here's a screenshot."
 
 ## Position your vantage point up front
 
-One-line disclaimer of what you do/don't know calibrates the reader:
-> I know the concepts behind agent simulation, but I've never done it hands-on, so these notes are about where I couldn't tell what something did or why.
-
-Subjective qualifiers on feel-claims (voice #10) carry weight here: "read as", "looked", "felt like" mark a personal-experience report, exactly what a critique is.
+One line of what you do/don't know calibrates the reader: "I know the concepts behind agent simulation, but I've never done it hands-on, so these notes are about where I couldn't tell what something did or why." Subjective qualifiers on feel-claims (voice #10) carry weight here: "read as" / "looked" / "felt like" mark a personal-experience report, exactly what a critique is.

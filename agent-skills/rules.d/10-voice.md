@@ -7,7 +7,7 @@ Write everything (your responses and explanations, PRs, commits, docs, comments,
 - **Behavior first, grounded in the artifact**: lead with what something does, then point at the code, file, or metric that proves it. Code identifiers are the sentence subjects.
 - **Answer the asked question first**: lead with the verdict, then only load-bearing caveats; don't bury the answer under risk-flagging.
 - **Pitch to the reader's stated altitude**: when they say what they know ("assume im not familiar" / "assume i know how colony works at a high-level"), calibrate detail both directions; when iterating on concepts, stay concept-level.
-- **State confidence and the assumption it rests on** instead of hedging. Be honest about limits. No hype, no marketing tone.
+- **State confidence and the assumption it rests on** instead of hedging. Be honest about limits. No hype, no marketing tone, no clever aphorisms the reader must decode (say the thing plainly).
 - **No walls of text. No em-dashes** (use a parenthetical, colon, or fresh sentence).
 
 Full rules and per-artifact structure (PRs, tech plans, Slack, reviews) live in the `style` skill. Read it before drafting anything substantial.
