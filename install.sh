@@ -752,9 +752,13 @@ setup_claude_plugins() {
   # settings.json stays a real machine-local file because Claude Code rewrites it
   # at runtime (theme, model, /fast). Deep-merge the repo's tracked keys in, repo
   # winning on conflicts, so shared settings propagate without clobbering
-  # machine-only keys. Secrets and per-machine values go in the untracked
-  # settings.local.json, which Claude Code merges on top.
+  # machine-only keys. Then merge claude-code/settings.local.json (gitignored,
+  # per-machine) on top, so a machine can override a repo-declared key and the
+  # override survives re-runs.
   merge_json "$DOTFILES_DIR/claude-code/settings.json" "$HOME/.claude/settings.json"
+  if [[ -f "$DOTFILES_DIR/claude-code/settings.local.json" ]]; then
+    merge_json "$DOTFILES_DIR/claude-code/settings.local.json" "$HOME/.claude/settings.json"
+  fi
   backup_and_link "$DOTFILES_DIR/claude-code/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
 
   local manifest="$DOTFILES_DIR/claude-code/plugins.txt"

@@ -1,13 +1,15 @@
 ---
 name: claude-code
-description: Maintains the Claude Code config module: user-level settings.json deep-merged by install.sh, plugins replayed from claude-code/plugins.txt, and the statusline script. Use when adding/removing Claude Code plugins, changing shared settings or the statusline, or when a plugin unexpectedly disappears after install.sh (the manifest sync uninstalls unlisted plugins).
+description: Maintains the Claude Code config module: user-level settings.json deep-merged by install.sh (with per-machine overrides in gitignored settings.local.json), plugins replayed from claude-code/plugins.txt, and the statusline script. Use when adding/removing Claude Code plugins, changing shared or per-machine settings or the statusline, or when a plugin unexpectedly disappears after install.sh (the manifest sync uninstalls unlisted plugins).
 ---
 
 Claude-Code-specific config: user-level `settings.json` plus plugins. The cross-agent skills, commands, and global rules live in the [[agent-skills]] module instead (those apply to every coding agent, not just Claude Code).
 
-**settings.json** — not symlinked, because Claude Code rewrites `~/.claude/settings.json` at runtime (theme, model, `/fast`). It stays a real machine-local file; install.sh (PHASE 6c) deep-merges the repo's tracked keys into it, **repo winning on conflicts** (merge_json in install.sh). So `claude-code/settings.json` is the source of truth for the keys it declares (model, theme, permissions, enabled plugins) and they propagate on re-run, while machine-only keys the repo doesn't declare are preserved. Secrets and per-machine values go in `~/.claude/settings.local.json`, which Claude Code merges on top and which stays untracked.
+**settings.json** — not symlinked, because Claude Code rewrites `~/.claude/settings.json` at runtime (theme, model, `/fast`). It stays a real machine-local file; install.sh (PHASE 6c) deep-merges the repo's tracked keys into it, **repo winning on conflicts** (merge_json in install.sh). So `claude-code/settings.json` is the source of truth for the keys it declares (model, theme, permissions, enabled plugins) and they propagate on re-run, while machine-only keys the repo doesn't declare are preserved.
 
-To change a shared setting: edit `claude-code/settings.json`, re-run install.sh. To keep a setting machine-local, don't add its key to the repo file (and if needed, put it in settings.local.json).
+**settings.local.json** — `claude-code/settings.local.json` (gitignored) holds this machine's overrides, mirroring the `.dotfiles-local` pattern. install.sh merges it into `~/.claude/settings.json` *after* the repo file, so on this machine **local wins over repo** for the keys it declares, and the override is re-asserted every run instead of being clobbered by the shared settings.
+
+To change a shared setting: edit `claude-code/settings.json`, re-run install.sh. To pin a setting on this machine only (including overriding a repo-declared key): put it in `claude-code/settings.local.json`, re-run install.sh.
 
 **statusLine** — `claude-code/statusline-command.sh` is symlinked to `~/.claude/statusline-command.sh` (unlike settings.json, this file is never rewritten at runtime, so a plain symlink works). `settings.json` points `statusLine.command` at it. It reads the statusline JSON on stdin and renders model name, reasoning effort (`.effort.level`), worktree (`.worktree.name` or `.workspace.git_worktree`), and context-window usage.
 

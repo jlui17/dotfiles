@@ -19,3 +19,8 @@ mise/config.toml
 # Machine-only global-rules section, appended to the generated ~/CLAUDE.md /
 # ~/AGENTS.md by install.sh. Shared sections live in tracked rules.d/ files.
 agent-skills/rules.d/99-local.md
+
+# Machine-local Claude Code settings, merged over the repo's settings.json into
+# ~/.claude/settings.json by install.sh (local wins). Shared keys stay in
+# claude-code/settings.json.
+claude-code/settings.local.json
