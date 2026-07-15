@@ -92,7 +92,7 @@ Format / structure:
 
 ```
 gog sheets format SHEET_ID RANGE --format-json '{...CellFormat}' --format-fields MASK
-gog sheets number-format SHEET_ID RANGE ...    # merge|unmerge, freeze, resize-columns|rows, copy-paste, banding
+gog sheets number-format SHEET_ID RANGE ...    # also: merge|unmerge, freeze, resize-columns|rows, copy-paste, banding
 gog sheets add-tab SHEET_ID "Tab"              # rename-tab, delete-tab, reorder-tab
 gog sheets create "TITLE" --sheets "A,B" --parent FOLDER
 gog sheets copy SHEET_ID "NEW TITLE"

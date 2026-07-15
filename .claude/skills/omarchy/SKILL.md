@@ -1,6 +1,6 @@
 ---
 name: omarchy
-description: macOS-style keybindings for Hyprland via Omarchy (Arch Linux only).
+description: macOS-style keybindings for Hyprland via Omarchy (Arch Linux only). Use when adding, changing, or reverting Hyprland keybindings on the Arch machine.
 ---
 
 Single override file that unbinds and rebinds Omarchy's default keybindings to match macOS Cmd-key muscle memory. Edits propagate via symlink + hyprctl reload. Only runs on Arch; skipped entirely on macOS.

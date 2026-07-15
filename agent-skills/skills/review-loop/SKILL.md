@@ -12,10 +12,9 @@ Skip for trivial changes (rename, typo, one-line config). Loop costs two subagen
 ## Loop
 
 1. Build one context packet. Both reviewers get identical copy.
-2. Spawn both reviewers parallel, read-only.
-3. Collect findings. Neither has actionable feedback → exit, done.
-4. Fix every actionable finding unless a tradeoff justifies declining. Record declines + reason.
-5. Back to 1 with a changelog of what changed.
+2. Spawn both reviewers parallel, read-only; collect findings. Neither has actionable feedback → exit, done.
+3. Fix every actionable finding unless a tradeoff justifies declining. Record declines + reason.
+4. Back to 1 with a changelog of what changed.
 
 ## Step 1 — Context packet
 
@@ -27,7 +26,7 @@ Reviewers lack your conversation history. Packet must stand alone. Both get the 
 - **Implementation.** The change. `git diff` + paths to read in full. Enough to verify, not a tour.
 - **Constraints.** What bounds the solution: compat, perf budget, deadline, "can't touch X", patterns to match.
 
-Example packet (the bar: enough to verify, not a tour):
+Example packet:
 
 - **Problem:** Trace records show "Created By" as "Anonymous" instead of the user who created them.
 - **Desired outcome:** the record's creator resolves to the real user wherever we have one.

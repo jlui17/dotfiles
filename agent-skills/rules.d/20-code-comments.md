@@ -1,3 +1,5 @@
+## Code comments
+
 Do not write code comments unless documenting an assumption the code is making. When a comment is warranted, it states *why*, not *how*: code already shows how, and the two drift. Prefer a precise name over a comment: if a comment explains what code does, rename and delete it. Put each comment at the code it constrains, state it once, and keep it self-contained, with no references (tickets, docs, "Trap #N") a future reader can't resolve.
 
 No comment unless it carries information that can't be derived or inferred from ANY part of the codebase or context (other files, tests, types, language semantics, conventions all count as derivable); default to encoding a relationship in code and pinning it with a test, and comment only what neither can hold. A comment that fails this bar is deleted, not shortened (keep only the clause that passes), and cross-file authority gets a bare pointer (`-- enum defined in status.go`), nothing more.

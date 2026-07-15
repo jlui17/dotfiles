@@ -1,11 +1,11 @@
 ---
 name: helium
-description: Browser automation using your local Helium browser (Chromium fork). Load this when you need to browse websites, take screenshots, fill forms, or do any browser task — it configures the agent_browser tool to use Helium instead of the default headless Chrome.
+description: Browser automation using the local Helium browser (a Chromium fork) instead of the default headless Chrome. Use for any browser task: browsing websites, taking screenshots, filling forms. Configures the agent_browser tool to launch or connect to Helium.
 ---
 
 # Helium Browser Automation
 
-Your default browser is **Helium**, a Chromium fork at `/Applications/Helium.app/Contents/MacOS/Helium`. When using the native `agent_browser` tool, prefer Helium over the default headless Chrome.
+Your default browser is **Helium**, a Chromium fork at `/Applications/Helium.app/Contents/MacOS/Helium`. When using the native `agent_browser` tool (which wraps the `agent-browser` CLI), prefer Helium over the default headless Chrome.
 
 ## Launch Helium directly
 
@@ -18,7 +18,7 @@ Use `--executable-path` on the first call, with `sessionMode: "fresh"`:
 }
 ```
 
-Subsequent calls in the same session don't need the flag — the extension tracks the session:
+Subsequent calls in the same session don't need the flag; the extension tracks the session:
 
 ```json
 { "args": ["snapshot", "-i"] }
@@ -36,12 +36,12 @@ If Helium is already open with remote debugging (`--remote-debugging-port=9222`)
 ## Gotchas
 
 - **Always use `sessionMode: "fresh"`** on the first Helium call to avoid conflicting with the default headless Chrome session.
-- **`--auto-connect` won't auto-discover Helium** — `agent-browser` looks for Chrome/Chromium processes. Use explicit `connect <port>` or `--cdp <port>` instead.
-- **Sandboxing** — if you hit permission issues, add `--args "--no-sandbox"`:
+- **`--auto-connect` won't auto-discover Helium**: `agent-browser` looks for Chrome/Chromium processes. Use explicit `connect <port>` or `--cdp <port>` instead.
+- **Sandboxing**: if you hit permission issues, add `--args "--no-sandbox"`:
   ```json
   {
     "args": ["--executable-path", "/Applications/Helium.app/Contents/MacOS/Helium", "--args", "--no-sandbox", "open", "https://example.com"],
     "sessionMode": "fresh"
   }
   ```
-- **Binary path** — confirm it exists with `ls /Applications/Helium.app/Contents/MacOS/Helium`.
+- **Binary path**: confirm it exists with `ls /Applications/Helium.app/Contents/MacOS/Helium`.

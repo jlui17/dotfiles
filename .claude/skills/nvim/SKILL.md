@@ -1,32 +1,17 @@
 ---
 name: nvim
-description: Neovim config using kickstart.nvim with native vim.pack plugin management.
+description: Neovim config using kickstart.nvim with native vim.pack plugin management. Use when adding or configuring plugins, LSP servers, formatters, or the theme, or when debugging plugin/Mason install failures.
 ---
 
-Uses [kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim) as a starting point. Plugin management via Neovim 0.11+ built-in `vim.pack`. Theme is [github-nvim-theme](https://github.com/projekt0n/github-nvim-theme) (github_dark_default). LSP/formatter installs via Mason.
+Uses [kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim) as a starting point. Plugin management via Neovim 0.11+ built-in `vim.pack`. LSP/formatter installs via Mason.
 
-**Structure:**
-- `init.lua` — Main entry point. Single file with 9 sections:
-  1. Foundation — options, keymaps, autocmds
-  2. Plugin manager intro — vim.pack build hooks
-  3. UI / Core UX — guess-indent, gitsigns (with `kickstart.plugins.gitsigns` keymaps active), which-key, github-nvim-theme, todo-comments, mini.nvim (ai, surround, statusline), render-markdown
-  4. Search & Navigation — Telescope
-  5. LSP — lspconfig, Mason, fidget (active servers: stylua, lua_ls, gopls, ts_ls, pyright)
-  6. Formatting — conform.nvim
-  7. Autocomplete & Snippets — blink.cmp, LuaSnip
-  8. Treesitter — parser management via nvim-treesitter (archived, still used for `install()`) + native auto-attach highlighting
-  9. Optional examples — kickstart.plugins.*, custom.plugins
-- `lua/kickstart/health.lua` — Health check
-- `lua/kickstart/plugins/*.lua` — Optional plugin configs (debug, indent_line, lint, autopairs, neo-tree, gitsigns)
-- `lua/custom/plugins/init.lua` — User custom plugins entry point
-- `doc/` — Help docs
+**Structure:** everything lives in `init.lua`, one file split by `-- SECTION N:` headers: 1 foundation (options, keymaps, autocmds), 2 plugin manager, 3 UI/core UX, 4 search & navigation (Telescope), 5 LSP (Mason + `servers` table), 6 formatting (conform), 7 completion (blink.cmp + LuaSnip), 8 treesitter, 9 optional kickstart/custom extras. Grep `SECTION` to jump; plugin and server inventories are the `vim.pack.add` calls and `servers` table in the file. Optional kickstart plugin files live in `lua/kickstart/plugins/`; `kickstart.plugins.gitsigns` is the one actually required (it adds the recommended gitsigns keymaps).
 
 **Install flow** (install.sh): symlinks entire `nvim/` → `~/.config/nvim`. Warns if dir exists and isn't our symlink. Post-install: open nvim and wait for vim.pack to fetch plugins, then `:checkhealth`.
 
 Mason builds the active servers from runtimes that must be on PATH first — `gopls` from Go, `ts_ls`/`pyright` from Node. Those global runtimes are provisioned by the [[mise]] module, so on a fresh machine run install.sh before the first nvim launch.
 
-**Design decisions:**
-- **Treesitter (2026-05-16):** `nvim-treesitter` plugin is archived but still kept for parser `install()` rather than fully manual parser management. Neovim 0.10+ handles highlighting auto-attach natively — no need for the plugin's old attach logic. `nvim-treesitter` also provides the `indentexpr()` function and is expected by `render-markdown.nvim`. Documented inline in Section 8.
+**Design decisions:** the treesitter setup is deliberate (archived nvim-treesitter kept for parser `install()` only); rationale is commented inline at Section 8 in init.lua.
 
 **Tasks:**
 - Add plugin: add `vim.pack.add { gh 'user/repo' }` to relevant `init.lua` section, then `require('plugin').setup {}`

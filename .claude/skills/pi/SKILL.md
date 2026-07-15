@@ -1,11 +1,11 @@
 ---
 name: pi
-description: Pi coding agent module — themes, skills, packages, settings.
+description: Pi coding agent module — themes, skills, packages, settings. Use when changing pi themes, skills, extensions, packages, or settings.
 ---
 
 Manages pi agent config via declarative files. All changes land here, symlinked into ~/.pi/agent/.
 
-**Install flow** (install.sh): symlinks themes/*.json → ~/.pi/agent/themes/, symlinks skills/*/ → ~/.pi/agent/skills/, symlinks settings.json → .pi/settings.json, runs `pi install` for each line in packages.txt.
+**Install flow** (install.sh): symlinks themes/*.json → ~/.pi/agent/themes/, symlinks skills/*/ → ~/.pi/agent/skills/, symlinks extensions/*.ts → ~/.pi/agent/extensions/, symlinks settings.json → ~/.pi/agent/settings.json, runs `pi install` for each line in packages.txt.
 
 **Tasks:**
 - Add theme: drop .json in themes/ (51-color-token schema), optionally set in settings.json, run install.sh

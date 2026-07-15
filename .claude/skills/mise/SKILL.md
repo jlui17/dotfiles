@@ -1,21 +1,15 @@
 ---
 name: mise
-description: Global language runtimes (node, go) managed by mise + a machine-local Python provider (uv or system). The live ~/.config/mise/config.toml is machine-local (untracked); install.sh seeds a node/go baseline on a fresh machine.
+description: Global language runtimes (node, go) managed by mise, plus a machine-local Python provider (uv or system). Use when changing runtime or Python versions, switching the Python provider, editing mise config, or debugging Mason/LSP server install failures on a fresh machine.
 ---
 
 [mise](https://mise.jdx.dev) manages global language runtime versions. `~/.config/mise/config.toml` (node, go) is machine-local and untracked: `install.sh` seeds a node/go baseline on a fresh machine (never clobbering an existing one), so per-machine tools stay out of the shared repo. `install.sh` then runs `mise install` to realize it.
 
 **Why this exists:** nvim's Mason auto-installs language servers on first launch, and several are built from a runtime that must already be on PATH — `gopls` needs Go, `ts_ls` and `pyright` need Node. Without global versions set, those installs fail. Pinning runtimes here makes a fresh machine's first `nvim` launch succeed. See [[nvim]].
 
-**Python is machine-local, not in the shared manifest.** `PYTHON_PROVIDER` in `.dotfiles-local` (gitignored) picks the strategy; `setup_mise` acts on it. Default is `uv`.
-- `uv` — `setup_mise` writes a `~/.config/mise/conf.d/dotfiles-python.toml` overlay adding `uv`, then `uv python install` + `uv python pin --global` the version in `MISE_PYTHON_VERSION` (3.12; Python has no real LTS). Python lands under uv, used by `uv run`/`uv venv`.
-- `system` — for locked-down machines whose security policy **SIGKILLs Astral's standalone binaries**. That kills both the `uv` binary *and* mise-managed Python (mise downloads python-build-standalone, also Astral), so neither works there. `setup_mise` removes the overlay and installs Python via the OS package manager instead (`brew install python@3.12` / `pacman -S python`), which is notarized and allowed.
+**Python is machine-local, not in the shared manifest.** `PYTHON_PROVIDER` in `.dotfiles-local` (gitignored) picks `uv` (default; Python lands under uv, used by `uv run`/`uv venv`) or `system` (for locked-down machines whose security policy SIGKILLs Astral's standalone binaries; that kills both uv and mise-managed Python, so the OS package manager installs it instead). Full rationale, overlay mechanics, and the version pin live at `setup_mise` in install.sh. Either way nvim's LSP servers are Node/Go-based, so they're unaffected by the Python choice.
 
-Either way pyright/ts_ls/gopls are Node/Go-based, so nvim's LSP is unaffected by the Python choice.
-
-**conf.d overlays:** mise merges every `~/.config/mise/conf.d/*.toml` on top of the global config. The overlay is generated per-machine and never committed, keeping the seeded baseline machine-agnostic.
-
-**Install flow** (install.sh, PHASE 1b): seed `~/.config/mise/config.toml` with a node/go baseline if absent (clearing a dangling symlink left from when the repo tracked mise config), write/remove the overlay per `PYTHON_PROVIDER`, `mise install`, then the provider-specific Python step. `PYTHON_PROVIDER` itself is sourced from `.dotfiles-local` once in `resolve_local_config` (start of main); `setup_mise` only consumes it. Runs after `install_packages` (installs the `mise` binary). zsh activates mise via `eval "$(mise activate zsh)"` in `zshrc`.
+**Install flow** (install.sh, PHASE 1b, `setup_mise`): seed the baseline if absent, write/remove the Python overlay per `PYTHON_PROVIDER`, `mise install`, then the provider-specific Python step. zsh activates mise via `eval "$(mise activate zsh)"` in `zshrc`.
 
 **Tasks:**
 - Switch a machine off uv: set `PYTHON_PROVIDER=system` in `.dotfiles-local`, re-run install.sh

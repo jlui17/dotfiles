@@ -4,6 +4,8 @@ The body makes a reviewer fast and confident, not a restage of the diff. The dif
 
 ## The arc
 
+The compact core of this arc is always-loaded in `rules.d/40-explaining-work.md`; update both together so they don't drift.
+
 The beats a good description covers when they apply. **Guidelines, not a required template**: a one-line fix gets a sentence or two, a large feature gets the full arc. Headers vary freely; skip a beat when it's absent or the code makes it obvious; format however reads best (prose, headers, bullets).
 
 1. **Problem**: what's happening today, why it's wrong, and who/what it hurts, in user-visible behavior terms, not internals. For a system the reviewer likely hasn't touched, open with one line of orientation: what the component is, what breaks when it breaks ("a colony-vm build packs the prod databases into one image the eval platform boots; if it fails, no new eval environment ships").
