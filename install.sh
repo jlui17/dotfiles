@@ -201,7 +201,7 @@ rule_section_slugs() {
 # names Claude's model tiers and Task tool, so it's Claude-only: excluded from
 # AGENTS.md, which other coding agents read.
 CLAUDE_MD_SKIP_RULES=()
-AGENTS_MD_SKIP_RULES=(orchestration)
+AGENTS_MD_SKIP_RULES=(orchestration worker-cost)
 
 # Run one module through the skip list. A skipped module prints why (so an
 # install log never looks like a phase silently vanished) and still succeeds.
