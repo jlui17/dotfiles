@@ -447,6 +447,10 @@ do
   -- Renders markdown contents with styling on the fly
   vim.pack.add { gh 'MeanderingProgrammer/render-markdown.nvim' }
   require('render-markdown').setup {}
+
+  -- File explorer: buffer-based tree browser, edit a directory listing like a file
+  require('mini.files').setup()
+  vim.keymap.set('n', '<leader>e', function() require('mini.files').open(vim.api.nvim_buf_get_name(0), false) end, { desc = '[E]xplore files' })
 end
 
 -- ============================================================
