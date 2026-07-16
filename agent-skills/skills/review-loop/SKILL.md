@@ -24,7 +24,7 @@ Reviewers lack your conversation history. Packet must stand alone. Both get the 
 - **Desired outcome.** What "solved" looks like.
 - **Approach.** How the solution solves it, and *why this way* — key decisions, rejected alternatives.
 - **Implementation.** The change. `git diff` + paths to read in full. Enough to verify, not a tour.
-- **Constraints.** What bounds the solution: compat, perf budget, deadline, "can't touch X", patterns to match.
+- **Constraints.** What bounds the solution: compat, perf budget, deadline, "can't touch X", patterns to match. Always include the repo's comment/documentation conventions (or a pointer to them), so reviewers phrase directions in terms of code, tests, and docs rather than prose at the site.
 
 Example packet:
 
@@ -97,6 +97,10 @@ Decline only when balance favors leaving it — fix costs more than flaw, breaks
 `nit` optional — take the near-free ones, drop the rest.
 
 Fix the cause, not the symptom. A patch that silences the finding without fixing the cause returns next round.
+
+A `direction` is a target, not a patch. A finding that asks to "document" or "state" something goes through the fix hierarchy: encode it in code, pin it with a test, put cross-component contracts in the README/docs at the *honoring* side; a code comment is the last resort and must pass the repo's comment rules on its own. Lifetime picks the venue: persistent context goes in the package's docs, PR-lifetime context (deploy status, merge order, what exists yet) goes in the PR — always the PR, never the package.
+
+After applying fixes, re-sweep every comment the fixes added or touched against the comment rules — and on any refactor round, sweep surviving comments for drift against the code they described.
 
 ## Step 4 — Loop or exit
 
