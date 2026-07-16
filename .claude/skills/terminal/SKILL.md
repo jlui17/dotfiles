@@ -7,7 +7,7 @@ Both are simple single-file configs with symlink-based install. Ghostty config c
 
 **Install flow** (install.sh):
 - Tmux: clones tpm if missing, symlinks tmux.conf → ~/.config/tmux/tmux.conf
-- Ghostty: symlinks ghostty/config to macOS path (~/Library/...) or Linux path (~/.config/ghostty/config)
+- Ghostty: symlinks ghostty/config to macOS path (~/Library/...) or Linux path (~/.config/ghostty/config); skipped entirely on Ubuntu, which this repo treats as a headless VPS
 
 **Tasks:**
 - Change tmux theme/flavor: edit @catppuccin_flavor (latte/frappe/macchiato/mocha), reload with `tmux source-file ~/.config/tmux/tmux.conf`

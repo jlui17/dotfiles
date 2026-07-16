@@ -9,7 +9,7 @@ Machine-specific tweaks that must not be committed go in `~/.zshrc.local` (outsi
 
 For prompt tweaks that p10k drives through `vcs_info` zstyles (e.g. branch-only, no dirty `!` marker via `check-for-changes false` + clearing the git hooks): p10k hardcodes `check-for-changes true` inside `_p9k_vcs_info_init`, which runs during init *before the first prompt*. A plain assignment is overwritten, and `p10k-on-init` runs too late (the first render still shows the marker). Wrap `_p9k_vcs_info_init` in `~/.zshrc.local` (it's defined when p10k loads, before init) and re-apply the zstyles after calling the original — then it holds from prompt #1.
 
-**Install flow** (install.sh): symlinks zshrc → ~/.zshrc. Skips on work computers — determined by a one-time prompt persisted to the gitignored `.dotfiles-local` (`IS_WORK_COMPUTER`); delete that file to be re-prompted. Zinit auto-clones + installs plugins on first shell launch.
+**Install flow** (install.sh): symlinks zshrc → ~/.zshrc. Skips on work computers — determined by a one-time prompt persisted to the gitignored `.dotfiles-local` (`IS_WORK_COMPUTER`); delete that file to be re-prompted. Zinit auto-clones + installs plugins on first shell launch. On Ubuntu servers it also runs `chsh` to make zsh the login shell (Ubuntu defaults to bash; macOS/Omarchy already default to zsh).
 
 **Tasks:**
 - Add plugin: add `zinit light user/repo` to zshrc, source ~/.zshrc

@@ -11,6 +11,8 @@ description: Global language runtimes (node, go) managed by mise, plus a machine
 
 **Install flow** (install.sh, PHASE 1b, `setup_mise`): seed the baseline if absent, write/remove the Python overlay per `PYTHON_PROVIDER`, `mise install`, then the provider-specific Python step. zsh activates mise via `eval "$(mise activate zsh)"` in `zshrc`.
 
+**Ubuntu servers lean harder on mise.** apt there lacks or ships stale builds of several CLI tools (neovim, fzf, zoxide, lazygit, tree-sitter), so `install_packages` writes them to `conf.d/dotfiles-apt-gaps.toml` (regenerated every run, like the Python overlay) and the same `mise install` realizes them. The list is `UBUNTU_MISE_PACKAGES` in install.sh; mise itself installs from its official apt repo.
+
 **Tasks:**
 - Switch a machine off uv: set `PYTHON_PROVIDER=system` in `.dotfiles-local`, re-run install.sh
 - Add/bump a tool on this machine: edit `~/.config/mise/config.toml`, then `mise install`

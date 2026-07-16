@@ -1,6 +1,6 @@
 # Dotfiles
 
-Canonical config source. Single setup across macOS (Homebrew) and Arch Linux (Pacman). All coding/terminal config changes go here.
+Canonical config source. Single setup across macOS (Homebrew), Arch Linux (Pacman), and Ubuntu servers (apt + mise). All coding/terminal config changes go here.
 
 ## Principles
 
@@ -14,12 +14,14 @@ Canonical config source. Single setup across macOS (Homebrew) and Arch Linux (Pa
 ## Design
 
 - `install.sh` — OS detection → packages → symlinks → plugin managers. Each section idempotent.
+- Ubuntu = headless — an Ubuntu machine is an SSH-only VPS (desktop Linux is the Arch/Omarchy machine): GUI apps and Ghostty are skipped, and tools apt lacks or ships stale install through mise (`UBUNTU_MISE_PACKAGES` in install.sh).
 - Machine profile — `.dotfiles-local` (gitignored) holds this machine's divergence from the shared setup: skip lists (`SKIP_MODULES`, `SKIP_PACKAGES`, `SKIP_APPS`, `SKIP_RULES`), `KEEP_PLUGINS`, work-computer flag, Python provider. Opt-out, not opt-in, so a new module reaches every machine unless a machine says otherwise. install.sh appends a commented template listing every knob to fresh and pre-existing configs. The profile subtracts from the shared set; machine-only additions live in `KEEP_PLUGINS` and the machine-local mise config, deliberately, so the shared lists stay the only install source.
 - Module dirs — Each subsystem owns a directory at repo root. Single-file configs (`zshrc`, `tmux.conf`) live at root.
 - Agent skills — Each module has a maintenance skill under `.agents/skills/` with structure, install flow, and common tasks.
 
 ## Rules
 
+- Fresh Ubuntu VPS: `sudo apt-get update && sudo apt-get install -y git zsh` first — install.sh runs under zsh and the repo arrives by git, so neither can bootstrap itself. Then clone and `./install.sh` (it switches the login shell to zsh).
 - New module: create dir at repo root, add symlink + deps to `install.sh`.
 - Names: lowercase, hyphens, no spaces.
 - Symlinks: use XDG paths (`~/.config/`). Backup existing files before replacing.

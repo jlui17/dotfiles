@@ -54,6 +54,8 @@ case "$(uname)" in
   Linux)
     if [[ -f /etc/arch-release ]]; then
       OS="arch"
+    elif grep -qE '^(ID|ID_LIKE)=.*(ubuntu|debian)' /etc/os-release 2>/dev/null; then
+      OS="ubuntu"
     else
       OS="unknown"
     fi
@@ -75,24 +77,56 @@ case "$OS" in
   arch)
     PKG_MANAGER="pacman"
     PKG_INSTALL=(sudo pacman -S --noconfirm)
-    PKG_QUERY=(pacman -Qs)
+    PKG_QUERY=(pacman -Qi)
     PKG_UPDATE=(sudo pacman -Syu --noconfirm)
+    ;;
+  ubuntu)
+    PKG_MANAGER="apt"
+    PKG_INSTALL=(sudo apt-get install -y)
+    PKG_QUERY=(apt_pkg_installed)
+    PKG_UPDATE=(sudo apt-get update)
     ;;
 esac
 
+# dpkg -s alone won't do as the query: it exits 0 for packages that were
+# removed but not purged (status "deinstall ok config-files").
+apt_pkg_installed() {
+  [[ "$(dpkg-query -W -f '${db:Status-Status}' "$1" 2>/dev/null)" == "installed" ]]
+}
+
+# Ubuntu here means a headless server (VPS, SSH-only) — desktop Linux is the
+# Arch/Omarchy machine. apt covers the base packages; tools apt lacks or ships
+# too old for our configs route through mise (package → mise registry name):
+#   fzf      — zshrc runs `fzf --zsh`, which needs fzf ≥ 0.48; LTS apt is older
+#   zoxide   — zshrc runs `zoxide init --cmd cd`, needing ≥ 0.8; 22.04 ships 0.4
+#   neovim   — the nvim config uses vim.pack; apt's neovim predates it
+#   lazygit / tree-sitter-cli — not in Ubuntu's repos at all
+typeset -A UBUNTU_MISE_PACKAGES=(
+  fzf             fzf
+  zoxide          zoxide
+  neovim          neovim
+  lazygit         lazygit
+  tree-sitter-cli tree-sitter
+)
+# No headless use — a GUI terminal emulator configures the machine you sit at.
+UBUNTU_DROP_PACKAGES=(ghostty)
+
 # GUI / extra tools that aren't simple cross-platform CLI packages. Declarative
 # table — add a row, no new function or main() wiring needed.
-#   name | check (is it installed?) | macOS install | Arch install
+#   name | check (is it installed?) | macOS install | Arch install | Ubuntu install
 # An empty install cell means "not available on that OS" (skipped). Arch AUR
-# installs use yay, which Omarchy ships by default.
+# installs use yay, which Omarchy ships by default. Ubuntu is a headless VPS,
+# so its column carries only CLI tools, npm-installed into mise's node. Pi's
+# ubuntu cell is empty because its npm package trails the brew formula by
+# several minor versions — install by hand if needed.
 GUI_APPS=(
-  "Raycast|brew list --cask raycast|brew install --cask raycast|"
-  "AltTab|brew list --cask alt-tab|brew install --cask alt-tab|"
-  "Zed|command -v zed|brew install --cask zed|sudo pacman -S --noconfirm zed"
-  "1Password CLI|command -v op|brew install --cask 1password-cli|yay -S --noconfirm 1password-cli"
-  "Hunk|command -v hunk|brew tap modem-dev/tap 2>/dev/null; brew install hunk|npm i -g hunkdiff"
-  "OpenCode|command -v opencode|brew install opencode|"
-  "Pi|command -v pi|brew install pi-coding-agent|"
+  "Raycast|brew list --cask raycast|brew install --cask raycast||"
+  "AltTab|brew list --cask alt-tab|brew install --cask alt-tab||"
+  "Zed|command -v zed|brew install --cask zed|sudo pacman -S --noconfirm zed|"
+  "1Password CLI|command -v op|brew install --cask 1password-cli|yay -S --noconfirm 1password-cli|"
+  "Hunk|command -v hunk|brew tap modem-dev/tap 2>/dev/null; brew install hunk|npm i -g hunkdiff|npm i -g hunkdiff"
+  "OpenCode|command -v opencode|brew install opencode||npm i -g opencode-ai"
+  "Pi|command -v pi|brew install pi-coding-agent||"
 )
 
 # Ordered module registry: name:function. main() runs every entry through
@@ -330,7 +364,7 @@ install_packages() {
   echo "==> Installing packages..."
 
   if [[ "$OS" == "unknown" ]]; then
-    echo "Unsupported OS. This script supports macOS and Arch Linux."
+    echo "Unsupported OS. This script supports macOS, Arch Linux, and Ubuntu/Debian."
     exit 1
   fi
 
@@ -349,24 +383,70 @@ install_packages() {
       exit 1
     fi
   fi
-  if [[ "$OS" == "arch" ]] && ! command_exists sudo; then
-    echo "sudo is required to install packages on Arch Linux."
+  if [[ "$OS" != "macos" ]] && ! command_exists sudo; then
+    echo "sudo is required to install packages on Linux."
     exit 1
+  fi
+
+  # mise has no package in Ubuntu's repos; add its official apt repo so the
+  # normal install loop below installs it and `apt upgrade` keeps it current.
+  if [[ "$OS" == "ubuntu" ]] && ! command_exists mise; then
+    echo "  Adding the mise apt repository..."
+    track "apt update" sudo apt-get update
+    track "install curl gpg" sudo apt-get install -y curl gpg
+    sudo install -dm 755 /etc/apt/keyrings
+    track "mise apt key" sh -c \
+      "curl -fsSL https://mise.jdx.dev/gpg-key.pub | sudo gpg --yes --dearmor -o /etc/apt/keyrings/mise-archive-keyring.gpg"
+    echo "deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.gpg arch=$(dpkg --print-architecture)] https://mise.jdx.dev/deb stable main" \
+      | sudo tee /etc/apt/sources.list.d/mise.list >/dev/null
   fi
 
   echo "  Updating $PKG_MANAGER..."
   track "update $PKG_MANAGER" "$PKG_UPDATE[@]"
 
+  local -a mise_tools=()
   for package in "${COMMON_PACKAGES[@]}"; do
     if (( ${SKIP_PACKAGES[(Ie)$package]} )); then
       echo "  $package skipped (SKIP_PACKAGES)."
-    elif "$PKG_QUERY[@]" "^${package}\$" >/dev/null 2>&1; then
+      continue
+    fi
+    if [[ "$OS" == "ubuntu" ]]; then
+      if (( ${UBUNTU_DROP_PACKAGES[(Ie)$package]} )); then
+        echo "  $package skipped (no headless use on Ubuntu)."
+        continue
+      fi
+      if (( ${+UBUNTU_MISE_PACKAGES[$package]} )); then
+        mise_tools+=("${UBUNTU_MISE_PACKAGES[$package]}")
+        echo "  $package routed to mise."
+        continue
+      fi
+    fi
+    if "$PKG_QUERY[@]" "$package" >/dev/null 2>&1; then
       echo "  $package is already installed."
     else
       echo "  Installing $package..."
       track "install $package" "$PKG_INSTALL[@]" "$package"
     fi
   done
+
+  # The mise-routed tools land in a conf.d overlay (like the Python one in
+  # setup_mise) rather than the machine-local config.toml, so the dotfiles-
+  # managed list re-asserts on every run without touching per-machine edits.
+  # setup_mise's `mise install` realizes it right after this phase.
+  if [[ "$OS" == "ubuntu" ]]; then
+    local mise_confd="${XDG_CONFIG_HOME:-$HOME/.config}/mise/conf.d"
+    ensure_dir "$mise_confd"
+    {
+      echo "# Generated by dotfiles install.sh — tools apt lacks or ships too old"
+      echo "# (see UBUNTU_MISE_PACKAGES in install.sh). Edits here get overwritten."
+      echo "[tools]"
+      local tool
+      for tool in "${mise_tools[@]}"; do
+        echo "$tool = \"latest\""
+      done
+    } > "$mise_confd/dotfiles-apt-gaps.toml"
+    echo "  Declared ${#mise_tools[@]} mise-routed tool(s) in conf.d/dotfiles-apt-gaps.toml."
+  fi
   echo ""
 }
 
@@ -443,6 +523,11 @@ TOML
                                    || echo "  Installing mise tools (node, go)..."
   track "mise install" mise install
 
+  # Put mise-managed tool bins on this run's PATH: later phases check and use
+  # them (setup_nvim's nvim check, npm for the apps table). Interactive shells
+  # get this from `mise activate zsh` in zshrc; this script never sources that.
+  eval "$(mise env -s zsh 2>/dev/null)"
+
   case "$python_provider" in
     uv)
       echo "  Installing Python $MISE_PYTHON_VERSION via uv..."
@@ -453,6 +538,7 @@ TOML
       echo "  Installing Python $MISE_PYTHON_VERSION via OS package manager..."
       run_if_os "macos" track "brew python@$MISE_PYTHON_VERSION" brew install "python@$MISE_PYTHON_VERSION"
       run_if_os "arch" track "pacman python" sudo pacman -S --noconfirm python
+      run_if_os "ubuntu" track "apt python3" sudo apt-get install -y python3
       ;;
   esac
   echo ""
@@ -485,6 +571,19 @@ setup_zshrc() {
   else
     backup_and_link "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"
   fi
+
+  # SSH logins must land in zsh for any of this config to run. macOS and
+  # Omarchy default to zsh already; Ubuntu defaults to bash.
+  if [[ "$OS" == "ubuntu" ]]; then
+    local login_shell
+    login_shell="$(getent passwd "$CURRENT_USER" | cut -d: -f7)"
+    if [[ "$login_shell" != *zsh ]]; then
+      echo "  Setting login shell to zsh..."
+      track "chsh to zsh" sudo chsh -s "$(command -v zsh)" "$CURRENT_USER"
+    else
+      echo "  Login shell is already zsh."
+    fi
+  fi
   echo ""
 }
 
@@ -505,6 +604,8 @@ setup_nvim() {
     echo "  Neovim not found. Installing..."
     run_if_os "macos" brew install neovim
     run_if_os "arch" sudo pacman -S --noconfirm neovim
+    # Ubuntu's neovim comes from mise (declared in conf.d/dotfiles-apt-gaps.toml).
+    run_if_os "ubuntu" mise install neovim
   else
     echo "  Neovim is already installed."
   fi
@@ -532,6 +633,11 @@ setup_nvim() {
 }
 
 setup_ghostty() {
+  # Ubuntu means a headless VPS — no terminal emulator runs there, so neither
+  # the ghostty package (dropped in install_packages) nor its config applies.
+  if [[ "$OS" == "ubuntu" ]]; then
+    return
+  fi
   echo "==> Ghostty configuration..."
   case "$OS" in
     macos)
@@ -870,12 +976,14 @@ setup_apps() {
   echo "==> GUI apps..."
   # Declared once, outside the loop: zsh's `local` on an already-local name
   # prints its value, so re-declaring per iteration spams the output.
-  local row name check macos_cmd arch_cmd cmd
+  local row name check macos_cmd arch_cmd ubuntu_cmd cmd
   for row in "${GUI_APPS[@]}"; do
-    IFS='|' read -r name check macos_cmd arch_cmd <<< "$row"
+    IFS='|' read -r name check macos_cmd arch_cmd ubuntu_cmd <<< "$row"
     case "$OS" in
-      macos) cmd="$macos_cmd" ;;
-      arch)  cmd="$arch_cmd" ;;
+      macos)  cmd="$macos_cmd" ;;
+      arch)   cmd="$arch_cmd" ;;
+      ubuntu) cmd="$ubuntu_cmd" ;;
+      *)      cmd="" ;;
     esac
     [[ -z "$cmd" ]] && continue          # not available on this OS
     if (( ${SKIP_APPS[(Ie)$name]} )); then
@@ -969,7 +1077,7 @@ main() {
   echo "- Zsh plugins will be installed automatically the first time you open zsh."
   echo "- To install tmux plugins, start tmux and press prefix + I (Ctrl+b, then I)."
   echo "- Neovim: open nvim and wait for vim.pack to install plugins, then run :checkhealth."
-  echo "- Ghostty config is linked to the platform-appropriate path."
+  [[ "$OS" != "ubuntu" ]] && echo "- Ghostty config is linked to the platform-appropriate path."
   echo "- Pi theme is linked. Select it in pi via /settings or edit settings.json."
 
   # Non-zero exit if anything failed, so callers/CI can detect a partial install.
