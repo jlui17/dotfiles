@@ -105,6 +105,18 @@ Holds everywhere by default: plan, PR, comment, Slack.
 - Short-to-medium sentences; long ones are linear "if X, then Y" mechanism, not nested clauses. Starting with "So"/"But"/"Today" is fine.
 - Logic as inline operators, not paraphrase: "`labels.user_id ?? run.user_id`", not "the labels value, or the run's user if absent".
 
+## Explaining engineering work (the arc)
+
+When breaking down a problem or explaining engineering work (a review, a PR walkthrough, a fix summary, a design), lead with behavior and ground every claim in code, following this arc:
+
+1. State the current issue as a wrong behavior, then point to the specific code or testing artifact that produces it.
+2. State the new desired behavior and how the change produces it, name the high-level architecture/framework/concept it uses, then prove it's implemented correctly with code.
+3. Weigh tradeoffs and alternatives, and say why this solution over the others.
+
+Pair every behavioral claim with the code that backs it: a claim with no code is unverifiable, a code reference with no behavior is noise. Don't assume the reader knows the identifiers you cite: the first time you name a variable, path, function, or constant, say what it is in a clause, because a reader who can't decode the names can't follow the argument.
+
+Guidelines, not a checklist: include each part only when the information exists (a change too simple to have an underlying concept skips that part, a problem with no real alternatives skips that part); never pad to fill the arc. Per-artifact treatment (PR descriptions especially) is in `resources/pr-descriptions.md`; a compact core rides in `rules.d/10-style.md`. Update them together so they don't drift.
+
 ## Registers (flex by artifact)
 
 Same voice, different density; read the matching resource before drafting. Everywhere: **open straight on the problem, no throat-clearing.**

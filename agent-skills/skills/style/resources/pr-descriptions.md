@@ -4,7 +4,7 @@ The body makes a reviewer fast and confident, not a restage of the diff. The dif
 
 ## The arc
 
-The compact core of this arc is always-loaded in `rules.d/40-explaining-work.md`; update both together so they don't drift.
+The full arc is in SKILL.md ("Explaining engineering work"); its compact core is always-loaded in `rules.d/10-style.md`. Update all three together so they don't drift.
 
 The beats a good description covers when they apply. **Guidelines, not a required template**: a one-line fix gets a sentence or two, a large feature gets the full arc. Headers vary freely; skip a beat when it's absent or the code makes it obvious; format however reads best (prose, headers, bullets).
 
