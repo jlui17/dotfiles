@@ -13,7 +13,7 @@ description: Justin's voice: the default style for ALL language produced here, o
 
 **Applying feedback.** Wording/style feedback goes into the artifact immediately; noting it for later without editing the doc is a miss. Design *decisions* are the opposite: discuss and confirm first, then apply.
 
-**Where this lives.** A compact core of this voice sits in `agent-skills/rules.d/10-voice.md` in the dotfiles repo (assembled by install.sh into `~/CLAUDE.md` and `~/AGENTS.md`, so it loads into every session for every agent); this skill is the full reference. When you change a core rule, update both so they don't drift, and re-run install.sh to land it.
+**Where this lives.** A compact core of this voice sits in `agent-skills/rules.d/10-style.md` in the dotfiles repo (assembled by install.sh into `~/CLAUDE.md` and `~/AGENTS.md`, so it loads into every session for every agent); this skill is the full reference. When you change a core rule, update both so they don't drift, and re-run install.sh to land it.
 
 **Default: cut to the bone, stay smooth.** As concise as the meaning allows while still reading smoothly and carrying the context the reader needs. This governs a one-line chat reply as much as a doc. Cut the dead weight ruthlessly:
 
