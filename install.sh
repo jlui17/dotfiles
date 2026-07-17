@@ -116,9 +116,7 @@ UBUNTU_DROP_PACKAGES=(ghostty)
 #   name | check (is it installed?) | macOS install | Arch install | Ubuntu install
 # An empty install cell means "not available on that OS" (skipped). Arch AUR
 # installs use yay, which Omarchy ships by default. Ubuntu is a headless VPS,
-# so its column carries only CLI tools, npm-installed into mise's node. Pi's
-# ubuntu cell is empty because its npm package trails the brew formula by
-# several minor versions — install by hand if needed.
+# so its column carries only CLI tools, npm-installed into mise's node.
 GUI_APPS=(
   "Raycast|brew list --cask raycast|brew install --cask raycast||"
   "AltTab|brew list --cask alt-tab|brew install --cask alt-tab||"
@@ -126,7 +124,7 @@ GUI_APPS=(
   "1Password CLI|command -v op|brew install --cask 1password-cli|yay -S --noconfirm 1password-cli|"
   "Hunk|command -v hunk|brew tap modem-dev/tap 2>/dev/null; brew install hunk|npm i -g hunkdiff|npm i -g hunkdiff"
   "OpenCode|command -v opencode|brew install opencode||npm i -g opencode-ai"
-  "Pi|command -v pi|brew install pi-coding-agent||"
+  "Pi|command -v pi|brew install pi-coding-agent|npm i -g @earendil-works/pi-coding-agent|npm i -g @earendil-works/pi-coding-agent"
 )
 
 # Ordered module registry: name:function. main() runs every entry through
@@ -136,6 +134,7 @@ GUI_APPS=(
 MODULES=(
   packages:install_packages
   mise:setup_mise
+  apps:setup_apps
   tpm:setup_tpm
   zshrc:setup_zshrc
   tmux:setup_tmux
@@ -148,7 +147,6 @@ MODULES=(
   claude-code:setup_claude_plugins
   gitignore:setup_gitignore
   git-config:setup_git_config
-  apps:setup_apps
   macos-defaults:setup_macos_defaults
 )
 
