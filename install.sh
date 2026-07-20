@@ -32,12 +32,15 @@ IS_WORK_COMPUTER=false
 #   SKIP_APPS     — name column of GUI_APPS
 #   SKIP_RULES    — global-rules sections (agent-skills/rules.d/ slugs) left
 #                   out of this machine's generated ~/CLAUDE.md / ~/AGENTS.md
+#   SKIP_SKILLS   — global skills (agent-skills/skills/ dirs) not linked into
+#                   this machine's agent roots
 #   KEEP_PLUGINS  — machine-local Claude Code plugins (plugin@marketplace) the
 #                   manifest sync must not uninstall
 SKIP_MODULES=()
 SKIP_PACKAGES=()
 SKIP_APPS=()
 SKIP_RULES=()
+SKIP_SKILLS=()
 KEEP_PLUGINS=()
 
 # Collects human-readable labels of steps that failed. A bootstrap script
@@ -193,6 +196,15 @@ rule_section_slugs() {
   done
 }
 
+# Names of the global skills, one per line: agent-skills/skills/<name>/ →
+# <name>. These are what SKIP_SKILLS names.
+global_skill_names() {
+  local d
+  for d in "$DOTFILES_DIR/agent-skills/skills/"*/(N); do
+    echo "${${d%/}:t}"
+  done
+}
+
 # Rules kept out of one generated output, repo-wide (not per-machine — that knob
 # is SKIP_RULES in .dotfiles-local). Both assemblers start from the full rules.d/
 # set; a slug here drops that section from just that one file. orchestration
@@ -252,6 +264,16 @@ EOF
 EOF
     echo "  Added the SKIP_RULES knob to ${DOTFILES_LOCAL_CONFIG:t} — edit it to exclude global-rules sections."
   fi
+  if ! grep -q "SKIP_SKILLS" "$DOTFILES_LOCAL_CONFIG" 2>/dev/null; then
+    cat >> "$DOTFILES_LOCAL_CONFIG" <<EOF
+
+# Global skills not linked into this machine's agent roots. Names come from
+# agent-skills/skills/ directories. Available:
+#   ${(j: :)${(f)"$(global_skill_names)"}}
+#SKIP_SKILLS=(gog)
+EOF
+    echo "  Added the SKIP_SKILLS knob to ${DOTFILES_LOCAL_CONFIG:t} — edit it to exclude global skills."
+  fi
 }
 
 # Load this machine's profile from the gitignored local config. First run asks
@@ -293,6 +315,10 @@ validate_skip_lists() {
   local rule_slugs=($(rule_section_slugs))
   for entry in "${SKIP_RULES[@]}"; do
     (( ${rule_slugs[(Ie)$entry]} )) || echo "⚠️  SKIP_RULES: unknown rules section '$entry' (ignored)."
+  done
+  local skill_names=($(global_skill_names))
+  for entry in "${SKIP_SKILLS[@]}"; do
+    (( ${skill_names[(Ie)$entry]} )) || echo "⚠️  SKIP_SKILLS: unknown skill '$entry' (ignored)."
   done
   for entry in "${CLAUDE_MD_SKIP_RULES[@]}"; do
     (( ${rule_slugs[(Ie)$entry]} )) || echo "⚠️  CLAUDE_MD_SKIP_RULES: unknown rules section '$entry' (ignored)."
@@ -816,7 +842,11 @@ setup_agent_skills() {
   echo "==> Agent skills & commands..."
   local module_dir="$DOTFILES_DIR/agent-skills"
   local agent_roots=("$HOME/.claude" "$HOME/.agents")
-  local root
+  local root skipped
+
+  for skipped in "${SKIP_SKILLS[@]}"; do
+    echo "  $skipped skipped (SKIP_SKILLS)."
+  done
 
   for root in "${agent_roots[@]}"; do
     local commands_dir="$root/commands"
@@ -830,6 +860,7 @@ setup_agent_skills() {
     ensure_dir "$skills_dir"
     for skill_dir in "$module_dir/skills/"*/(N); do
       [[ -d "$skill_dir" ]] || continue
+      (( ${SKIP_SKILLS[(Ie)$(basename "$skill_dir")]} )) && continue
       backup_and_link "${skill_dir%/}" "$skills_dir/$(basename "$skill_dir")"
     done
   done
