@@ -55,6 +55,8 @@ Group proofs by the claim they prove, never a flat activity log ("we ran X, then
 - **Live/integration proof (a real run, a probe on real infra) = the steps you took**: 2-4 numbered steps under the concern, behaviorally described (what you did, what you observed, what that proves when it isn't obvious). Not a command dump, and not the outcome alone ("all 8 jobs green" is a claim, not a proof: the reviewer can't tell what was exercised).
 - **When methods mix, say why the method fit the claim**: "pure logic, so a unit test pins it with no infra" vs "the real failure only reproduces in prod, so verify the decision directly".
 
+**Spend the detail on architectural invariants; compress mechanics.** A claim that proves a design decision holds ("the DB itself rejects a second active row, so the invariant survives writers outside this module") earns a bold bullet naming the enforcement mechanism, and every bullet proving the same invariant merges into it. Mechanical-fidelity claims (round-trip exactness, codec byte-exactness, a clever fixture) don't earn their own detailed bullets: close the section with one line naming the remaining coverage areas.
+
 **Non-goals**: what you didn't do and why deferred. Part of Limits / Out of scope (beat 5); keeps the next problem visible without scope-creeping this PR.
 
 ## Condense pass

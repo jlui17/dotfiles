@@ -142,7 +142,7 @@ Beyond the rules' own "No" examples:
 - Over-citation: enumerating every file, test, and pass-count when one link plus the central identifier would do. Reads as AI over-justification, especially in chat.
 - Telegraphing a casual message into one-claim-per-line fragments. In chat, write the way you'd say it (see `resources/slack.md`).
 - Bare file/symbol name-drops ("same pattern in `foo.py` and `bar.py`") with no clause saying what they are or why they matter. Name for findability, but define and justify.
-- A verification/test section as a flat activity log ("ran X, then Y") instead of grouped by claim, each entry opening on the broken behavior in plain terms (full treatment: `resources/pr-descriptions.md`).
+- A verification/test section as a flat activity log ("ran X, then Y") instead of grouped by claim, each entry opening on the broken behavior in plain terms; or detail spent on test mechanics (DeepEqual, fixtures) instead of the architectural invariant they prove (full treatment: `resources/pr-descriptions.md`).
 
 ## Self-check
 
