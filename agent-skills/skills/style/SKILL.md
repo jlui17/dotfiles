@@ -117,6 +117,18 @@ Pair every behavioral claim with the code that backs it: a claim with no code is
 
 Guidelines, not a checklist: include each part only when the information exists (a change too simple to have an underlying concept skips that part, a problem with no real alternatives skips that part); never pad to fill the arc. Per-artifact treatment (PR descriptions especially) is in `resources/pr-descriptions.md`; a compact core rides in `rules.d/10-style.md`. Update them together so they don't drift.
 
+### Walking through a change (what a good explanation of a code change is)
+
+The arc above orders the argument; this is the shape when the deliverable is a walkthrough of a change — a PR, a stacked pair, a subsystem (compact core: `rules.d/11-explaining-changes.md`, keep in sync):
+
+- **Open with the one-sentence frame that makes the parts make sense** — the division of responsibility or mental model ("X ships a mechanism with no opinions; Y ships the policy") — before any detail. If pieces connect (stacked PRs, sibling modules), name the connective tissue (imports, a shared golden, a base branch) in the same breath.
+- **Narrate in runtime order, not diff order.** Pick one request or datum and follow it through the chain step by step. File-by-file and commit-by-commit orderings force the reader to reassemble the flow themselves.
+- **Each step: bold behavioral claim, then the contract.** One bolded sentence saying what the step means for the system, the method signature or type verbatim in a code block, then the process consequence (what fails where, what can't drift, what an operator sees when it goes wrong).
+- **Signatures and contracts, not implementation.** Show an impl detail only when it carries an architectural or process decision ("resolved fresh per launch — no cache — until colony-579"; "refuses before an execution is spent"). Everything else stays behind the signature.
+- **Deliberate absences are design decisions — explain them like ones.** What the change intentionally does not do, and the reason ("config vars don't vary by service: `SNAPSHOT_SERVICE` picks the roster entry"; "nothing decodes yet, by design, so the deploy is inert").
+- **Name the ownership boundaries** — which component owns which vars, names, rows ("the starter owns job control, `launchenv.go` owns identity, the tagged struct owns config") — so the reader knows where the next change lands.
+- **Compress the plumbing to one closing line.** Dockerfiles, CI filters, flag wiring: name them as being in service of the chain, never walk them.
+
 ## Registers (flex by artifact)
 
 Same voice, different density; read the matching resource before drafting. Everywhere: **open straight on the problem, no throat-clearing.**
