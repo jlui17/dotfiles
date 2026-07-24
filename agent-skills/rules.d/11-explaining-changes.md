@@ -9,3 +9,5 @@ When walking through a change (a PR, a stacked pair, a subsystem), this is the s
 - **Deliberate absences are design decisions — explain them like ones.** Say what the change intentionally does not do and why ("nothing decodes yet, by design, so the deploy is inert").
 - **Name ownership boundaries** — which component owns which vars, names, rows — so the reader knows where the next change lands.
 - **Compress the plumbing to one closing line** (Dockerfiles, CI filters, flag wiring): name it as serving the chain, never walk it.
+
+When asked for a **summary of what changed** (scope/shape, not a walkthrough), answer with a signature profile instead: code blocks grouped by module, one line per declaration — the signature verbatim, marked `+`/`~`/`-` (added/changed/removed), `// was ...` inline on changes, a trailing comment only where the signature can't carry the meaning — closing with what's untouched and a line or two of prose on what fell out. Full shape: the `style` skill.

@@ -129,6 +129,19 @@ The arc above orders the argument; this is the shape when the deliverable is a w
 - **Name the ownership boundaries** — which component owns which vars, names, rows ("the starter owns job control, `launchenv.go` owns identity, the tagged struct owns config") — so the reader knows where the next change lands.
 - **Compress the plumbing to one closing line.** Dockerfiles, CI filters, flag wiring: name them as being in service of the chain, never walk them.
 
+### Scope summaries: the signature profile
+
+When the ask is a **summary of what changed** — scope and shape, not a walkthrough ("summarize what changed", "what's the scope of this diff") — don't narrate; profile the signatures. The reader wants to reconstruct the diff's skeleton in one skim:
+
+- **Code blocks grouped by module/component**, in dependency or runtime order, one line per declaration.
+- **Each line: the signature verbatim, marked `+`/`~`/`-`** (added / changed / removed). On a `~`, note the old form inline: `// was (cfg *OrgConfig, ts time.Time)`.
+- **A trailing comment only where the signature can't carry the meaning** ("PK read, no org scoping"; "*int64: legacy rows are NULL") — never restating what the types already say.
+- **Structs/interfaces compress to the changed members**, not the whole definition: `~ Workflow { ... ConfigVersion *int64 ... }  // + field`.
+- **Close with what's untouched** (the files/modules a reviewer might expect to move but didn't) **and one or two prose lines on what fell out** — a deletion enabled, a dependency added — since consequences don't show in signatures.
+- Tests, fixtures, and README churn get one collective closing line, not per-file entries.
+
+This is the complement of the walkthrough above: the walkthrough sells the behavior, the profile maps the surface area. When the ask is ambiguous, the walkthrough is the default; switch to the profile when the reader says "scope", "shape", or "what changed where".
+
 ## Registers (flex by artifact)
 
 Same voice, different density; read the matching resource before drafting. Everywhere: **open straight on the problem, no throat-clearing.**
