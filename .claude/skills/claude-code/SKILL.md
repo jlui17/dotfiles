@@ -3,7 +3,7 @@ name: claude-code
 description: Maintains the Claude Code config module: user-level settings.json deep-merged by install.sh (with per-machine overrides in gitignored settings.local.json), plugins replayed from claude-code/plugins.txt, and the statusline script. Use when adding/removing Claude Code plugins, changing shared or per-machine settings or the statusline, or when a plugin unexpectedly disappears after install.sh (the manifest sync uninstalls unlisted plugins).
 ---
 
-Claude-Code-specific config: user-level `settings.json` plus plugins. The cross-agent skills, commands, and global rules live in the [[agent-skills]] module instead (those apply to every coding agent, not just Claude Code).
+Claude-Code-specific config: user-level `settings.json` plus plugins. The global skills, commands, rules, and output style live in the [[claude-code-skills]] module instead.
 
 **settings.json** — not symlinked, because Claude Code rewrites `~/.claude/settings.json` at runtime (theme, model, `/fast`). It stays a real machine-local file; install.sh (PHASE 6c) deep-merges the repo's tracked keys into it, **repo winning on conflicts** (merge_json in install.sh). So `claude-code/settings.json` is the source of truth for the keys it declares (model, theme, permissions, enabled plugins) and they propagate on re-run, while machine-only keys the repo doesn't declare are preserved.
 
