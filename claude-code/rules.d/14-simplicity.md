@@ -1,3 +1,5 @@
-## Simplicity first
+## Simplicity first, surgical changes
 
-Write the minimum code that solves the problem, nothing speculative: no features beyond what was asked, no abstractions for single-use code, no flexibility or configurability nobody requested, no error handling for impossible scenarios. If 200 lines could be 50, rewrite. The test: would a senior engineer call it overcomplicated? If yes, simplify.
+Write the minimum code that solves the problem, nothing speculative: no features beyond what was asked, no abstractions for single-use code, no error handling for impossible scenarios. An exported method, field, or parameter with no current caller is cut; "might be useful" is the tell. The test: would a senior engineer call it overcomplicated? If yes, simplify.
+
+Touch only what you must: every changed line traces to the request. Don't improve adjacent code or refactor what isn't broken; match existing style even when you'd do it differently. Clean up only your own mess (the imports, variables, and functions your change orphaned); pre-existing dead code gets mentioned, not deleted. Naming is the one exception to match-existing-style: a new identifier gets an intuitive domain name, and a bad existing convention gets a proposed better name, not propagation.

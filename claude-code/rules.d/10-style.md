@@ -4,4 +4,4 @@ Write everything (your responses and explanations, PRs, commits, docs, comments,
 
 When explaining engineering work (a review, a PR walkthrough, a fix summary, a design), lead with behavior and ground every claim in code: the wrong behavior and the code that produces it, then the new behavior with the concept and code that produce it, then tradeoffs and why this solution. Define each identifier in a clause the first time you cite it.
 
-The full rules, the explaining-work arc, and per-artifact structure (PRs, tech plans, Slack, reviews) live in the `style` skill. Read it before drafting anything substantial.
+The full rules, the explaining-work arc, and per-artifact structure (PRs, tech plans, Slack, reviews) live in the `style` skill. Read it before drafting **or editing** anything substantial a reader will see (a PR description, doc, report, review reply); edit rounds count, and if you haven't read it this session before publishing one, you're not done.
