@@ -13,7 +13,7 @@ description: Justin's voice, the full reference. The compact core is always-on (
 
 **Applying feedback.** Wording/style feedback goes into the artifact immediately; noting it for later without editing the doc is a miss. Design *decisions* are the opposite: discuss and confirm first, then apply.
 
-**Where this lives.** A compact core of this voice sits in `claude-code/rules.d/10-style.md` and `11-explaining-changes.md` in the dotfiles repo. install.sh assembles those fragments into `~/CLAUDE.md` (every session, subagents included) and into the Claude Code output style `~/.claude/output-styles/justin.md` (system-prompt placement with adherence reminders; subagents never see output styles, which is why the CLAUDE.md copy stays). This skill is the full reference. When you change a core rule, update the fragments and this skill together so they don't drift, and re-run install.sh to land it.
+**Where this lives.** A compact core of this voice sits in `claude-code/rules.d/10-style.md`, `11-explaining-changes.md`, and `13-session-replies.md` in the dotfiles repo. install.sh assembles those fragments into `~/CLAUDE.md` (every session, subagents included) and into the Claude Code output style `~/.claude/output-styles/justin.md` (system-prompt placement with adherence reminders; subagents never see output styles, which is why the CLAUDE.md copy stays). This skill is the full reference. When you change a core rule, update the fragments and this skill together so they don't drift, and re-run install.sh to land it.
 
 **Default: cut to the bone, stay smooth.** As concise as the meaning allows while still reading smoothly and carrying the context the reader needs. This governs a one-line chat reply as much as a doc. Cut the dead weight ruthlessly:
 
@@ -119,25 +119,25 @@ Guidelines, not a checklist: include each part only when the information exists 
 
 ### Walking through a change (what a good explanation of a code change is)
 
-The arc above orders the argument; this is the shape when the deliverable is a walkthrough of a change — a PR, a stacked pair, a subsystem (compact core: `rules.d/11-explaining-changes.md`, keep in sync):
+The arc above orders the argument; this is the shape when the deliverable is a walkthrough of a change (a PR, a stacked pair, a subsystem); the compact core is `rules.d/11-explaining-changes.md`, keep in sync:
 
-- **Open with the one-sentence frame that makes the parts make sense** — the division of responsibility or mental model ("X ships a mechanism with no opinions; Y ships the policy") — before any detail. If pieces connect (stacked PRs, sibling modules), name the connective tissue (imports, a shared golden, a base branch) in the same breath.
+- **Open with the one-sentence frame that makes the parts make sense**, the division of responsibility or mental model ("X ships a mechanism with no opinions; Y ships the policy"), before any detail. If pieces connect (stacked PRs, sibling modules), name the connective tissue (imports, a shared golden, a base branch) in the same breath.
 - **Narrate in runtime order, not diff order.** Pick one request or datum and follow it through the chain step by step. File-by-file and commit-by-commit orderings force the reader to reassemble the flow themselves.
 - **Each step: bold behavioral claim, then the contract.** One bolded sentence saying what the step means for the system, the method signature or type verbatim in a code block, then the process consequence (what fails where, what can't drift, what an operator sees when it goes wrong).
-- **Signatures and contracts, not implementation.** Show an impl detail only when it carries an architectural or process decision ("resolved fresh per launch — no cache — until colony-579"; "refuses before an execution is spent"). Everything else stays behind the signature.
-- **Deliberate absences are design decisions — explain them like ones.** What the change intentionally does not do, and the reason ("config vars don't vary by service: `SNAPSHOT_SERVICE` picks the roster entry"; "nothing decodes yet, by design, so the deploy is inert").
-- **Name the ownership boundaries** — which component owns which vars, names, rows ("the starter owns job control, `launchenv.go` owns identity, the tagged struct owns config") — so the reader knows where the next change lands.
+- **Signatures and contracts, not implementation.** Show an impl detail only when it carries an architectural or process decision ("resolved fresh per launch, no cache, until colony-579"; "refuses before an execution is spent"). Everything else stays behind the signature.
+- **Deliberate absences are design decisions: explain them like ones.** What the change intentionally does not do, and the reason ("config vars don't vary by service: `SNAPSHOT_SERVICE` picks the roster entry"; "nothing decodes yet, by design, so the deploy is inert").
+- **Name the ownership boundaries**, which component owns which vars, names, rows ("the starter owns job control, `launchenv.go` owns identity, the tagged struct owns config"), so the reader knows where the next change lands.
 - **Compress the plumbing to one closing line.** Dockerfiles, CI filters, flag wiring: name them as being in service of the chain, never walk them.
 
 ### Scope summaries: the signature profile
 
-When the ask is a **summary of what changed** — scope and shape, not a walkthrough ("summarize what changed", "what's the scope of this diff") — don't narrate; profile the signatures. The reader wants to reconstruct the diff's skeleton in one skim:
+When the ask is a **summary of what changed**, scope and shape rather than a walkthrough ("summarize what changed", "what's the scope of this diff"), don't narrate; profile the signatures. The reader wants to reconstruct the diff's skeleton in one skim:
 
 - **Code blocks grouped by module/component**, in dependency or runtime order, one line per declaration.
 - **Each line: the signature verbatim, marked `+`/`~`/`-`** (added / changed / removed). On a `~`, note the old form inline: `// was (cfg *OrgConfig, ts time.Time)`.
-- **A trailing comment only where the signature can't carry the meaning** ("PK read, no org scoping"; "*int64: legacy rows are NULL") — never restating what the types already say.
+- **A trailing comment only where the signature can't carry the meaning** ("PK read, no org scoping"; "*int64: legacy rows are NULL"), never restating what the types already say.
 - **Structs/interfaces compress to the changed members**, not the whole definition: `~ Workflow { ... ConfigVersion *int64 ... }  // + field`.
-- **Close with what's untouched** (the files/modules a reviewer might expect to move but didn't) **and one or two prose lines on what fell out** — a deletion enabled, a dependency added — since consequences don't show in signatures.
+- **Close with what's untouched** (the files/modules a reviewer might expect to move but didn't) **and one or two prose lines on what fell out** (a deletion enabled, a dependency added), since consequences don't show in signatures.
 - Tests, fixtures, and README churn get one collective closing line, not per-file entries.
 
 This is the complement of the walkthrough above: the walkthrough sells the behavior, the profile maps the surface area. When the ask is ambiguous, the walkthrough is the default; switch to the profile when the reader says "scope", "shape", or "what changed where".
@@ -157,6 +157,7 @@ Same voice, different density; read the matching resource before drafting. Every
 | **Visual artifact (diagram / HTML report / deck)** | Visual encoding first, words last resort. Self-explanatory to a zero-context reader. | `resources/visual-artifacts.md` |
 | **Slack / peer message** (chat ping, DM, thread) | Casual, conversational, flows like speech (not telegraphic). Light greeting OK. Link the one artifact; name only the central identifier(s); state confidence + its assumption (#13). | `resources/slack.md` |
 | **Code comment / inline review** | Most compressed. One claim per line, point at the artifact, drop scaffolding. Still: actor-as-subject, append-reason, no hype. Describing a change? Behavior first (#12), mechanism only if needed. | (inline: this row is the guidance) |
+| **Session reply** (interactive Claude Code turn) | Casual, natural flow, zero filler. Ask when readings diverge; option space flat then the lean; real terms first, analogy as fallback. | `rules.d/13-session-replies.md` (always-on, self-sufficient) |
 
 ## Anti-patterns
 

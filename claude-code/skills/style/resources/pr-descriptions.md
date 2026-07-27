@@ -2,7 +2,7 @@
 
 The body makes a reviewer fast and confident, not a restage of the diff. The diff shows *what changed*; the description carries what it can't: **what was happening** (the behavior, in plain terms) and **what we're doing about it conceptually**. Spend words there; cut anything readable straight from the code.
 
-**Hard budget: one page.** Only information a reviewer can't get from the diff earns space: the purpose of the change, invariants, decisions, architectural patterns/designs, and verification steps. Per-file walkthroughs, mechanism narration, signature dumps, and exhaustive test inventories restate the diff; cut them. When a draft runs long, drop whole beats before trimming words — a reviewer who wants more detail reads the code. The walkthrough shape in SKILL.md ("Walking through a change") is for explanations and reviews; in a PR body it compresses to fit the page.
+**Hard budget: one page.** Only information a reviewer can't get from the diff earns space: the purpose of the change, invariants, decisions, architectural patterns/designs, and verification steps. Per-file walkthroughs, mechanism narration, signature dumps, and exhaustive test inventories restate the diff; cut them. When a draft runs long, drop whole beats before trimming words; a reviewer who wants more detail reads the code. The walkthrough shape in SKILL.md ("Walking through a change") is for explanations and reviews; in a PR body it compresses to fit the page.
 
 ## The arc
 
@@ -63,7 +63,7 @@ Group proofs by the claim they prove, never a flat activity log ("we ran X, then
 
 ## Condense pass
 
-Evidence-dense is the right density; the failure mode is restating, not over-citing. After drafting, keep every claim and its evidence, cut restatement, scaffolding, and anything the diff already shows. A thorough draft usually condenses by half without losing a claim — then check it against the one-page budget: still over means whole beats go, not words.
+Evidence-dense is the right density; the failure mode is restating, not over-citing. After drafting, keep every claim and its evidence, cut restatement, scaffolding, and anything the diff already shows. A thorough draft usually condenses by half without losing a claim; then check it against the one-page budget: still over means whole beats go, not words.
 
 ## After the first push
 
