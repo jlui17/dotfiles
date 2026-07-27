@@ -207,8 +207,9 @@ global_skill_names() {
 # Include list (not a skip list): the voice-core fragments also emitted as a
 # Claude Code output style, which rides in the system prompt with adherence
 # reminders. CLAUDE.md keeps its copy of the same fragments because subagents
-# load CLAUDE.md but never see output styles.
-OUTPUT_STYLE_RULES=(style explaining-changes session-replies)
+# load CLAUDE.md but never see output styles. Keep this list minimal: every
+# listed fragment loads twice in a main session (CLAUDE.md + output style).
+OUTPUT_STYLE_RULES=(style session-replies)
 
 # Run one module through the skip list. A skipped module prints why (so an
 # install log never looks like a phase silently vanished) and still succeeds.
@@ -257,7 +258,7 @@ EOF
 # Exclude global-rules sections from this machine's generated ~/CLAUDE.md.
 # Slugs come from claude-code/rules.d/ filenames. Available:
 #   ${(j: :)${(f)"$(rule_section_slugs)"}}
-#SKIP_RULES=(review-feedback)
+#SKIP_RULES=(worker-cost)
 EOF
     echo "  Added the SKIP_RULES knob to ${DOTFILES_LOCAL_CONFIG:t} — edit it to exclude global-rules sections."
   fi
@@ -713,6 +714,16 @@ setup_opencode() {
   ensure_dir "$opencode_dir"
 
   backup_and_link "$DOTFILES_DIR/opencode/opencode.json" "$opencode_dir/opencode.json"
+
+  # Credential files (service account keys, tokens) referenced by opencode.json.
+  ensure_dir "$DOTFILES_DIR/opencode/env"
+  # A machine that provisioned keys at the target before env/ was repo-managed
+  # keeps them: adopt into the repo dir instead of stranding them in env.bak.
+  if [[ -d "$opencode_dir/env" && ! -L "$opencode_dir/env" ]]; then
+    local existing_keys=("$opencode_dir/env/"*(ND))
+    (( ${#existing_keys} )) && mv -n "${existing_keys[@]}" "$DOTFILES_DIR/opencode/env/"
+  fi
+  backup_and_link "$DOTFILES_DIR/opencode/env" "$opencode_dir/env"
   echo ""
 }
 
