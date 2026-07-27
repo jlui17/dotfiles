@@ -23,4 +23,4 @@ No session narrative, no meta-progress, no diary of how the draft evolved ("what
 
 ## Ongoing `docs/` pages: record the why, briefly
 
-A living doc notes why the current approach was chosen and what was rejected, in a sentence or two, so the next reader doesn't re-walk the dead end. One clause per rejected path ("polling rejected: webhook latency was already under 2s"), not a design history. Design/scoping docs are stricter: comparative post-mortems and decision history move to the PR with a pointer (see `tech-plans.md`); the one-clause why-chosen stays in both.
+A living doc notes why the current approach was chosen and what was rejected, in a sentence or two, so the next reader doesn't re-walk the dead end. One clause per rejected path ("polling rejected: webhook latency was already under 2s"), not a design history. Design/scoping docs are stricter: see `tech-plans.md`.

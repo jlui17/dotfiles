@@ -6,14 +6,6 @@ Anything the reader looks at before they read. Voice holds where words appear, b
 
 A visual drowning in prose has failed before layout is judged ("not what i was thinking. there's too much text"). Encode with position, size, color, and arrows; words are a last resort, only for what can't be shown. If a paragraph is explaining the picture, the picture isn't doing its job.
 
-## Self-explanatory to a zero-context reader
-
-"imagine the audience has no idea what this proposal or visualization is about": the artifact itself carries the minimal context (what's shown, what's being compared, why it matters). If it needs you standing next to it, it's incomplete.
-
-## Layout emphasis follows information priority
-
-The most important content dominates visually: biggest, first, centered. State (or ask for) the priority order, then check the layout mirrors it; a draft that gives prime space to a secondary item fails on that alone.
-
 ## A working diagram grammar
 
 The grammar that survived a week of drawio iteration; start here instead of rediscovering it.
@@ -26,7 +18,7 @@ The why: once the numbering exists, feedback arrives in that vocabulary ("X does
 
 ## Every label answers "what does this actually mean"
 
-Precise, domain-standard names, with a definitional tooltip or caption where the name alone doesn't carry it: "colony registry" with tooltip "a key-value store of where each colony keeps its data" beats "colony list". A vague label makes the reader guess; a wrong-register one makes them guess wrong.
+Precise, domain-standard names, with a definitional tooltip or caption where the name alone doesn't carry it: "colony registry" with tooltip "a key-value store of where each colony keeps its data" beats "colony list".
 
 ## Converge on the team's shared picture
 

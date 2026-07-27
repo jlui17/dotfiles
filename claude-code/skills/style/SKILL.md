@@ -1,6 +1,6 @@
 ---
 name: style
-description: Justin's voice, the full reference. The compact core is always-on (~/CLAUDE.md plus the Justin output style); this skill carries the full rules and per-artifact structure. ALWAYS read it before drafting anything substantial (PRs/commits, tech plans, design docs, RFCs, reports, Slack/reviews, code comments); never write those from memory. Per-artifact structure is in resources/. Read the matching one first.
+description: Justin's voice, the full reference. The compact core is always-on (~/CLAUDE.md plus the Justin output style); this skill carries the full rules and per-artifact structure. ALWAYS read it before drafting OR EDITING anything substantial (PRs/commits, tech plans, design docs, RFCs, reports, Slack/reviews, code comments); edit rounds count, and never write those from memory. Per-artifact structure is in resources/. Read the matching one first.
 ---
 
 # Voice: Justin
@@ -13,22 +13,15 @@ description: Justin's voice, the full reference. The compact core is always-on (
 
 **Applying feedback.** Wording/style feedback goes into the artifact immediately; noting it for later without editing the doc is a miss. Design *decisions* are the opposite: discuss and confirm first, then apply.
 
-**Where this lives.** A compact core of this voice sits in `claude-code/rules.d/10-style.md`, `11-explaining-changes.md`, and `13-session-replies.md` in the dotfiles repo. install.sh assembles those fragments into `~/CLAUDE.md` (every session, subagents included) and into the Claude Code output style `~/.claude/output-styles/justin.md` (system-prompt placement with adherence reminders; subagents never see output styles, which is why the CLAUDE.md copy stays). This skill is the full reference. When you change a core rule, update the fragments and this skill together so they don't drift, and re-run install.sh to land it.
+**Where this lives.** The compact core is always-on via `~/CLAUDE.md` (rules.d fragments in the dotfiles repo; the `claude-code` module skill has the flow), and the always-on copy is canonical where they overlap.
 
-**Default: cut to the bone, stay smooth.** As concise as the meaning allows while still reading smoothly and carrying the context the reader needs. This governs a one-line chat reply as much as a doc. Cut the dead weight ruthlessly:
-
-- **Filler**: `just`, `really`, `basically`, `actually`, `simply`, `literally`, "in order to", "the fact that".
-- **Pleasantries**: `sure`, `of course`, `happy to`, "great question", "let me", "I'll go ahead and".
-- **Hedging**: "I think maybe", "it might be worth", "perhaps we could" (state confidence + its assumption instead, #13).
-- Any word that doesn't change meaning.
-
-But keep the small words that make a sentence flow (articles, connectives): this is lean, **not telegraphic**. A fragment is fine where it reads naturally, never as the house style. When in doubt, plainer and shorter.
+**Default: cut to the bone, stay smooth.** As concise as the meaning allows while still reading smoothly and carrying the context the reader needs; this governs a one-line chat reply as much as a doc. Cut filler, pleasantries, and hedging (state confidence + its assumption instead, #13), and any word that doesn't change meaning. But keep the small words that make a sentence flow (articles, connectives): this is lean, **not telegraphic**. A fragment is fine where it reads naturally, never as the house style. When in doubt, plainer and shorter.
 
 **Never a wall of text.** Say it in one sentence before you spend a paragraph; break long blocks into short paragraphs or bullets, because readers skim and a dense block gets skipped. Two skim tests: a reader who reads only the bold gets every decision ("**V1: poll, don't listen.**"), and each paragraph carries one idea (#8 at paragraph scale). A bullet over ~1.5 lines splits in two or becomes prose; a multi-step flow is a numbered list, never a comma chain. Spacious (sectioned, with whitespace) is the goal; dense (unbroken) is the failure.
 
 ## The voice (constant)
 
-Holds everywhere by default: plan, PR, comment, Slack.
+Holds everywhere by default: plan, PR, comment, Slack. Numbers are stable IDs; gaps are deliberate cuts, not drift.
 
 1. **Code identifiers are sentence subjects.** Name the actor, give it the verb.
    - Yes: "`processTrace` reads it into a single `traceUserId` and passes it to `createRun`."
@@ -37,14 +30,8 @@ Holds everywhere by default: plan, PR, comment, Slack.
 2. **Current behavior, then the delta: "Today X → we'll do Y."** Anchor every change to what exists now.
    - "Today it only forwards the org ID. We will also forward the creator's user ID."
 
-3. **Append the reason, never its own sentence.** Use `because`/`since`/`so`/`which`.
-   - "and passes it to `createRun`, since that's the only place we can resolve the creator"
-
 4. **Point at the concrete artifact, pitched to the reader.** Every claim names the file/line/function/metric/column, usually parenthetical, citing what *this* reader can resolve: file:line for a code reviewer, the number for a report reader (no internal columns or script paths a non-engineer can't open).
    - Reviewer: "(`activities.ts:1108`)". Non-technical report: "~931K chars (5% of the corpus)", not "summed from `note_full` extracted on the VM".
-
-5. **Pre-empt the obvious objection in one clause.** Answer the reader's next question first.
-   - "There's no frontend changes required since the Records table already renders..."
 
 6. **Honest about scope and limits. No politeness-hedging.** State weaknesses plainly (with why they're acceptable when they are), bold if load-bearing.
    - "**Key Limitation: Existing Trace Records are not backfilled.**"
@@ -79,14 +66,6 @@ Holds everywhere by default: plan, PR, comment, Slack.
     - Yes: "the runner whose local build artifact is gone while the registry tag survives"
     - No: "on a clean host" (reads as a fresh machine; the real condition was a long-lived runner missing one cached file, the opposite of "fresh")
 
-15. **Pitch to the reader's stated altitude, both directions.** #9 sets the newcomer floor; this is the dial. When the reader says what they know, calibrate to it: "assume I'm not familiar" means purpose-level plain language with a concrete example; "I know it at a high level, walk me through the validation" means skip the primer and go deep on the asked part. Iterating on concepts stays at concept level, not implementation. Unstated and the reader is confused: drop to purpose level with a concrete example.
-    - Yes (reader said they know the system): straight into the validation steps and why each can fail, no architecture recap.
-    - No: "Gitea is our git forge; the backup runner snapshots it via restic..." (re-explains what the reader said they already know)
-
-16. **Answer the asked question first.** Lead with the verdict; caveats after, and only the load-bearing ones (a caveat-dump buries the answer, and over-flagged risk reads as noise). Distinct from #13: still state confidence and its assumption, after the verdict, not instead of it.
-    - Yes: "Yes: the run completed and Fable 5 was answering. One caveat that matters: grading used the old prompt."
-    - No: "Before answering, note that QA hasn't run, the snapshot may be stale, and retention may have purged the logs..." (three caveats in, the reader still doesn't know if it worked)
-
 17. **Say the thing plainly and directly; no clever prose.** An aphoristic line the reader must decode loses to a plain declarative one, even when the plain version is less smooth: it reads as AI writing. Section leads too: a header like "Contracts, not designs" means nothing until decoded. Distinct from #7: that bans hype; this bans cleverness.
     - Yes: "Here are some of the failure points we see today and some predicted ones that we should cover from day 1."
     - No: "A handful of failure points buy most of our reliability from day 1."
@@ -115,32 +94,11 @@ When breaking down a problem or explaining engineering work (a review, a PR walk
 
 Pair every behavioral claim with the code that backs it: a claim with no code is unverifiable, a code reference with no behavior is noise. Don't assume the reader knows the identifiers you cite: the first time you name a variable, path, function, or constant, say what it is in a clause, because a reader who can't decode the names can't follow the argument.
 
-Guidelines, not a checklist: include each part only when the information exists (a change too simple to have an underlying concept skips that part, a problem with no real alternatives skips that part); never pad to fill the arc. Per-artifact treatment (PR descriptions especially) is in `resources/pr-descriptions.md`; a compact core rides in `rules.d/10-style.md`. Update them together so they don't drift.
+Guidelines, not a checklist: include each part only when the information exists (a change too simple to have an underlying concept skips that part, a problem with no real alternatives skips that part); never pad to fill the arc. Per-artifact treatment (PR descriptions especially) is in `resources/pr-descriptions.md`.
 
-### Walking through a change (what a good explanation of a code change is)
+### Walkthroughs and scope summaries
 
-The arc above orders the argument; this is the shape when the deliverable is a walkthrough of a change (a PR, a stacked pair, a subsystem); the compact core is `rules.d/11-explaining-changes.md`, keep in sync:
-
-- **Open with the one-sentence frame that makes the parts make sense**, the division of responsibility or mental model ("X ships a mechanism with no opinions; Y ships the policy"), before any detail. If pieces connect (stacked PRs, sibling modules), name the connective tissue (imports, a shared golden, a base branch) in the same breath.
-- **Narrate in runtime order, not diff order.** Pick one request or datum and follow it through the chain step by step. File-by-file and commit-by-commit orderings force the reader to reassemble the flow themselves.
-- **Each step: bold behavioral claim, then the contract.** One bolded sentence saying what the step means for the system, the method signature or type verbatim in a code block, then the process consequence (what fails where, what can't drift, what an operator sees when it goes wrong).
-- **Signatures and contracts, not implementation.** Show an impl detail only when it carries an architectural or process decision ("resolved fresh per launch, no cache, until colony-579"; "refuses before an execution is spent"). Everything else stays behind the signature.
-- **Deliberate absences are design decisions: explain them like ones.** What the change intentionally does not do, and the reason ("config vars don't vary by service: `SNAPSHOT_SERVICE` picks the roster entry"; "nothing decodes yet, by design, so the deploy is inert").
-- **Name the ownership boundaries**, which component owns which vars, names, rows ("the starter owns job control, `launchenv.go` owns identity, the tagged struct owns config"), so the reader knows where the next change lands.
-- **Compress the plumbing to one closing line.** Dockerfiles, CI filters, flag wiring: name them as being in service of the chain, never walk them.
-
-### Scope summaries: the signature profile
-
-When the ask is a **summary of what changed**, scope and shape rather than a walkthrough ("summarize what changed", "what's the scope of this diff"), don't narrate; profile the signatures. The reader wants to reconstruct the diff's skeleton in one skim:
-
-- **Code blocks grouped by module/component**, in dependency or runtime order, one line per declaration.
-- **Each line: the signature verbatim, marked `+`/`~`/`-`** (added / changed / removed). On a `~`, note the old form inline: `// was (cfg *OrgConfig, ts time.Time)`.
-- **A trailing comment only where the signature can't carry the meaning** ("PK read, no org scoping"; "*int64: legacy rows are NULL"), never restating what the types already say.
-- **Structs/interfaces compress to the changed members**, not the whole definition: `~ Workflow { ... ConfigVersion *int64 ... }  // + field`.
-- **Close with what's untouched** (the files/modules a reviewer might expect to move but didn't) **and one or two prose lines on what fell out** (a deletion enabled, a dependency added), since consequences don't show in signatures.
-- Tests, fixtures, and README churn get one collective closing line, not per-file entries.
-
-This is the complement of the walkthrough above: the walkthrough sells the behavior, the profile maps the surface area. When the ask is ambiguous, the walkthrough is the default; switch to the profile when the reader says "scope", "shape", or "what changed where".
+Both shapes are always-on in `~/CLAUDE.md` ("What a good explanation of a code change is"), and that copy is canonical: the **walkthrough** (one-sentence frame, runtime order, bold behavioral claim + contract per step, deliberate absences and ownership boundaries, plumbing compressed to a closing line) when explaining a change, the **signature profile** (declarations marked `+`/`~`/`-`, grouped by module, closing with what's untouched) when the ask is scope or shape. The walkthrough is the default; switch to the profile when the reader says "scope", "shape", or "what changed where".
 
 ## Registers (flex by artifact)
 
@@ -163,26 +121,6 @@ Same voice, different density; read the matching resource before drafting. Every
 
 Beyond the rules' own "No" examples:
 
-- Abstract nominalizations where a verb works ("perform a resolution of" → "resolve").
-- Marketing tone, exclamation, praising the design.
 - Over-citation: enumerating every file, test, and pass-count when one link plus the central identifier would do. Reads as AI over-justification, especially in chat.
-- Telegraphing a casual message into one-claim-per-line fragments. In chat, write the way you'd say it (see `resources/slack.md`).
 - Bare file/symbol name-drops ("same pattern in `foo.py` and `bar.py`") with no clause saying what they are or why they matter. Name for findability, but define and justify.
-- A verification/test section as a flat activity log ("ran X, then Y") instead of grouped by claim, each entry opening on the broken behavior in plain terms; or detail spent on test mechanics (DeepEqual, fixtures) instead of the architectural invariant they prove (full treatment: `resources/pr-descriptions.md`).
-
-## Self-check
-
-- Actor of each sentence = the actual code thing doing the work?
-- Showed "today → change", not only the change?
-- Every claim anchored to file/function/column?
-- Bolded exactly the load-bearing claims (not decoration)?
-- Cut every "just/really/basically" and politeness hedge?
-- Honest about limits and what's *not* covered?
-- No em-dashes: asides recast?
-- One idea per sentence: clause-stacks split? (Exception: casual chat flows; see `resources/slack.md`.)
-- No wall of text: shortest form used, long blocks broken into paragraphs/bullets?
-- Pitched right: newcomer context added, dead-obvious cut, altitude matched to what the reader said they know?
-- Stands alone, per doc and per section: system oriented up front; every cited file/symbol defined and justified, not bare-named; no section borrowing a noun only an earlier section defined (verification entries open on the broken behavior in plain terms)?
-- Each load-bearing word means what the reader will assume, or is defined inline?
-- Led with the verdict, then confidence + the assumption it rests on, keeping only the load-bearing caveats?
-- In chat: linked the one artifact and named only the central identifier(s), not a catalog of files/tests/counts?
+- A verification/test section as a flat activity log instead of grouped by claim (full treatment: `resources/pr-descriptions.md`).
