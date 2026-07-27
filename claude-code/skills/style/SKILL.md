@@ -13,7 +13,7 @@ description: Justin's voice, the full reference. The compact core is always-on (
 
 **Applying feedback.** Wording/style feedback goes into the artifact immediately; noting it for later without editing the doc is a miss. Design *decisions* are the opposite: discuss and confirm first, then apply.
 
-**Where this lives.** A compact core of this voice sits in `claude-code-skills/rules.d/10-style.md` and `11-explaining-changes.md` in the dotfiles repo. install.sh assembles those fragments into `~/CLAUDE.md` (every session, subagents included) and into the Claude Code output style `~/.claude/output-styles/justin.md` (system-prompt placement with adherence reminders; subagents never see output styles, which is why the CLAUDE.md copy stays). This skill is the full reference. When you change a core rule, update the fragments and this skill together so they don't drift, and re-run install.sh to land it.
+**Where this lives.** A compact core of this voice sits in `claude-code/rules.d/10-style.md` and `11-explaining-changes.md` in the dotfiles repo. install.sh assembles those fragments into `~/CLAUDE.md` (every session, subagents included) and into the Claude Code output style `~/.claude/output-styles/justin.md` (system-prompt placement with adherence reminders; subagents never see output styles, which is why the CLAUDE.md copy stays). This skill is the full reference. When you change a core rule, update the fragments and this skill together so they don't drift, and re-run install.sh to land it.
 
 **Default: cut to the bone, stay smooth.** As concise as the meaning allows while still reading smoothly and carrying the context the reader needs. This governs a one-line chat reply as much as a doc. Cut the dead weight ruthlessly:
 
