@@ -7,7 +7,9 @@ description: Harden a solution by looping two review subagents (directional + co
 
 Two reviewers, every round. Directional judges the *approach* vs problem. Correctness judges the *implementation* vs approach. Catches both a sound plan built buggy and a clean build of the wrong plan.
 
-Skip for trivial changes (rename, typo, one-line config). Loop costs two subagent runs per round.
+This is a fix-and-re-review loop; for a review-only third-party pass with no fixes, run the reviewers once and report instead.
+
+Skip for trivial changes (rename, typo, one-line config).
 
 ## Loop
 
@@ -18,35 +20,25 @@ Skip for trivial changes (rename, typo, one-line config). Loop costs two subagen
 
 ## Step 1 — Context packet
 
-Reviewers lack your conversation history. Packet must stand alone. Both get the same one:
+Reviewers lack your conversation history; the packet must stand alone:
 
 - **Problem.** What's wrong/needed, concrete. Point at symptom, not your framing.
 - **Desired outcome.** What "solved" looks like.
 - **Approach.** How the solution solves it, and *why this way* — key decisions, rejected alternatives.
 - **Implementation.** The change. `git diff` + paths to read in full. Enough to verify, not a tour.
-- **Constraints.** What bounds the solution: compat, perf budget, deadline, "can't touch X", patterns to match. Always include the repo's comment/documentation conventions (or a pointer to them), so reviewers phrase directions in terms of code, tests, and docs rather than prose at the site.
-
-Example packet:
-
-- **Problem:** Trace records show "Created By" as "Anonymous" instead of the user who created them.
-- **Desired outcome:** the record's creator resolves to the real user wherever we have one.
-- **Approach:** resolve attribution in `processTrace` at ingest, preferring the label's `user_id` and falling back to the run owner. Chose ingest-time over a read-time join because the Collector already has both IDs in hand (rejected: backfill, doesn't help new records).
-- **Implementation:** `git diff main` touches `activities.ts` and `runs.ts`; read `processTrace` and `createRun` in full.
-- **Constraints:** can't touch the Collector; existing records won't be backfilled.
+- **Constraints.** What bounds the solution: compat, perf budget, deadline, "can't touch X", patterns to match.
 
 ## Step 2 — Spawn two reviewers
 
 Both at once, read-only. Neither sees the other's output — independence is the point, else they anchor.
 
-Sample questions below are a prod, not a checklist. Tell each reviewer: **think what this problem and solution most need scrutinized, review that.** Top finding is usually one no generic checklist names.
+Sample questions below are a prod, not a checklist. Tell each reviewer: **think what this problem and solution most need scrutinized, review that.**
 
 ### Directional — right approach?
 
 Judge intent and approach vs problem, not code. Starters:
 
-- How does this approach tackle the problem? Solves the stated problem or an adjacent one?
 - Simplest approach that fully works? Cheaper/smaller solution exist?
-- Tradeoffs conscious? What does it give up?
 - What does it fail to handle — edge cases, scale, failure modes out of reach?
 - Different framing that dissolves the problem instead of solving it?
 
@@ -55,18 +47,10 @@ Judge intent and approach vs problem, not code. Starters:
 Take approach as given, validate the implementation delivers it. Starters:
 
 - Follows the stated approach or quietly diverges?
-- Where wrong — logic, edge cases, off-by-one, wrong condition, missed case?
 - Parts claiming to do X actually do X? Trace load-bearing paths.
-- Breaks under concurrency, failure, empty input, large input?
-- **One fact duplicated across places — did every copy move?** When the diff changes a value, name, rule, or assumption that's represented in more than one place, a parallel copy can silently keep the old version and drift out of agreement. This is general across code and infra: a constant repeated in two modules; a string that must match between producer and consumer (event name, API field, status enum, error code, route path); a rule enforced in both client and server; a DB schema vs the ORM model or migration that mirrors it; a default in code vs its doc or a test's expected value; a `switch`/`match` that must cover every variant of a type; a config pin vs its `${VAR:-default}` fallback. The stale copy lives *outside* the diff, so a reviewer who reads only the changed lines can't see it — grep the repo for the concept, not just the diff. Confirm every copy moved together, or that a mechanism (a single source of truth, codegen, a drift-guard test, an exhaustiveness/compiler check) makes divergence impossible.
+- **One fact duplicated across places — did every copy move?** When the diff changes a value, name, or rule that's represented in more than one place, the stale copy lives *outside* the diff, so reading only the changed lines can't catch it. Grep the repo for the concept, not the diff: a string that must match between producer and consumer, a rule enforced in both client and server, a schema vs the migration that mirrors it. Confirm every copy moved, or a mechanism (single source of truth, drift-guard test, exhaustiveness check) makes divergence impossible.
 
-**Test coverage — explicit charge, not optional.** Verify the change is actually tested and the tests are real:
-
-- Is the load-bearing logic covered? Name what's untested — branches, edge cases, error paths the implementation added but no test touches.
-- Do the tests exercise the real implementation, or do they assert on mocks/stubs and prove nothing? A test that mocks the thing under test is theater.
-- Would a test fail if the implementation were wrong? Mutate the logic in your head — if the test still passes, it's not testing logic, it's testing that the code runs.
-- Tests assert on meaningful outcomes, not just "no exception thrown" or a trivial truthy check?
-- Missing or weak coverage on a load-bearing path is `must-fix`, not a `nit`.
+**Test coverage — explicit charge, not optional.** A test that mocks the thing under test is theater. Missing or weak coverage on a load-bearing path is `must-fix`, not a `nit`.
 
 ### Output contract
 
@@ -80,7 +64,9 @@ Findings in this shape so triage is mechanical:
 
 No `must-fix`/`should-fix` → reviewer says **"no actionable feedback"** outright. No praise, no padding. That phrase ends the loop.
 
-Example finding (one filled-in shape; `direction` points where to go, not the patch, and `why` is the consequence, not a restatement of `what`):
+If asked to deliver findings via Hunk (the `/hunk` inline-comment reviewer) and no live Hunk session exists or it can't load the worktree, return findings as structured text in this shape; don't retry Hunk.
+
+Example finding:
 
 - **severity:** must-fix
 - **location:** `processTrace` (`activities.ts:1108`)
@@ -92,25 +78,23 @@ Example finding (one filled-in shape; `direction` points where to go, not the pa
 
 Fix every `must-fix` and `should-fix`. Default is fix, not debate.
 
-Decline only when balance favors leaving it — fix costs more than flaw, breaks a constraint, or reviewer missed packet context. On decline, **write the finding + reason in your response.** Silent skip reads as "addressed everything" when it wasn't.
+Decline only when balance favors leaving it — fix costs more than flaw, breaks a constraint, or reviewer missed packet context. On decline, **write the finding + reason in your response**; a silent skip reads as "addressed everything".
 
 `nit` optional — take the near-free ones, drop the rest.
 
-Fix the cause, not the symptom. A patch that silences the finding without fixing the cause returns next round.
+Fix the cause, not the symptom; a silencing patch returns next round.
 
-A `direction` is a target, not a patch. A finding that asks to "document" or "state" something goes through the fix hierarchy: encode it in code, pin it with a test, put cross-component contracts in the README/docs at the *honoring* side; a code comment is the last resort and must pass the repo's comment rules on its own. Lifetime picks the venue: persistent context goes in the package's docs, PR-lifetime context (deploy status, merge order, what exists yet) goes in the PR — always the PR, never the package.
-
-After applying fixes, re-sweep every comment the fixes added or touched against the comment rules — and on any refactor round, sweep surviving comments for drift against the code they described.
+Comment findings follow the global code-comments rule in `~/CLAUDE.md`: reviewers propose DELETE, not rewrites, for comments that fail its bar.
 
 ## Step 4 — Loop or exit
 
 **Exit** when both reviewers say "no actionable feedback" same round. Converged.
 
-**Else** re-run from step 1. Same packet + a **changelog**: what changed, and why for any decline. Lets reviewers verify fixes instead of re-deriving, and stops resolved findings resurfacing.
+**Else** re-run from step 1. Same packet + a **changelog**: what changed, and why for any decline, so reviewers verify fixes instead of re-deriving.
 
 ## Guardrails
 
-- **Cap rounds at 4.** Most converge in 1–2. Backstop against a loop that won't settle — still churning after four usually means an unstated disagreement a human breaks. Trades runaway cost vs convergence room; guessed, not measured, so raise if a task class needs more. Hit the cap → **stop, surface unresolved findings to user.** No silent loop, no false done.
+- **Cap rounds at 4.** Still churning after four usually means an unstated disagreement a human breaks. Hit the cap → **stop, surface unresolved findings to user.** No silent loop, no false done.
 - **No scope widening.** Reviewers review the solution to *this* problem. A rewrite of an untouched neighbor is out of scope unless the change broke it.
-- **"Wrong" ≠ "different."** A directional reviewer's preferred approach is a finding only if the current one is worse, not merely other. Weigh it, don't reflex-adopt.
+- **"Wrong" ≠ "different."** A directional reviewer's preferred approach is a finding only if the current one is worse, not merely other.
 - **Independence each round.** Reviewers see the solution + changelog, never each other's reports.
