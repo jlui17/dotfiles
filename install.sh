@@ -31,9 +31,9 @@ IS_WORK_COMPUTER=false
 #   SKIP_PACKAGES — entries in COMMON_PACKAGES
 #   SKIP_APPS     — name column of GUI_APPS
 #   SKIP_RULES    — global-rules sections (agent-skills/rules.d/ slugs) left
-#                   out of this machine's generated ~/CLAUDE.md / ~/AGENTS.md
+#                   out of this machine's generated ~/CLAUDE.md
 #   SKIP_SKILLS   — global skills (agent-skills/skills/ dirs) not linked into
-#                   this machine's agent roots
+#                   this machine's ~/.claude
 #   KEEP_PLUGINS  — machine-local Claude Code plugins (plugin@marketplace) the
 #                   manifest sync must not uninstall
 SKIP_MODULES=()
@@ -205,14 +205,6 @@ global_skill_names() {
   done
 }
 
-# Rules kept out of one generated output, repo-wide (not per-machine — that knob
-# is SKIP_RULES in .dotfiles-local). Both assemblers start from the full rules.d/
-# set; a slug here drops that section from just that one file. orchestration
-# names Claude's model tiers and Task tool, so it's Claude-only: excluded from
-# AGENTS.md, which other coding agents read.
-CLAUDE_MD_SKIP_RULES=()
-AGENTS_MD_SKIP_RULES=(orchestration worker-cost)
-
 # Include list (not a skip list): the voice-core fragments also emitted as a
 # Claude Code output style, which rides in the system prompt with adherence
 # reminders. CLAUDE.md keeps its copy of the same fragments because subagents
@@ -263,8 +255,8 @@ EOF
   if ! grep -q "SKIP_RULES" "$DOTFILES_LOCAL_CONFIG" 2>/dev/null; then
     cat >> "$DOTFILES_LOCAL_CONFIG" <<EOF
 
-# Exclude global-rules sections from this machine's generated ~/CLAUDE.md and
-# ~/AGENTS.md. Slugs come from agent-skills/rules.d/ filenames. Available:
+# Exclude global-rules sections from this machine's generated ~/CLAUDE.md.
+# Slugs come from agent-skills/rules.d/ filenames. Available:
 #   ${(j: :)${(f)"$(rule_section_slugs)"}}
 #SKIP_RULES=(review-feedback)
 EOF
@@ -273,7 +265,7 @@ EOF
   if ! grep -q "SKIP_SKILLS" "$DOTFILES_LOCAL_CONFIG" 2>/dev/null; then
     cat >> "$DOTFILES_LOCAL_CONFIG" <<EOF
 
-# Global skills not linked into this machine's agent roots. Names come from
+# Global skills not linked into this machine's ~/.claude. Names come from
 # agent-skills/skills/ directories. Available:
 #   ${(j: :)${(f)"$(global_skill_names)"}}
 #SKIP_SKILLS=(gog)
@@ -325,12 +317,6 @@ validate_skip_lists() {
   local skill_names=($(global_skill_names))
   for entry in "${SKIP_SKILLS[@]}"; do
     (( ${skill_names[(Ie)$entry]} )) || echo "⚠️  SKIP_SKILLS: unknown skill '$entry' (ignored)."
-  done
-  for entry in "${CLAUDE_MD_SKIP_RULES[@]}"; do
-    (( ${rule_slugs[(Ie)$entry]} )) || echo "⚠️  CLAUDE_MD_SKIP_RULES: unknown rules section '$entry' (ignored)."
-  done
-  for entry in "${AGENTS_MD_SKIP_RULES[@]}"; do
-    (( ${rule_slugs[(Ie)$entry]} )) || echo "⚠️  AGENTS_MD_SKIP_RULES: unknown rules section '$entry' (ignored)."
   done
   for entry in "${OUTPUT_STYLE_RULES[@]}"; do
     (( ${rule_slugs[(Ie)$entry]} )) || echo "⚠️  OUTPUT_STYLE_RULES: unknown rules section '$entry' (ignored)."
@@ -801,16 +787,14 @@ setup_pi() {
 #  PHASE 6b — Agent skills & commands
 # ──────────────────────────────────────────────
 
-# Build the global rules file from the rules.d/ fragments, in filename order.
-# Both outputs start from the full set; a fragment is dropped if its slug is in
-# the machine's SKIP_RULES (per-machine, .dotfiles-local) or in this output's
-# repo-wide skip list (out_skips, e.g. AGENTS_MD_SKIP_RULES). Generated instead
-# of symlinked because per-machine section exclusion needs a per-machine
-# artifact — a symlink is all-or-nothing. 99-local.md (gitignored) rides along
-# for machine-only rules. Quiet when the output is already current.
+# Build the global rules file from the rules.d/ fragments, in filename order,
+# dropping fragments whose slug is in the machine's SKIP_RULES (per-machine,
+# .dotfiles-local). Generated instead of symlinked because per-machine section
+# exclusion needs a per-machine artifact — a symlink is all-or-nothing.
+# 99-local.md (gitignored) rides along for machine-only rules. Quiet when the
+# output is already current.
 assemble_global_rules() {
-  local dst="$1"; shift
-  local -a out_skips=("$@")
+  local dst="$1"
   local fragment slug tmp
   tmp="$(mktemp)"
   {
@@ -819,7 +803,6 @@ assemble_global_rules() {
     for fragment in "$DOTFILES_DIR/agent-skills/rules.d/"*.md(N); do
       slug="${${${fragment:t}%.md}#*-}"
       (( ${SKIP_RULES[(Ie)$slug]} )) && continue
-      (( ${out_skips[(Ie)$slug]} )) && continue
       echo ""
       cat "$fragment"
     done
@@ -879,44 +862,35 @@ EOF
   install_generated_file "$tmp" "$dst"
 }
 
-# Fan the agent-skills module out to every agent root. ~/.claude wires up
-# Claude Code; ~/.agents wires up other coding agents that read the same
-# layout. Same source, multiple consumers — add a root here and it inherits
-# the whole module.
+# Claude Code setup: global skills, slash commands, rules, and the output
+# style, all under ~/.claude. Other harnesses get their own modules with
+# harness-native config (see setup_pi, setup_opencode) if and when needed.
 setup_agent_skills() {
-  echo "==> Agent skills & commands..."
+  echo "==> Claude Code skills & commands..."
   local module_dir="$DOTFILES_DIR/agent-skills"
-  local agent_roots=("$HOME/.claude" "$HOME/.agents")
-  local root skipped
+  local skipped
 
   for skipped in "${SKIP_SKILLS[@]}"; do
     echo "  $skipped skipped (SKIP_SKILLS)."
   done
 
-  for root in "${agent_roots[@]}"; do
-    local commands_dir="$root/commands"
-    ensure_dir "$commands_dir"
-    for cmd_file in "$module_dir/commands/"*.md(N); do
-      [[ -f "$cmd_file" ]] || continue
-      backup_and_link "$cmd_file" "$commands_dir/$(basename "$cmd_file")"
-    done
-
-    local skills_dir="$root/skills"
-    ensure_dir "$skills_dir"
-    for skill_dir in "$module_dir/skills/"*/(N); do
-      [[ -d "$skill_dir" ]] || continue
-      (( ${SKIP_SKILLS[(Ie)$(basename "$skill_dir")]} )) && continue
-      backup_and_link "${skill_dir%/}" "$skills_dir/$(basename "$skill_dir")"
-    done
+  local commands_dir="$HOME/.claude/commands"
+  ensure_dir "$commands_dir"
+  for cmd_file in "$module_dir/commands/"*.md(N); do
+    [[ -f "$cmd_file" ]] || continue
+    backup_and_link "$cmd_file" "$commands_dir/$(basename "$cmd_file")"
   done
 
-  # One canonical rules source, generated under both names agents look for in
-  # $HOME: same fragments, each output minus its per-output skip list and this
-  # machine's SKIP_RULES.
-  assemble_global_rules "$HOME/CLAUDE.md" "${CLAUDE_MD_SKIP_RULES[@]}"
-  assemble_global_rules "$HOME/AGENTS.md" "${AGENTS_MD_SKIP_RULES[@]}"
+  local skills_dir="$HOME/.claude/skills"
+  ensure_dir "$skills_dir"
+  for skill_dir in "$module_dir/skills/"*/(N); do
+    [[ -d "$skill_dir" ]] || continue
+    (( ${SKIP_SKILLS[(Ie)$(basename "$skill_dir")]} )) && continue
+    backup_and_link "${skill_dir%/}" "$skills_dir/$(basename "$skill_dir")"
+  done
 
-  # Claude Code only — no other agent root reads output styles.
+  assemble_global_rules "$HOME/CLAUDE.md"
+
   ensure_dir "$HOME/.claude/output-styles"
   assemble_output_style "$HOME/.claude/output-styles/justin.md"
   echo ""

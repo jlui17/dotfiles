@@ -1,23 +1,22 @@
 ---
 name: agent-skills
-description: Maintains the agent-skills module: global skills, slash commands, and rules.d/ instruction fragments shared across coding agents, fanned out from one source to ~/.claude and ~/.agents. Use when adding or editing a global skill, slash command, or CLAUDE.md/AGENTS.md rule, or when wiring up a new agent root.
+description: Maintains the agent-skills module: Justin's global Claude Code setup — skills, slash commands, rules.d/ instruction fragments, and the output style, deployed to ~/.claude. Use when adding or editing a global skill, slash command, CLAUDE.md rule, or the output style.
 ---
 
-One module, many agents. `agent-skills/` holds the global skills and slash commands Justin uses everywhere, authored once and symlinked into every agent root: `~/.claude` is where Claude Code discovers skills/commands, `~/.agents` is the shared root other coding agents read. Both get the identical module contents — a single canonical set of agent capabilities, not a Claude-Code-only config — and supporting another agent means adding its root to the install, not re-authoring anything.
+One module, one consumer: Claude Code. `agent-skills/` holds the global skills, slash commands, and instruction rules Justin uses in every Claude Code session, deployed to `~/.claude`. Other harnesses get their own modules with harness-native config (`pi/`, `opencode/`); if one later needs the shared rules, add a sink over the same `rules.d/` fragments (the deleted `~/AGENTS.md` assembly in git history is the template) rather than a parallel rules source.
 
 **Layout:**
-- `agent-skills/commands/*.md` — global slash commands (one file per command).
-- `agent-skills/skills/<name>/SKILL.md` — global skills (one dir per skill).
-- `agent-skills/rules.d/NN-<slug>.md` — global instruction rules, one section per file (the `NN-` prefix orders them, the slug names them). install.sh assembles them into generated `~/CLAUDE.md` and `~/AGENTS.md`, skipping any slugs in this machine's `SKIP_RULES` (`.dotfiles-local`). Generated, not symlinked, because per-machine section exclusion needs a per-machine artifact. `99-local.md` is gitignored for machine-only rules.
-  - **Per-output composition:** both `~/CLAUDE.md` and `~/AGENTS.md` assemble the full `rules.d/` set, then each drops the slugs in its own repo-wide skip list (`CLAUDE_MD_SKIP_RULES` / `AGENTS_MD_SKIP_RULES` in install.sh). Opt-out, so a new fragment reaches both outputs unless a list excludes it. Use it for rules specific to one agent (e.g. `worker-cost` names Claude model tiers and `orchestration` the Agent tool, so both are in `AGENTS_MD_SKIP_RULES`). This is orthogonal to the per-machine `SKIP_RULES` in `.dotfiles-local`, which subtracts from both outputs on one box.
+- `agent-skills/commands/*.md` — global slash commands (one file per command), symlinked into `~/.claude/commands/`.
+- `agent-skills/skills/<name>/SKILL.md` — global skills (one dir per skill), symlinked into `~/.claude/skills/`.
+- `agent-skills/rules.d/NN-<slug>.md` — global instruction rules, one section per file (the `NN-` prefix orders them, the slug names them). install.sh assembles them into the generated `~/CLAUDE.md`, skipping any slugs in this machine's `SKIP_RULES` (`.dotfiles-local`). Generated, not symlinked, because per-machine section exclusion needs a per-machine artifact. `99-local.md` is gitignored for machine-only rules.
+- The voice-core fragments listed in `OUTPUT_STYLE_RULES` (install.sh) are additionally assembled into the Claude Code output style `~/.claude/output-styles/justin.md`, selected via `outputStyle` in `claude-code/settings.json`. `~/CLAUDE.md` keeps its copy of the same fragments because subagents load CLAUDE.md but never see output styles.
 
-**Install flow** (install.sh `setup_agent_skills`): symlinks `commands/*.md` and `skills/<name>/` into each root in `agent_roots`, then `assemble_global_rules` regenerates both rules files. Backs up existing non-symlinks; idempotent. Skills named in this machine's `SKIP_SKILLS` (`.dotfiles-local`) are not linked — like `SKIP_RULES` but for whole skills; removing an already-linked skill from a machine also means deleting its symlinks from each root manually (install.sh never prunes).
+**Install flow** (install.sh `setup_agent_skills`): symlinks `commands/*.md` and `skills/<name>/` into `~/.claude`, then regenerates `~/CLAUDE.md` and the output style. Backs up existing non-symlinks; idempotent. Skills named in this machine's `SKIP_SKILLS` (`.dotfiles-local`) are not linked — like `SKIP_RULES` but for whole skills; removing an already-linked skill from a machine also means deleting its symlink from `~/.claude/skills` manually (install.sh never prunes).
 
-**Editing a rule means re-running install.sh.** Edits to `rules.d/` reach `~/CLAUDE.md` and `~/AGENTS.md` only on the next `./install.sh` run (generated, not symlinked). Never edit the generated files directly; the next run overwrites them.
+**Editing a rule means re-running install.sh.** Edits to `rules.d/` reach `~/CLAUDE.md` and the output style only on the next `./install.sh` run (generated, not symlinked). Never edit the generated files directly; the next run overwrites them.
 
 **Tasks:**
 - Any add/edit (command, skill, rule fragment) lands by re-running `./install.sh`.
-- Remove a capability: delete the file/dir; remove stale symlinks from each agent root manually (install.sh only links, never prunes).
-- Support a new agent: append its config root to `agent_roots` in `setup_agent_skills`.
+- Remove a capability: delete the file/dir; remove the stale symlink from `~/.claude` manually (install.sh only links, never prunes).
 
-Note: this is a **repo maintenance** skill (lives in `.agents/skills/`, describes the module). The skills *inside* `agent-skills/skills/` are the **runtime** skills that get deployed to agents.
+Note: this is a **repo maintenance** skill (lives in `.claude/skills/`, describes the module). The skills *inside* `agent-skills/skills/` are the **runtime** skills that get deployed.
