@@ -218,6 +218,11 @@ do
   -- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
   -- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
+  -- Cycle buffers. <Tab> and <C-i> are the same keycode in most terminals, so this
+  -- costs the jumplist-forward motion; <C-o> back still works, and <C-t> covers tag jumps.
+  vim.keymap.set('n', '<Tab>', '<cmd>bnext<CR>', { desc = 'Next buffer' })
+  vim.keymap.set('n', '<S-Tab>', '<cmd>bprevious<CR>', { desc = 'Previous buffer' })
+
   -- Keybinds to make split navigation easier.
   --  Use CTRL+<hjkl> to switch between windows
   --
