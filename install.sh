@@ -128,6 +128,7 @@ GUI_APPS=(
   "Hunk|command -v hunk|brew tap modem-dev/tap 2>/dev/null; brew install hunk|npm i -g hunkdiff|npm i -g hunkdiff"
   "OpenCode|command -v opencode|brew install opencode||npm i -g opencode-ai"
   "Pi|command -v pi|brew install pi-coding-agent|npm i -g @earendil-works/pi-coding-agent|npm i -g @earendil-works/pi-coding-agent"
+  "Herdr|command -v herdr|brew install herdr|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\"|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\""
 )
 
 # Ordered module registry: name:function. main() runs every entry through
@@ -146,6 +147,7 @@ MODULES=(
   omarchy:setup_omarchy
   opencode:setup_opencode
   pi:setup_pi
+  herdr:setup_herdr
   claude-code:setup_claude_code
   gitignore:setup_gitignore
   git-config:setup_git_config
@@ -794,7 +796,20 @@ setup_pi() {
 }
 
 # ──────────────────────────────────────────────
-#  PHASE 6b — Agent skills & commands
+#  PHASE 6b — Herdr
+# ──────────────────────────────────────────────
+
+setup_herdr() {
+  echo "==> Herdr configuration..."
+  local herdr_dir="${XDG_CONFIG_HOME:-$HOME/.config}/herdr"
+  ensure_dir "$herdr_dir"
+
+  backup_and_link "$DOTFILES_DIR/herdr/config.toml" "$herdr_dir/config.toml"
+  echo ""
+}
+
+# ──────────────────────────────────────────────
+#  PHASE 6c — Agent skills & commands
 # ──────────────────────────────────────────────
 
 # Build the global rules file from the rules.d/ fragments, in filename order,
@@ -914,7 +929,7 @@ setup_claude_code_skills() {
 }
 
 # ──────────────────────────────────────────────
-#  PHASE 6c — Claude Code config
+#  PHASE 6d — Claude Code config
 # ──────────────────────────────────────────────
 
 # settings.json links like any other config. Plugins can't be linked — their

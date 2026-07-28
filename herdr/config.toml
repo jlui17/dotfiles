@@ -1,0 +1,21 @@
+onboarding = false
+
+[theme]
+name = "terminal"
+auto_switch = false
+
+[keys]
+previous_workspace = "prefix+["
+next_workspace = "prefix+]"
+previous_tab = "prefix+p"
+next_tab = "prefix+n"
+# tmux.conf leaves tmux's split bindings at their defaults (% side-by-side,
+# " stacked) — mirrored here so the muscle memory carries over.
+split_vertical = "prefix+%"
+split_horizontal = "prefix+quote"
+
+[ui]
+agent_panel_sort = "spaces"
+
+[ui.sound]
+enabled = false
