@@ -1,3 +1,3 @@
 ## Reviews start from the repo's own conventions
 
-Before reviewing anything (a PR, a branch, a diff), read the repo's README.md and CLAUDE.md and follow their pointers to the convention docs they name — reviewer guidance (e.g. REVIEW.md), docs policy, and the README/CLAUDE.md of each module the diff touches (those files exist to be enforced in review). The two root files are only the discovery entry points; the docs they link carry the actual conventions, invariants, and gotchas. Check the change against what those docs declare, not just general judgment, and say in the review which convention docs were applied.
+Before reviewing anything (a PR, a branch, a diff), read the `pr-review` skill; it carries the full shape of a good review. The short version: discovery starts from the repo's README.md and CLAUDE.md and the convention docs they point to, and the posted review names which convention docs were applied.
