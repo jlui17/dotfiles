@@ -109,6 +109,9 @@ if command -v mise &>/dev/null; then
   eval "$(mise activate zsh)"
 fi
 
+# Bun-installed global CLIs (after mise so mise-managed tools keep precedence)
+export PATH="$PATH:$HOME/.bun/bin"
+
 # Shell integrations
 eval "$(fzf --zsh)"
 enable-fzf-tab
