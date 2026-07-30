@@ -15,7 +15,7 @@ split_vertical = "prefix+%"
 split_horizontal = "prefix+quote"
 
 [ui]
-agent_panel_sort = "spaces"
+agent_panel_sort = "priority"
 
 [ui.sound]
 enabled = false
