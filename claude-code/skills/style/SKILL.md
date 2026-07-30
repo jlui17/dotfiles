@@ -78,7 +78,7 @@ Holds everywhere by default: plan, PR, comment, Slack. Numbers are stable IDs; g
 - *Italics* = the single pivot/limiting word: "the *only* place". Bold = the claim; italics = the word limiting it.
 - **`→`** for chains/transitions: "`api_key_user_id → parent run's user → background-job`".
 - **`/`** joins two ideas into one concept-name: "read/list", "first-writer-wins".
-- **Em-dashes: AVOID.** Prefer parenthetical, colon, comma, or fresh sentence. Em-dash only when nothing else carries the aside (rare).
+- **Em-dashes: STRONGLY PREFER a parenthetical, colon, comma, or fresh sentence instead.** An em-dash only when nothing else carries the aside (rare).
 - **Parentheticals** scope precisely: "(i.e. Records with a `trace_id`)", "(nullable)", file:line.
 - **Backticks** on every code identifier, column, attribute, UI string ("Created By", "Anonymous").
 - Short-to-medium sentences; long ones are linear "if X, then Y" mechanism, not nested clauses. Starting with "So"/"But"/"Today" is fine.

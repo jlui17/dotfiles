@@ -1,6 +1,6 @@
 # Slack / peer messages
 
-Casual and conversational: closer to how you'd actually type to a teammate than to a PR description. Same voice (actor-as-subject, behavior-first, append-reason, no hype, no em-dashes), but it *flows*. Don't telegraph.
+Casual and conversational: closer to how you'd actually type to a teammate than to a PR description. Same voice (actor-as-subject, behavior-first, append-reason, no hype; a parenthetical, colon, comma, or fresh sentence over an em-dash), but it *flows*. Don't telegraph.
 
 - **A light greeting is fine.** "Hey," to open is normal chat, not throat-clearing.
 - **Full conversational sentences, clauses joined naturally** with `since` / `but` / `as long as` / `then`. One-idea-per-sentence (voice #8) is for dense technical prose; in chat, write the way you'd say it out loud. One-claim-per-line bullets read as a robot.
