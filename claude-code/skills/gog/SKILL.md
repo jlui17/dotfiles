@@ -1,6 +1,6 @@
 ---
 name: gog
-description: Use the `gog` CLI to read/search/edit Google Docs, Drive, Calendar, and Gmail (and other Google Workspace). Trigger whenever a task touches Google Docs, Drive, Sheets, Calendar/events/meetings, Gmail/email, a docs.google.com / drive.google.com / calendar.google.com / mail.google.com URL, or "my doc/drive/calendar/email/workspace".
+description: Use whenever a task touches Google Docs, Drive, Sheets, Calendar/events/meetings, Gmail/email, a docs.google.com / drive.google.com / calendar.google.com / mail.google.com URL, or "my doc/drive/calendar/email/workspace".
 ---
 
 `gog` = Google Workspace CLI. Already authed. Prefer over MCP for Docs/Drive.

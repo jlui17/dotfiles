@@ -1,6 +1,6 @@
 ---
 name: helium
-description: Browser automation using the local Helium browser (a Chromium fork) instead of the default headless Chrome. Use for any browser task: browsing websites, taking screenshots, filling forms. Configures the agent_browser tool to launch or connect to Helium.
+description: Use for any browser task (browsing websites, taking screenshots, filling forms) or any agent_browser call.
 ---
 
 # Helium Browser Automation

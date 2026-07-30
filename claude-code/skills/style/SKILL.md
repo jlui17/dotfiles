@@ -1,6 +1,6 @@
 ---
 name: style
-description: Justin's voice, the full reference. The compact core is always-on (~/CLAUDE.md plus the Justin output style); this skill carries the full rules and per-artifact structure. ALWAYS read it before drafting OR EDITING anything substantial (PRs/commits, tech plans, design docs, RFCs, reports, Slack/reviews, code comments); edit rounds count, and never write those from memory. Per-artifact structure is in resources/. Read the matching one first.
+description: Use before drafting OR EDITING anything substantial a reader will see (PRs/commits, tech plans, design docs, RFCs, reports, Slack/reviews, code comments); edit rounds count, and never write those from memory. Read this skill first, then the matching resources/ file.
 ---
 
 # Voice: Justin
@@ -13,7 +13,7 @@ description: Justin's voice, the full reference. The compact core is always-on (
 
 **Applying feedback.** Wording/style feedback goes into the artifact immediately; noting it for later without editing the doc is a miss. Design *decisions* are the opposite: discuss and confirm first, then apply.
 
-**Where this lives.** The compact core is always-on via `~/CLAUDE.md` (rules.d fragments in the dotfiles repo; the `claude-code` module skill has the flow), and the always-on copy is canonical where they overlap.
+**Where this lives.** The compact core is always-on via `~/CLAUDE.md` plus the Justin output style (rules.d fragments in the dotfiles repo; the `claude-code` module skill has the flow), and the always-on copy is canonical where they overlap. This skill is the full reference: the complete rules plus per-artifact structure in `resources/`.
 
 **Default: cut to the bone, stay smooth.** As concise as the meaning allows while still reading smoothly and carrying the context the reader needs; this governs a one-line chat reply as much as a doc. Cut filler, pleasantries, and hedging (state confidence + its assumption instead, #13), and any word that doesn't change meaning. But keep the small words that make a sentence flow (articles, connectives): this is lean, **not telegraphic**. A fragment is fine where it reads naturally, never as the house style. When in doubt, plainer and shorter.
 

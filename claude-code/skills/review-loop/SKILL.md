@@ -1,11 +1,11 @@
 ---
 name: review-loop
-description: Harden a solution by looping two review subagents (directional + correctness) and fixing feedback until it converges. Use after a non-trivial change before declaring done, or when user says "review loop", "review-and-fix until clean", or asks to review approach and implementation separately.
+description: Use after a non-trivial change before declaring done, or when user says "review loop", "review-and-fix until clean", or asks to review approach and implementation separately.
 ---
 
 # Review loop
 
-Two reviewers, every round. Directional judges the *approach* vs problem. Correctness judges the *implementation* vs approach. Catches both a sound plan built buggy and a clean build of the wrong plan.
+Two reviewer subagents, every round. Directional judges the *approach* vs problem. Correctness judges the *implementation* vs approach. Catches both a sound plan built buggy and a clean build of the wrong plan.
 
 This is a fix-and-re-review loop; for a review-only third-party pass with no fixes, run the reviewers once and report instead.
 

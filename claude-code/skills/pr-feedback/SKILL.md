@@ -1,6 +1,6 @@
 ---
 name: pr-feedback
-description: Addressing PR review feedback. Use when responding to review comments on a PR (human or agent reviewer), before pushing fixes or replying to the reviewer.
+description: Use when responding to review comments on a PR (human or agent reviewer), before pushing fixes or replying to the reviewer.
 ---
 
 # PR feedback
