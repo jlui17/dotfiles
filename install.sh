@@ -950,7 +950,7 @@ setup_claude_plugins() {
     merge_json "$DOTFILES_DIR/claude-code/settings.local.json" "$HOME/.claude/settings.json"
   fi
   backup_and_link "$DOTFILES_DIR/claude-code/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
-  backup_and_link "$DOTFILES_DIR/claude-code/herdr-context.sh" "$HOME/.claude/herdr-context.sh"
+  backup_and_link "$DOTFILES_DIR/claude-code/herdr-session-hook.sh" "$HOME/.claude/herdr-session-hook.sh"
 
   local manifest="$DOTFILES_DIR/claude-code/plugins.txt"
 

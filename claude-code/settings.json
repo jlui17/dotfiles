@@ -14,7 +14,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/herdr-context.sh",
+            "command": "bash ~/.claude/herdr-session-hook.sh",
             "timeout": 10
           }
         ]
