@@ -7,8 +7,10 @@ auto_switch = false
 [keys]
 previous_agent = "prefix+["
 next_agent = "prefix+]"
-previous_workspace = "prefix+shift+["
-next_workspace = "prefix+shift+]"
+# Written as the shifted characters, not "shift+[": the terminal delivers
+# { and }, so a shift+bracket binding parses but never matches a keypress.
+previous_workspace = "prefix+{"
+next_workspace = "prefix+}"
 previous_tab = "prefix+p"
 next_tab = "prefix+n"
 # tmux.conf leaves tmux's split bindings at their defaults (% side-by-side,
