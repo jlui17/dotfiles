@@ -1,0 +1,1 @@
+Babysit this PR: monitor the Slack review thread and the PR, apply feedback as it lands until the PR is approved, then merge. One caveat: if feedback items contradict each other, or you're not highly confident a piece of feedback is right to apply, stop and raise the concern to me instead of applying it.
