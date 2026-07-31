@@ -88,6 +88,19 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 export TERM=xterm-256color
 export EDITOR='nvim'
 
+# Login shells started by SSH do not read ~/.profile. Add user-level install
+# locations here instead of relying on PATH inherited from a terminal app.
+typeset -U path PATH
+path=(
+  "$HOME/.local/bin"
+  "$HOME/.npm-global/bin"
+  "$HOME/.bun/bin"
+  "$HOME/.local/share/pnpm"
+  "$HOME/.opencode/bin"
+  "$HOME/bin"
+  $path
+)
+
 # Aliases
 alias ls='ls --color'
 alias vim='nvim'
@@ -136,3 +149,8 @@ unsetopt NULL_GLOB
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
 eval "$(zoxide init --cmd cd zsh)"
+
+# OpenClaw Completion
+[ -f "/home/openclaw/.openclaw/completions/openclaw.zsh" ] && source "/home/openclaw/.openclaw/completions/openclaw.zsh"
+export NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache
+export OPENCLAW_NO_RESPAWN=1
