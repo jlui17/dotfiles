@@ -7,17 +7,17 @@ description: Use when driving herdr programmatically — starting a new session,
 
 Herdr is a terminal workspace manager with a socket API; every `herdr` subcommand prints JSON. The hierarchy is session → space → tab → pane, and IDs are hierarchical (`w1` → `w1:t2` → `w1:p2`). The UI says "space"; the CLI calls the same thing `workspace`.
 
-Commands target the default session unless told otherwise: pass `--session <name>` or set `HERDR_SESSION=<name>` for a named one (`HERDR_SOCKET_PATH` is the low-level override). `herdr api snapshot` dumps a session's entire state (spaces, tabs, panes, agents) in one call.
+Commands target one session's socket at a time: pass `--session <name>` (`default` is a valid name) for a specific one. Inside a herdr pane the CLI inherits `HERDR_SOCKET_PATH` pointing at that pane's own session, and the `HERDR_SESSION` env var loses to it, so `--session` is the only override that always works. `herdr api snapshot` dumps a session's entire state (spaces, tabs, panes, agents) in one call.
 
 ## Orient first
 
-You may be running inside a herdr pane or in a plain terminal; both are normal. `herdr pane current` tells you which: it returns your own pane when inside (detection walks the process tree, no env vars needed) and errors when you're not in one. When inside, treat that pane as yours: don't close it, its tab, or start an agent in it.
+You may be running inside a herdr pane or in a plain terminal; both are normal, and a SessionStart hook already injects which one at startup. The ground truth is the environment: herdr exports `HERDR_PANE_ID`, `HERDR_TAB_ID`, `HERDR_WORKSPACE_ID`, and `HERDR_SESSION` into every pane shell, so a set `HERDR_PANE_ID` means you're inside that pane. When inside, treat that pane as yours: don't close it, its tab, or start an agent in it. (`herdr pane current` is NOT you: it returns the session's focused pane, whoever that is.)
 
 ## New headless session
 
 ```sh
-HERDR_SESSION=<name> herdr server &   # creates and runs the session, no TUI
-HERDR_SESSION=<name> herdr workspace create --cwd <dir> --label <label>
+herdr --session <name> server &   # creates and runs the session, no TUI
+herdr --session <name> workspace create --cwd <dir> --label <label>
 ```
 
 A fresh session has zero spaces, and every other call fails with `workspace_not_found` until that first `workspace create`. The user attaches visually later with `herdr session attach <name>`.

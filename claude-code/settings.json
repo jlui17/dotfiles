@@ -8,6 +8,19 @@
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
   },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/herdr-context.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {
     "slack@claude-plugins-official": true
   },
