@@ -17,7 +17,7 @@ description: Use before drafting OR EDITING anything substantial a reader will s
 
 **Default: cut to the bone, stay smooth.** As concise as the meaning allows while still reading smoothly and carrying the context the reader needs; this governs a one-line chat reply as much as a doc. Cut filler, pleasantries, and hedging (state confidence + its assumption instead, #13), and any word that doesn't change meaning. But keep the small words that make a sentence flow (articles, connectives): this is lean, **not telegraphic**. A fragment is fine where it reads naturally, never as the house style. When in doubt, plainer and shorter.
 
-**Never a wall of text.** Say it in one sentence before you spend a paragraph; break long blocks into short paragraphs or bullets, because readers skim and a dense block gets skipped. Two skim tests: a reader who reads only the bold gets every decision ("**V1: poll, don't listen.**"), and each paragraph carries one idea (#8 at paragraph scale). A bullet over ~1.5 lines splits in two or becomes prose; a single point is prose, never a one-item bullet list; a multi-step flow is a numbered list, never a comma chain. Spacious (sectioned, with whitespace) is the goal; dense (unbroken) is the failure.
+**Never a wall of text.** Say it in one sentence before you spend a paragraph; break long blocks into short paragraphs or bullets, because readers skim and a dense block gets skipped. Two skim tests: a reader who reads only the bold gets every decision ("**V1: poll, don't listen.**"), and each paragraph carries one idea (#8 at paragraph scale). A bullet over ~1.5 lines splits in two or becomes prose; a single point is prose, never a one-item bullet list; a multi-step flow is a numbered list, never a comma chain. Nest to keep the top level skimmable: a qualification or secondary fact rides as a sub-bullet under the claim it qualifies, so a skim of the top-level bullets gets every primary claim. Spacious (sectioned, with whitespace) is the goal; dense (unbroken) is the failure.
 
 ## The voice (constant)
 
@@ -72,9 +72,17 @@ Holds everywhere by default: plan, PR, comment, Slack. Numbers are stable IDs; g
 
 18. **A dictated example is the canonical register.** When the reader supplies replacement text ("I would say smth like '...'"), adopt it verbatim or near-verbatim (paraphrasing it fails; verbatim lands), then generalize its shape to the rest of the artifact. Justin's samples share one shape: bold label, the process narrated as a temporal sequence ("every X mins, this job will start, bootstrap itself..."), the benefits plainly, the alternative dismissed in one trailing clause.
 
+19. **State design intent as a plain declarative: actor + will + change.** "We'll change X", "We can do Y", "The service will re-queue Z". Open with the content itself; a sentence *about* the design only delays it.
+    - Yes: "We'll create two new tools the model can use to access attachments."
+    - No: "Two tool definitions are the heart of the design; the rest of the change wires them into the existing chat."
+
+20. **Be direct: one reason, stated once, and practical reasons are first-class.** Justify a choice in one sentence naming the concrete capability or cost it buys; token cost, time to v1, and feedback velocity carry as much weight as technical elegance. A second supporting reason or worst-case arithmetic dilutes the one that matters.
+    - Yes: "We're raising the cap from 3 to 4 so the model can list attachments, fetch twice, and still fetch a skill file in one turn."
+    - No: a paragraph deriving the same number from worst-case chains and per-round costs.
+
 ## Punctuation & emphasis
 
-- **Bold** = the one load-bearing claim/decision per paragraph (the skimmable thing). Often a bold lead-in: "**Attribution is forward-looking / source-agnostic:** ..."
+- **Bold** = the one load-bearing claim/decision per paragraph (the skimmable thing). Often a bold lead-in: "**Attribution is forward-looking / source-agnostic:** ..." A bold lead-in reads as a fluent sentence or phrase ("**The system prompt tells the model how many attachments the record has.**"), never a coined one-word label ("**Announce:**").
 - *Italics* = the single pivot/limiting word: "the *only* place". Bold = the claim; italics = the word limiting it.
 - **`→`** for chains/transitions: "`api_key_user_id → parent run's user → background-job`".
 - **`/`** joins two ideas into one concept-name: "read/list", "first-writer-wins".
