@@ -7,4 +7,4 @@
 # install.sh adds the marketplace from the repo, then installs each listed plugin.
 # Lines starting with # are ignored.
 
-anthropics/claude-plugins-official  slack@claude-plugins-official
+anthropics/claude-plugins-official  slack@claude-plugins-official mattpocock-skills@claude-plugins-official
