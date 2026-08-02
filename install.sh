@@ -681,25 +681,26 @@ setup_omarchy() {
   if [[ "$OS" != "arch" ]]; then
     return
   fi
-  echo "==> Omarchy macOS keybindings..."
+  echo "==> Omarchy Hyprland overrides..."
   if command_exists omarchy-update; then
     local hypr_dir="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
     ensure_dir "$hypr_dir"
 
-    ln -sf "$DOTFILES_DIR/omarchy/hypr/bindings-override.conf" \
-           "$hypr_dir/bindings-override.conf"
-    echo "  Linked bindings-override.conf."
+    local override
+    for override in bindings-override.conf input-override.conf; do
+      ln -sf "$DOTFILES_DIR/omarchy/hypr/$override" "$hypr_dir/$override"
+      echo "  Linked $override."
 
-    if ! grep -q "source = bindings-override.conf" "$hypr_dir/hyprland.conf" 2>/dev/null; then
-      {
-        echo ""
-        echo "# macOS-style keybindings"
-        echo "source = bindings-override.conf"
-      } >> "$hypr_dir/hyprland.conf"
-      echo "  Added source directive to hyprland.conf."
-    else
-      echo "  hyprland.conf already sources bindings-override.conf."
-    fi
+      if ! grep -q "source = $override" "$hypr_dir/hyprland.conf" 2>/dev/null; then
+        {
+          echo ""
+          echo "source = $override"
+        } >> "$hypr_dir/hyprland.conf"
+        echo "  Added source directive for $override to hyprland.conf."
+      else
+        echo "  hyprland.conf already sources $override."
+      fi
+    done
   else
     echo "  omarchy-update not found — skipping Omarchy setup."
   fi
