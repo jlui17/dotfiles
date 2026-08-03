@@ -98,6 +98,10 @@ path=(
   "$HOME/.local/share/pnpm"
   "$HOME/.opencode/bin"
   "$HOME/bin"
+  # mise activate (below) only rewrites PATH from prompt hooks, so a
+  # non-interactive `zsh -c` never sees mise-managed tools. Shims cover those;
+  # activate prepends the real install dirs, so it still wins interactively.
+  "$HOME/.local/share/mise/shims"
   $path
 )
 
