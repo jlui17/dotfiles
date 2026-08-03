@@ -109,12 +109,12 @@ alias vim-zsh='nvim ~/.zshrc'
 alias lg='lazygit'
 alias claude='claude --dangerously-skip-permissions'
 if command -v brew &>/dev/null; then
-  alias update_pkgs='brew update && brew upgrade && mise up && zinit update'
+  alias update_pkgs='brew update && brew upgrade && mise up && zinit update && zinit cclear'
   alias update_cc='brew update && brew upgrade claude-code@latest'
 elif command -v pacman &>/dev/null; then
-  alias update_pkgs='sudo pacman -Syu && mise up && zinit update'
+  alias update_pkgs='sudo pacman -Syu && mise up && zinit update && zinit cclear'
 elif command -v apt-get &>/dev/null; then
-  alias update_pkgs='sudo apt-get update && sudo apt-get upgrade && mise up && zinit update'
+  alias update_pkgs='sudo apt-get update && sudo apt-get upgrade && mise up && zinit update && zinit cclear'
 fi
 
 # Mise (before shell integrations that depend on mise-managed tools)
