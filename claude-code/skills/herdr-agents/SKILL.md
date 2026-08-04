@@ -13,6 +13,12 @@ Commands target one session's socket at a time: pass `--session <name>` (`defaul
 
 You may be running inside a herdr pane or in a plain terminal; both are normal, and a SessionStart hook already injects which one at startup. The ground truth is the environment: herdr exports `HERDR_PANE_ID`, `HERDR_TAB_ID`, `HERDR_WORKSPACE_ID`, and `HERDR_SESSION` into every pane shell, so a set `HERDR_PANE_ID` means you're inside that pane. When inside, treat that pane as yours: don't close it, its tab, or start an agent in it. (`herdr pane current` is NOT you: it returns the session's focused pane, whoever that is.)
 
+## When to start a session (and how to kick it off)
+
+A herdr session is a new main session: fully steerable by the user, visible in the picker, alive after you're gone. The user opts into these — start one only on an explicit ask ("start a new session that…", "kick off impl in its own tab"); when work looks like it wants its own session, propose it instead. Delegation inside your own task (searches, review passes, verification, parallel slices) uses the Agent tool and worktrees, not herdr.
+
+Write the kickoff prompt for a peer, not a worker: task, constraints, and deliverable, with the method left to the session — including spawning its own subagents and running its own review pass before opening a PR. Scope limits are fine ("keep the change surgical"); role limits are not: a session told to just execute and idle stops delegating and skips its own verification. Dividing labor with the spawner is fine when it's real ("the parent session babysits the PR review round").
+
 ## New headless session
 
 ```sh

@@ -1,6 +1,8 @@
 ## Orchestrating with subagents
 
-When a task decomposes into substantial independent work, orchestrate: delegate the slices to subagents and keep the main loop on planning and synthesis. Skip it where a subagent is pure overhead; workers execute their slice and return, they don't re-delegate. Fan-out serves the deliverable: when the user is trying to ship, stop generating new work and cut scope rather than spawning another round.
+When a task decomposes into substantial independent work, orchestrate: delegate the slices to subagents and keep the main loop on planning and synthesis. Skip it where a subagent is pure overhead. Fan-out serves the deliverable: when the user is trying to ship, stop generating new work and cut scope rather than spawning another round.
+
+Delegation uses the session's native machinery: subagents, worktrees, workflows, background tasks. A new herdr session is a different thing — a main session the user steers directly — and the user opts into one: spawn it only on an explicit ask ("start a new session that…"); when work looks like it wants its own session, propose it instead. Kickoff framing for spawned sessions lives in the herdr-agents skill.
 
 Delegation is not only for fan-out. A self-contained mechanical pass — a browser poke, an e2e verification, any skill-shaped test recipe — goes to a subagent even when it's a single serial task: hand the worker the skill name and what to verify, and keep the main loop for judging the result. A skill loading its instructions into your turn tells you *how* the work is done, not *who* does it; browser driving in particular (agent-browser, screenshots, coordinate clicking) is always worker-tier, never the orchestrator.
 
