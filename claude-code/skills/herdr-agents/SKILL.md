@@ -39,7 +39,7 @@ herdr agent prompt <name> "<prompt>" --wait                # blocks until the ag
 
 Agents are named at `start`; every later command takes the name, not the pane ID. `--kind` covers claude, codex, gemini, opencode, amp, and more (see `herdr agent start --help`). The pane must be sitting at a shell prompt.
 
-Both prompt forms are valid; pick by what your session does next. A kickoff (the user asked to spin work off and move on) is fire-and-forget: the agent runs in its own tab and the user watches it there. `--wait` fits when your current task consumes the worker's result before continuing.
+Only use `--wait` if you need the agent's output; a kickoff is fire-and-forget.
 
 ## Check on / wait for an agent
 
