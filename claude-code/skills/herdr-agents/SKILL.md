@@ -34,11 +34,12 @@ For parallel agents on one repo, `herdr worktree create --branch <name> [--base 
 herdr tab create --cwd <dir> --label <task> --no-focus     # → root pane_id
 herdr agent start <name> --kind claude --pane <pane_id>    # blocks until the agent is ready
 herdr agent prompt <name> "<prompt>"                       # fire-and-forget
+herdr agent prompt <name> "<prompt>" --wait                # blocks until the agent settles
 ```
 
 Agents are named at `start`; every later command takes the name, not the pane ID. `--kind` covers claude, codex, gemini, opencode, amp, and more (see `herdr agent start --help`). The pane must be sitting at a shell prompt.
 
-A kickoff prompt is fire-and-forget: the spun-off agent runs in its own tab and the user watches it there, so blocking your session on its turn (`--wait`) defeats the point of spinning it off. Reach for `--wait` or `agent wait` only when your current task genuinely needs the worker's result to continue.
+Both prompt forms are valid; pick by what your session does next. A kickoff (the user asked to spin work off and move on) is fire-and-forget: the agent runs in its own tab and the user watches it there. `--wait` fits when your current task consumes the worker's result before continuing.
 
 ## Check on / wait for an agent
 
