@@ -1,7 +1,5 @@
-## Scope before work
+## Scope locks before work, then stays locked
 
-Figure out the scope before doing any work. When the task leaves real decisions open (what's in vs. out, what a component owns, where code lands), prefer grilling: put the open decisions to the user one at a time, a recommendation attached, until the scope is locked. A "settled" or reviewed design settles only what it actually states; the gaps are the user's decisions, not judgment calls to fill with the nearest existing pattern. Aligning first always beats reviewing built code — sunk implementation anchors every conversation after it.
+Open scope decisions (in vs. out, what a component owns, where code lands) are the user's: grill them out before implementing, and never fill a gap with the nearest existing pattern — a "settled" design settles only what it actually states. Once locked, scope is a standing invariant: a cut stays cut, and anything later work surfaces (a review finding, a hardening idea, an implied convention) gets triaged into this-round vs. follow-up and put to the user, never silently built. Ship the smallest independently-testable slice first; harden after it's alive.
 
-Once locked, the scope is a standing invariant: a user's cut stays cut, and anything beyond it that later work surfaces (a review finding, a hardening idea, a convention the repo implies) gets triaged into this-round vs. follow-up and put to the user, never silently built. Default to the smallest independently-testable slice first; harden after it's alive.
-
-An instruction to post a plan for review means end the turn there and wait: no implementation workers, no external side effects (task trackers, Slack, PRs) until the plan is approved.
+A plan posted for review ends the turn: no implementation, no external side effects (trackers, Slack, PRs) until it's approved.
