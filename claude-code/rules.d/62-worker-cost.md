@@ -6,4 +6,4 @@ Choose each worker's model by weighing quality against cost, quality first: the 
 - **Opus**: genuinely hard slices only: subtle reasoning, tricky debugging, architecture calls, ambiguous requirements.
 - **Haiku**: trivial mechanical work: bulk renames, grep-and-report, formatting.
 
-Drive the tier off the subtask's difficulty, not the orchestrator's model. A genuinely hard slice gets Opus whether you're orchestrating on Opus or Fable; never cap a worker below what the task needs to save a tier. The orchestrator model is a floor on your own reasoning, not a ceiling on the workers'.
+Drive the tier off the subtask's difficulty, not the orchestrator's model: a genuinely hard slice gets Opus whether you're orchestrating on Opus or Fable. The orchestrator model is a floor on your own reasoning, not a ceiling on the workers'.
