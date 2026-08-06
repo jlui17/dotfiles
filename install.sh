@@ -660,16 +660,22 @@ setup_ghostty() {
     return
   fi
   echo "==> Ghostty configuration..."
+  # Ghostty reads its config from the macOS-native path but only scans the XDG
+  # path for user themes, so on macOS the two land in different directories.
+  local xdg_dir="${XDG_CONFIG_HOME:-$HOME/.config}/ghostty"
+  local ghostty_dir
   case "$OS" in
     macos)
       ghostty_dir="$HOME/Library/Application Support/com.mitchellh.ghostty"
       ;;
     *)
-      ghostty_dir="${XDG_CONFIG_HOME:-$HOME/.config}/ghostty"
+      ghostty_dir="$xdg_dir"
       ;;
   esac
   ensure_dir "$ghostty_dir"
+  ensure_dir "$xdg_dir"
   backup_and_link "$DOTFILES_DIR/ghostty/config" "$ghostty_dir/config"
+  backup_and_link "$DOTFILES_DIR/ghostty/themes" "$xdg_dir/themes"
   echo ""
 }
 

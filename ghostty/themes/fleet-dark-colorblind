@@ -1,0 +1,34 @@
+# JetBrains Fleet's dark palette, retuned for red-green color vision deficiency.
+#
+# The red slot is orange and the green slot is blue, on purpose: deuteranopia and
+# protanopia collapse the red-green axis, so the two colors that most often carry
+# opposed meanings are placed at opposite ends of the blue-yellow axis instead.
+# Every pair of text colors from different hue families stays at least 15 dE76
+# apart after Vienot dichromat simulation, and every one clears 4.5:1 on the
+# background. Slots 0 and 8 are chrome (borders, dim fills) and never text.
+
+background = #181818
+foreground = #d6d6dd
+
+cursor-color = #639bfb
+cursor-text = #181818
+
+selection-background = #163761
+selection-foreground = #d6d6dd
+
+palette = 0=#363636
+palette = 1=#ce8a47
+palette = 2=#88bafc
+palette = 3=#fbd67e
+palette = 4=#6088db
+palette = 5=#b570ac
+palette = 6=#53bc96
+palette = 7=#d6d6dd
+palette = 8=#6d6d6d
+palette = 9=#dda46e
+palette = 10=#afd6fd
+palette = 11=#fef3ad
+palette = 12=#639bfb
+palette = 13=#d98fc2
+palette = 14=#61e5b2
+palette = 15=#ffffff

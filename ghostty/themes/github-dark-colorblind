@@ -1,0 +1,26 @@
+# https://cmuxthemes.com/themes/github-dark-colorblind/
+#
+# Slots 2 and 4 hold the same blue, as do 10 and 12: GitHub's colorblind mode
+# drops green rather than relocating it. Not a transcription error.
+
+background = #0d1117
+foreground = #c9d1d9
+
+cursor-color = #58a6ff
+
+palette = 0=#484f58
+palette = 1=#ec8e2c
+palette = 2=#58a6ff
+palette = 3=#d29922
+palette = 4=#58a6ff
+palette = 5=#bc8cff
+palette = 6=#39c5cf
+palette = 7=#b1bac4
+palette = 8=#6e7681
+palette = 9=#fdac54
+palette = 10=#79c0ff
+palette = 11=#e3b341
+palette = 12=#79c0ff
+palette = 13=#d2a8ff
+palette = 14=#56d4dd
+palette = 15=#ffffff
