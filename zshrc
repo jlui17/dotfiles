@@ -112,6 +112,7 @@ alias src-zsh='source ~/.zshrc'
 alias vim-zsh='nvim ~/.zshrc'
 alias lg='lazygit'
 alias claude='claude --dangerously-skip-permissions'
+alias gauth='gcloud auth login && gcloud auth application-default login'
 if command -v brew &>/dev/null; then
   alias update_pkgs='brew update && brew upgrade && mise up && zinit update && zinit cclear'
   alias update_cc='brew update && brew upgrade claude-code@latest'
