@@ -41,7 +41,7 @@ From the Claude 5 context-engineering guidance (https://claude.com/blog/the-new-
 - **Judgment over constraint.** State the principle and trust the model's reasoning ("write code that reads like the surrounding code") instead of enumerating rigid per-case rules.
 - **Progressive disclosure.** Specialized guidance goes in a skill; CLAUDE.md carries the pointer and the trigger, not the content (the style fragment → style skill split is the in-repo example).
 - **One home per instruction.** Never repeat guidance across CLAUDE.md, the output style, and skills; place it where it's most relevant and point from elsewhere. Where a copy is deliberate (the output-style fragments duplicated into `~/CLAUDE.md` for subagents), name which copy is canonical.
-- **Personal facts go to auto-memory, standing rules go to rules.d.** Auto-memory covers what one machine's sessions learn; a rule every session must follow still lands as a fragment.
+- **Personal facts go to auto-memory, standing rules go to rules.d** (routing canonical in `rules.d/51-context-maintenance.md`). Auto-memory covers what one machine's sessions learn; a rule every session must follow still lands as a fragment.
 
 ## Tasks
 
