@@ -36,7 +36,7 @@ When two states or designs are compared, the delta shows up in the pixels (color
 
 ## Doc and diagram are one artifact
 
-Every scope or design change to a doc updates its companion diagram in the same round, or at least proposes the diagram edit; "did u update the diagram too?" should never need asking. Final-design-only (see `tech-plans.md`) holds for diagrams too: no "(formerly X)" residue, no date stamps.
+Final-design-only (see `tech-plans.md`) holds for diagrams too: no "(formerly X)" residue, no date stamps.
 
 ## One overview page beats per-section pages
 
