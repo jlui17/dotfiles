@@ -1,6 +1,6 @@
 ---
 name: review-loop
-description: Use after a non-trivial change before declaring done, or when user says "review loop", "review-and-fix until clean", or asks to review approach and implementation separately.
+description: Use by default after any substantive change before declaring done — proactively, not only when asked — or when user says "review loop", "review-and-fix until clean", or asks to review approach and implementation separately. Skip only trivial edits (rename, typo, one-line config).
 ---
 
 # Review loop
