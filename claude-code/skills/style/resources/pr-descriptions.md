@@ -66,7 +66,7 @@ After drafting, cut restatement and anything the diff already shows, keeping eve
 
 The body stays accurate for the life of the PR. Strong defaults, sized to the PR:
 
-- **Later commits that change the story get an "Update" section** prepended with the head SHA, and the superseded body text marked as superseded, so the body never claims something the diff no longer does. A rebase or a sibling PR merging triggers the same audit: re-read the body for claims that are no longer true ("needs X merged first" after X merged).
+- **Later commits that change the story get an "Update" section** prepended with the head SHA, and the superseded body text marked as superseded, so the body never claims something the diff no longer does. A rebase or a sibling PR merging triggers the same audit, per the always-on sweep rule ("needs X merged first" after X merged).
 - **Updates don't stack past two.** One or two Update sections during active review are fine; when a round rewrites the story (rename, removed feature, redesigned API), rewrite the whole body to describe the final state — a third supersession is the signal the body has become a changelog of the author's process instead of an answer to "what is this change".
 - **Fold review and chat answers back into the body**: a question one reviewer asked is a gap the next reviewer will hit.
 - **Post-merge verification lands as a PR comment with numbers** ("Post-merge prod verification: PASS across the board"), not silence.
