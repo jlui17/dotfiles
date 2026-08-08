@@ -2,11 +2,11 @@
 
 The body makes a reviewer fast and confident, not a restage of the diff. The diff shows *what changed*; the description carries what it can't: **what was happening** (the behavior, in plain terms) and **what we're doing about it conceptually**. Spend words there; cut anything readable straight from the code.
 
-**Hard budget: one page.** Only information a reviewer can't get from the diff earns space: the purpose of the change, invariants, decisions, architectural patterns/designs, and verification steps. Per-file walkthroughs, mechanism narration, signature dumps, and exhaustive test inventories restate the diff; cut them. When a draft runs long, drop whole beats before trimming words; a reviewer who wants more detail reads the code. The walkthrough shape in SKILL.md ("Walking through a change") is for explanations and reviews; in a PR body it compresses to fit the page.
+**Hard budget: one page.** Only information a reviewer can't get from the diff earns space: the purpose of the change, invariants, decisions, architectural patterns/designs, and verification steps. Per-file walkthroughs, mechanism narration, signature dumps, and exhaustive test inventories restate the diff; cut them. When a draft runs long, drop whole beats before trimming words; a reviewer who wants more detail reads the code. The walkthrough shape in SKILL.md ("Walkthroughs and scope summaries") is for explanations and reviews; in a PR body it compresses to fit the page.
 
 ## The arc
 
-The full arc is in SKILL.md ("Explaining engineering work"); its compact core is always-on in `~/CLAUDE.md`.
+The full arc is in SKILL.md ("Explaining engineering work").
 
 The beats a good description covers when they apply. **Guidelines, not a required template**: a one-line fix gets a sentence or two, a large feature gets the full arc. Headers vary freely; skip a beat when it's absent or the code makes it obvious; format however reads best (prose, headers, bullets).
 
