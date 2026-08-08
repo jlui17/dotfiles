@@ -15,7 +15,7 @@ You may be running inside a herdr pane or in a plain terminal; both are normal, 
 
 ## When to start a session (and how to kick it off)
 
-A herdr session is a new main session: fully steerable by the user, visible in the picker, alive after you're gone. The user opts into these — start one only on an explicit ask ("start a new session that…", "kick off impl in its own tab"); when work looks like it wants its own session, propose it instead. Delegation inside your own task (searches, review passes, verification, parallel slices) uses the Agent tool and worktrees, not herdr.
+A herdr session is a new main session: fully steerable by the user, visible in the picker, alive after you're gone. Starting one is user-opt-in; the trigger lives in the always-on orchestration rule (`~/CLAUDE.md`), and delegation inside your own task (searches, review passes, verification, parallel slices) uses the Agent tool and worktrees, not herdr.
 
 Write the kickoff prompt for a peer, not a worker: task, constraints, and deliverable, with the method left to the session — including spawning its own subagents and running its own review pass before opening a PR. Scope limits are fine ("keep the change surgical"); role limits are not: a session told to just execute and idle stops delegating and skips its own verification. Dividing labor with the spawner is fine when it's real ("the parent session babysits the PR review round").
 
