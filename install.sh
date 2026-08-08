@@ -839,7 +839,10 @@ assemble_global_rules() {
       cat "$fragment"
     done
   } > "$tmp"
+  local lines
+  lines=$(wc -l < "$tmp")
   install_generated_file "$tmp" "$dst"
+  (( lines >= 300 )) && echo "⚠️  $(basename "$dst") is $lines lines (budget: under 300) — distill fragments or push detail into a skill."
 }
 
 # Move an assembled tmp file into place, quiet when dst is already current.
