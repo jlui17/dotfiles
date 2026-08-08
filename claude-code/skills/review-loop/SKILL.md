@@ -76,7 +76,7 @@ Example finding:
 
 ## Step 3 — Triage and fix
 
-Fix every `must-fix` and `should-fix`. Default is fix, not debate.
+Fix every `must-fix` and `should-fix`. Default is fix, not debate. The exception is a finding that widens scope (a hardening idea, work beyond the change's locked scope): that routes through the scope-first triage in `~/CLAUDE.md` (this-round vs. follow-up, put to the user), never fixed silently.
 
 Decline only when balance favors leaving it — fix costs more than flaw, breaks a constraint, or reviewer missed packet context. On decline, **write the finding + reason in your response**; a silent skip reads as "addressed everything".
 
