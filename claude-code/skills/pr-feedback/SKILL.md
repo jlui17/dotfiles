@@ -15,4 +15,4 @@ When a review objects to a decision or assumption we made, and the objection onl
 
 ## Close the loop in Slack
 
-After pushing fixes, reply in the requester's Slack thread (the original review-request message) with a short note that the comments are addressed. Claude monitors Slack, not the PR: dispositions posted only on the PR won't be seen. Details stay in the PR; the thread reply is the ping.
+After pushing fixes, reply in the requester's Slack thread (the original review-request message) with a short note that the comments are addressed. Claude monitors Slack, not the PR: dispositions posted only on the PR won't be seen. Details stay in the PR; the thread reply is the ping (the depth-pairing rule in the style skill's `resources/slack.md`).
