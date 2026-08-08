@@ -5,7 +5,7 @@ description: Use when responding to review comments on a PR (human or agent revi
 
 # PR feedback
 
-One commit per feedback item (always-on rule in `~/CLAUDE.md`); responses are numbered dispositions mapping each comment to its fix commit SHA, and declining is fine when the reason is stated (see the style skill's `resources/pr-descriptions.md` for the response format and PR-body upkeep).
+One commit per feedback item (always-on rule in `~/CLAUDE.md`); the response format and PR-body upkeep live in the style skill's `resources/pr-descriptions.md`.
 
 ## Review feedback is a documentation signal
 
