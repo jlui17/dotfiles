@@ -48,7 +48,7 @@ Take approach as given, validate the implementation delivers it. Starters:
 
 - Follows the stated approach or quietly diverges?
 - Parts claiming to do X actually do X? Trace load-bearing paths.
-- **One fact duplicated across places — did every copy move?** When the diff changes a value, name, or rule that's represented in more than one place, the stale copy lives *outside* the diff, so reading only the changed lines can't catch it. Grep the repo for the concept, not the diff: a string that must match between producer and consumer, a rule enforced in both client and server, a schema vs the migration that mirrors it. Confirm every copy moved, or a mechanism (single source of truth, drift-guard test, exhaustiveness check) makes divergence impossible.
+- **One fact duplicated across places — did every copy move?** (The reviewer side of the always-on artifact-sweep rule in `~/CLAUDE.md`.) When the diff changes a value, name, or rule that's represented in more than one place, the stale copy lives *outside* the diff, so reading only the changed lines can't catch it. Grep the repo for the concept, not the diff: a string that must match between producer and consumer, a rule enforced in both client and server, a schema vs the migration that mirrors it. Confirm every copy moved, or a mechanism (single source of truth, drift-guard test, exhaustiveness check) makes divergence impossible.
 
 **Test coverage — explicit charge, not optional.** A test that mocks the thing under test is theater. Missing or weak coverage on a load-bearing path is `must-fix`, not a `nit`.
 
