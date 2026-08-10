@@ -9,6 +9,8 @@ Herdr is a terminal workspace manager with a socket API; every `herdr` subcomman
 
 Commands target one session's socket at a time: pass `--session <name>` (`default` is a valid name) for a specific one. Inside a herdr pane the CLI inherits `HERDR_SOCKET_PATH` pointing at that pane's own session, and the `HERDR_SESSION` env var loses to it, so `--session` is the only override that always works. `herdr api snapshot` dumps a session's entire state (spaces, tabs, panes, agents) in one call.
 
+This skill covers cross-session orchestration; pane-level mechanics in the current session (splits and geometry, `pane run`/`wait-output`, read sources, the alternate-screen fallback) are canonical in the skill the binary ships: run `herdr --skill` and follow it for that work. It's versioned with the installed binary, so never restate its contents here. One deliberate divergence: it defaults to sibling panes in the caller's tab, while spawned sessions here get their own tabs/spaces so each agent owns its tab.
+
 ## Orient first
 
 You may be running inside a herdr pane or in a plain terminal; both are normal, and a SessionStart hook already injects which one at startup. The ground truth is the environment: herdr exports `HERDR_PANE_ID`, `HERDR_TAB_ID`, `HERDR_WORKSPACE_ID`, and `HERDR_SESSION` into every pane shell, so a set `HERDR_PANE_ID` means you're inside that pane. When inside, treat that pane as yours: don't close it, its tab, or start an agent in it. (`herdr pane current` is NOT you: it returns the session's focused pane, whoever that is.)
@@ -49,7 +51,7 @@ Only use `--wait` if you need the agent's output; a kickoff is fire-and-forget.
 
 ## Check on / wait for an agent
 
-Herdr tracks each agent pane through semantic states: `working` (mid-turn), `blocked` (waiting on the user: a permission prompt or a question), `idle`/`done` (settled).
+Herdr tracks each agent pane through semantic states: `working` (mid-turn), `blocked` (waiting on the user: a permission prompt or a question), `idle`/`done` (settled). `done` is `idle` in a tab nobody has focused since the work finished, and CLI reads don't mark it seen — so in a fleet listing, `done` agents are the ones with results the user hasn't looked at. `unknown` means herdr can't classify the pane; it doesn't prove completion.
 
 - `herdr agent list` — fleet view, one `agent_status` per agent.
 - `herdr agent wait <name> --until blocked --until done --timeout <ms>` — block until a state; without `--until` it matches any settled state.
@@ -62,6 +64,5 @@ Herdr tracks each agent pane through semantic states: `working` (mid-turn), `blo
 
 ## Gotchas
 
-- `agent_prompt_stalled` right after `agent start` is a startup race: the submit didn't land even though start reported ready. Retry once; `agent read` confirms whether the text arrived.
+- `agent_prompt_stalled`: a prompt sent to a non-`working` agent must produce an observed lifecycle change within five seconds, or herdr returns this instead of waiting forever. Right after `agent start` it's usually a startup race (the submit didn't land even though start reported ready): retry once, and `agent read` confirms whether the text arrived.
 - `prompt --wait` doesn't track turns: prompting an already-`working` agent can match the *previous* turn's completion. Wait for a settled state before prompting.
-- Layout commands (`pane split/swap/resize/zoom`) and raw-terminal control (`pane run/send-keys/wait-output`) exist but are rarely needed for agent driving; discover them via `herdr pane --help` when they are.
