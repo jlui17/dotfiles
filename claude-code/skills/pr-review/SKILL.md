@@ -15,6 +15,8 @@ A good review checks the change against what the repo declares, not just general
 
 "Review and summarize" means the what/why/how prose anchored on previous behavior ("Today X → we'll do Y": what the system did before and why that's being replaced), plus a per-file signature profile of the code changes (the `+`/`~`/`-` shape in `~/CLAUDE.md`), then verdict and findings. Verdict and findings alone is half the deliverable; the profile alone is the other half.
 
+Write the summary for a reader who has not opened the PR: they know the codebase's patterns and service architecture, but none of the diff. So the prose explains each piece from zero — what it is, what it does at runtime, why it moved — rather than labeling hunks ("renames X to Y, adds a replace directive") in a recap register that only makes sense with the diff open. The test: the reader can judge the findings without ever loading the PR. A summary that failed it drew the correction "imagine I didn't look at the code and you're explaining the whole PR."
+
 ## Design, not just mechanics
 
 Verification is table stakes: CI state, the head SHA reviewed, file:line on every finding. A good review also interrogates the design: who owns each datum, what should read config versus a stamped id, what happens on failure. A verdict of "design is solid" that leaves every headline design question for the reader to raise afterward wasn't a design review.
