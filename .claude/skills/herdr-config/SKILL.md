@@ -1,5 +1,5 @@
 ---
-name: herdr
+name: herdr-config
 description: Herdr terminal/agent multiplexer config (keybindings, theme, sidebar). Use when changing herdr keybindings, theme, or other config.toml settings.
 ---
 
