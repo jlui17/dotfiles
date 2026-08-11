@@ -27,3 +27,6 @@ venv-*/
 
 # Personal notes
 .luidocs/
+
+# Task worktrees (wtnew convention; keeps repos untouched by the flow)
+.worktrees/
