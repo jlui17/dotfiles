@@ -4,9 +4,25 @@ onboarding = false
 name = "terminal"
 auto_switch = false
 
+# Agent-state colors (blocked=red, working=yellow, done=teal, idle=green in
+# src/ui/status.rs) swapped for Okabe-Ito equivalents: hue-true to the
+# semantics but separable under red-green color-vision deficiency, unlike the
+# terminal palette these override. Drop these once ui.status_indicators
+# (unreleased as of 0.8.0) ships and shapes disambiguate the states instead.
+[theme.custom]
+red = "#D55E00"    # vermillion — blocked
+yellow = "#F0E442" # bright yellow — working
+teal = "#56B4E9"   # sky blue — done
+green = "#009E73"  # bluish green — idle
+
 [keys]
 previous_agent = "prefix+["
 next_agent = "prefix+]"
+# prefix+N jumps to the Nth agent row; with priority sort, prefix+1 is always
+# the agent that most needs attention. Takes over prefix+1..9 from switch_tab
+# (tabs keep prefix+p/n cycling).
+focus_agent = "prefix+1..9"
+switch_tab = ""
 # Written as the shifted characters, not "shift+[": the terminal delivers
 # { and }, so a shift+bracket binding parses but never matches a keypress.
 previous_workspace = "prefix+{"
@@ -20,6 +36,18 @@ split_horizontal = "prefix+quote"
 
 [ui]
 agent_panel_sort = "priority"
+# Unreleased as of 0.8.0. When it ships: distinct shape per state (× blocked,
+# ◐ working, ✓ done, ○ idle), readable under color-vision deficiency with no
+# palette override needed — enable and drop [theme.custom].
+# status_indicators = "symbols"
+prompt_new_tab_name = false
+
+# One line per agent (drop the default second agent-kind row: everything here
+# is Claude Code) so twice as many agents fit in the panel. Tab first: it
+# carries the agent-specific task name, while the space is shared context
+# (dimmed) — in a multi-tab space, space-first would render identical rows.
+[ui.sidebar.agents]
+rows = [["state_icon", "tab", { token = "workspace", dim = true }]]
 
 [ui.sound]
 enabled = false
