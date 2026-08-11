@@ -2,85 +2,66 @@
 
 # cdw / cdwrm — navigate and remove git worktrees
 #
-# cdw          fzf over all worktree locations under the project root
-# cdw <name>   cd directly to a worktree by name
-# cdw -        cd to the project root (the main worktree)
+# cdw          fzf over the repo's linked worktrees (from `git worktree list`)
+# cdw <name>   cd directly to a worktree by name (path basename)
+# cdw -        cd to the main worktree
 #
-# cdwrm             fzf multi-select over worktree locations under the project root
+# cdwrm             fzf multi-select over the repo's linked worktrees
 # cdwrm <name>...   remove worktrees by name
 # cdwrm -f ...      force removal (passes --force to `git worktree remove`)
 
-# Directories to search for worktrees, relative to the project root.
-# To add a location: append to this array before sourcing, or extend it here.
-typeset -ga _CDW_DIRS
-_CDW_DIRS=(.worktrees .claude/worktrees)
-
-_cdw_find_root() {
-  local d=$PWD dir
-  while [[ $d != / ]]; do
-    for dir in $_CDW_DIRS; do
-      [[ -d $d/$dir ]] && { echo $d; return }
-    done
-    if [[ -f $d/.git ]]; then
-      local parent=${d:h}
-      for dir in $_CDW_DIRS; do
-        [[ -d $parent/$dir ]] && { echo $parent; return }
-      done
-    fi
-    d=${d:h}
-  done
+# Prints the main worktree's path; empty outside a git repository.
+_cdw_root() {
+  git worktree list --porcelain 2>/dev/null | awk '/^worktree /{print substr($0, 10); exit}'
 }
 
-# Populates the `reply` array with worktree names found under $1 (the project root).
-_cdw_worktree_entries() {
-  local root=$1
-  local -a dir
-  reply=()
-  for dir in $_CDW_DIRS; do
-    reply+=("$root/$dir"/*(N/:t))
-  done
+# Prints linked worktree paths, one per line (skips the main checkout, which
+# porcelain output always lists first). Location-agnostic: sees worktrees
+# wherever they were created (.worktrees/, .claude/worktrees/, herdr's dir).
+_cdw_worktree_paths() {
+  git worktree list --porcelain 2>/dev/null | awk '/^worktree /{print substr($0, 10)}' | tail -n +2
 }
 
 cdw() {
-  local root=$(_cdw_find_root)
-
+  emulate -L zsh
+  local root=$(_cdw_root)
   if [[ -z $root ]]; then
-    echo "cdw: no worktree directories found in any parent" >&2
+    echo "cdw: not inside a git repository" >&2
     return 1
   fi
 
-  if [[ $# -eq 0 ]]; then
-    local -a entries reply dir
-    _cdw_worktree_entries "$root"
-    entries=("${reply[@]}" "[root]")
-    local target
-    target=$(printf '%s\n' "${entries[@]}" | fzf --prompt="worktree> " --height=~10 --tac)
-    [[ -z $target ]] && return 0
-    if [[ $target == "[root]" ]]; then
-      cd "$root"
-      return
-    fi
-    for dir in $_CDW_DIRS; do
-      [[ -d $root/$dir/$target ]] && { cd "$root/$dir/$target"; return }
+  local -a paths
+  paths=(${(f)"$(_cdw_worktree_paths)"})
+
+  if (( $# == 0 )); then
+    local -a entries
+    local p
+    for p in $paths; do
+      entries+=("${p:t}"$'\t'"$p")
     done
+    entries+=("[root]"$'\t'"$root")
+    local target
+    target=$(printf '%s\n' "${entries[@]}" |
+      fzf --prompt="worktree> " --height=~10 --tac --delimiter=$'\t' --with-nth=1)
+    [[ -z $target ]] && return 0
+    cd "${target#*$'\t'}"
   elif [[ $1 == - ]]; then
     cd "$root"
   else
-    local dir dest
-    for dir in $_CDW_DIRS; do
-      dest="$root/$dir/$1"
-      [[ -d $dest ]] && { cd "$dest"; return }
+    local p
+    for p in $paths; do
+      [[ ${p:t} == $1 ]] && { cd "$p"; return }
     done
-    echo "cdw: worktree '$1' not found under ${(j:, :)_CDW_DIRS}" >&2
+    echo "cdw: worktree '$1' not found in \`git worktree list\`" >&2
     return 1
   fi
 }
 
 cdwrm() {
-  local root=$(_cdw_find_root)
-
+  emulate -L zsh
+  local root=$(_cdw_root)
   if [[ -z $root ]]; then
-    echo "cdwrm: no worktree directories found in any parent" >&2
+    echo "cdwrm: not inside a git repository" >&2
     return 1
   fi
 
@@ -90,28 +71,29 @@ cdwrm() {
     shift
   fi
 
-  local -a targets reply
-  if [[ $# -eq 0 ]]; then
-    _cdw_worktree_entries "$root"
-    if [[ ${#reply} -eq 0 ]]; then
-      echo "cdwrm: no worktrees found under ${(j:, :)_CDW_DIRS}" >&2
+  local -a paths
+  paths=(${(f)"$(_cdw_worktree_paths)"})
+
+  local -a targets
+  if (( $# == 0 )); then
+    if (( ${#paths} == 0 )); then
+      echo "cdwrm: no linked worktrees in this repository" >&2
       return 1
     fi
-    targets=("${(@f)$(printf '%s\n' "${reply[@]}" | fzf --prompt="rm worktree> " --height=~10 --tac -m)}")
+    targets=("${(@f)$(printf '%s\n' "${paths[@]:t}" | fzf --prompt="rm worktree> " --height=~10 --tac -m)}")
     [[ -z $targets ]] && return 0
   else
     targets=("$@")
   fi
 
-  local name dir candidate found moved
+  local name p found moved
   for name in $targets; do
     found=""
-    for dir in $_CDW_DIRS; do
-      candidate="$root/$dir/$name"
-      [[ -d $candidate ]] && { found=$candidate; break }
+    for p in $paths; do
+      [[ ${p:t} == $name ]] && { found=$p; break }
     done
     if [[ -z $found ]]; then
-      echo "cdwrm: worktree '$name' not found under ${(j:, :)_CDW_DIRS}" >&2
+      echo "cdwrm: worktree '$name' not found in \`git worktree list\`" >&2
       continue
     fi
     if [[ $PWD == $found || $PWD == $found/* ]]; then
@@ -125,19 +107,15 @@ cdwrm() {
 }
 
 _cdw() {
-  local root=$(_cdw_find_root)
-  [[ -z $root ]] && return
-  local -a reply
-  _cdw_worktree_entries "$root"
-  compadd "${reply[@]}" -
+  local -a paths
+  paths=(${(f)"$(_cdw_worktree_paths)"})
+  compadd "${paths[@]:t}" -
 }
 
 _cdwrm() {
-  local root=$(_cdw_find_root)
-  [[ -z $root ]] && return
-  local -a reply
-  _cdw_worktree_entries "$root"
-  compadd "${reply[@]}"
+  local -a paths
+  paths=(${(f)"$(_cdw_worktree_paths)"})
+  compadd "${paths[@]:t}"
 }
 
 compdef _cdw cdw
