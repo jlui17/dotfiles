@@ -46,7 +46,11 @@ wtnew() {
   fi
 
   local wt_path="$repo_root/${wt_dir:-.worktrees}/$name"
-  git -C "$repo_root" worktree add "$wt_path" -b "$name" || return 1
+  if ! git -C "$repo_root" worktree add "$wt_path" -b "$name"; then
+    unfunction wt_setup
+    unset wt_dir
+    return 1
+  fi
 
   # Subshell so wt_setup's cd/env never touch the interactive shell.
   ( cd "$wt_path" && REPO_ROOT="$repo_root" WORKTREE_PATH="$wt_path" BRANCH="$name" wt_setup )
