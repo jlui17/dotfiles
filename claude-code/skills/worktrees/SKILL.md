@@ -19,12 +19,12 @@ wtnew <name> [summary...]     # e.g. wtnew colony-562 flow viewer
 
 ## The setup registry
 
-`zsh-functions/worktree-setups/<repo>.sh`, keyed by the main checkout's directory basename. Each file defines:
+`zsh-functions/worktree-setups/<repo>.sh`, keyed by the main checkout's directory basename. Each file defines exactly one of two hooks (both run in a subshell with `REPO_ROOT`, `WORKTREE_PATH`, and `BRANCH` set), plus optionally `wt_dir="dir"`, a repo-relative override of the `.worktrees` location:
 
-- `wt_setup()` — required, runs inside the fresh worktree with `REPO_ROOT`, `WORKTREE_PATH`, and `BRANCH` set. Empty body (`:`) when a repo needs nothing; the explicit file is the point.
-- `wt_dir="dir"` — optional, repo-relative override of the `.worktrees` location.
+- `wt_setup()` — post-create hook: wtnew runs `git worktree add -b` itself, then this inside the fresh worktree. Empty body (`:`) when a repo needs nothing; the explicit file is the point.
+- `wt_create()` — creation owner, for a repo with its own worktree tooling: runs from the repo root, delegates creation wholesale (colony's is one line calling `scripts/worktree.sh new "$BRANCH"`), and must leave a worktree at `WORKTREE_PATH` on branch `BRANCH`. wtnew skips its own `git worktree add` and only binds the herdr space to the result.
 
-**When `wtnew` refuses with "no setup defined", discovery goes docs-first**: search the repo's docs and scripts for repo-specific worktree tooling (colony's `scripts/worktree.sh` is the canonical example); when it exists, `wt_setup` delegates to it — never re-implement a slice of it (a hand-copied step drifts the moment the repo's script changes). When no such tooling exists, read the repo's dev-setup docs for what a fresh checkout needs (env files, deps, generated code) and confirm the proposed setup with Justin before adding anything. Either way the file commits to dotfiles as its own change; the refusal is the onboarding path, so never bypass it by creating the worktree manually.
+**When `wtnew` refuses with "no setup defined", discovery goes docs-first**: search the repo's docs and scripts for repo-specific worktree tooling (colony's `scripts/worktree.sh` is the canonical example); when it exists, write a `wt_create()` delegating to it — never re-implement a slice of it (a hand-copied step drifts the moment the repo's script changes). When no such tooling exists, read the repo's dev-setup docs for what a fresh checkout needs (env files, deps, generated code) and confirm the proposed setup with Justin before adding anything. Either way the file commits to dotfiles as its own change; the refusal is the onboarding path, so never bypass it by creating the worktree manually.
 
 ## Navigate and tear down
 

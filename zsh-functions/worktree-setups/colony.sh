@@ -1,8 +1,7 @@
-# .env is gitignored and compose/service scripts read it from the worktree
-# (colony's scripts/worktree.sh cmd_new does the same copy). Docker-stack
-# isolation (port offsets, stack registry) stays owned by scripts/worktree.sh;
-# a wtnew worktree has no stack index, so use that script for stack work.
-wt_setup() {
-  [ -f "$REPO_ROOT/.env" ] && cp "$REPO_ROOT/.env" "$WORKTREE_PATH/.env"
-  return 0
+# colony owns worktree creation in scripts/worktree.sh: latest-origin-tip
+# guard, stack-index registry, .env copy, per-stack port scheme. Delegate
+# wholesale; a "local main is behind" refusal is the repo's own guard — pull
+# main and re-run rather than bypassing it.
+wt_create() {
+  "$REPO_ROOT/scripts/worktree.sh" new "$BRANCH"
 }
