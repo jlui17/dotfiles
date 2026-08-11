@@ -13,7 +13,7 @@ This skill covers cross-session orchestration; pane-level mechanics in the curre
 
 ## Orient first
 
-You may be running inside a herdr pane or in a plain terminal; both are normal, and a SessionStart hook already injects which one at startup. The ground truth is the environment: herdr exports `HERDR_PANE_ID`, `HERDR_TAB_ID`, `HERDR_WORKSPACE_ID`, and `HERDR_SESSION` into every pane shell, so a set `HERDR_PANE_ID` means you're inside that pane. When inside, treat that pane as yours: don't close it, its tab, or start an agent in it. (`herdr pane current` is NOT you: it returns the session's focused pane, whoever that is.)
+You may be running inside a herdr pane or in a plain terminal; both are normal, and a SessionStart hook already injects which one at startup. The ground truth is the environment: herdr exports `HERDR_ENV=1`, `HERDR_PANE_ID`, `HERDR_TAB_ID`, and `HERDR_WORKSPACE_ID` into every pane shell, so a set `HERDR_PANE_ID` means you're inside that pane. When inside, treat that pane as yours: don't close it, its tab, or start an agent in it. (`herdr pane current` is NOT you: it returns the session's focused pane, whoever that is.)
 
 ## When to start a session (and how to kick it off)
 
@@ -36,7 +36,7 @@ A fresh session has zero spaces, and every other call fails with `workspace_not_
 
 `workspace create` and `tab create` both take `--cwd`, `--label`, `--env KEY=VALUE`, and `--focus`/`--no-focus`, and both return their root pane's ID in the JSON. Scope listings with `herdr tab list --workspace <id>`. Default to `--no-focus` so you don't yank the user's view; `--focus` only when they asked to be taken there.
 
-For parallel agents on one repo, `herdr worktree create --branch <name> [--base <ref>] --label <l>` opens a space backed by a fresh git worktree: one space per branch, no file conflicts.
+For parallel agents on one repo, give each *task* a worktree-backed space via the `worktrees` skill's flow, so the repo's setup registry runs; raw `herdr worktree create --branch <name>` skips the registry and produces an un-set-up checkout. Parallel sessions on the *same* task still share one space as tabs.
 
 ## Spawn an agent
 
