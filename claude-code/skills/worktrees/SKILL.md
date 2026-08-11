@@ -24,7 +24,7 @@ wtnew <name> [summary...]     # e.g. wtnew colony-562 flow viewer
 - `wt_setup()` — required, runs inside the fresh worktree with `REPO_ROOT`, `WORKTREE_PATH`, and `BRANCH` set. Empty body (`:`) when a repo needs nothing; the explicit file is the point.
 - `wt_dir="dir"` — optional, repo-relative override of the `.worktrees` location.
 
-**When `wtnew` refuses with "no setup defined", write the repo's file**: read the repo's own dev-setup docs for what a fresh checkout needs (env files, deps, generated code), encode exactly that, and commit it to dotfiles as its own change. The refusal is the onboarding path, so never bypass it by creating the worktree manually.
+**When `wtnew` refuses with "no setup defined", discovery goes docs-first**: search the repo's docs and scripts for repo-specific worktree tooling (colony's `scripts/worktree.sh` is the canonical example); when it exists, `wt_setup` delegates to it — never re-implement a slice of it (a hand-copied step drifts the moment the repo's script changes). When no such tooling exists, read the repo's dev-setup docs for what a fresh checkout needs (env files, deps, generated code) and confirm the proposed setup with Justin before adding anything. Either way the file commits to dotfiles as its own change; the refusal is the onboarding path, so never bypass it by creating the worktree manually.
 
 ## Navigate and tear down
 
