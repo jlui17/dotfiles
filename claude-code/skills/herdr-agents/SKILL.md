@@ -32,6 +32,8 @@ A fresh session has zero spaces, and every other call fails with `workspace_not_
 
 ## Spaces and tabs
 
+**A space is a task or a themed cluster of related small tasks; a tab is one agent session's work** (canonical here; the `worktrees` skill points at this). Label a task space `[<task-id>] <summary>` when a task ID exists; a task-less or cluster space gets a short plain name ("review", "agent upgrades"). More sessions for the same task or cluster means more tabs in that space, not another space. A coding-task space on a repo should be worktree-backed via the `worktrees` skill's flow (`wtnew`); read that skill before creating one.
+
 `workspace create` and `tab create` both take `--cwd`, `--label`, `--env KEY=VALUE`, and `--focus`/`--no-focus`, and both return their root pane's ID in the JSON. Scope listings with `herdr tab list --workspace <id>`. Default to `--no-focus` so you don't yank the user's view; `--focus` only when they asked to be taken there.
 
 For parallel agents on one repo, `herdr worktree create --branch <name> [--base <ref>] --label <l>` opens a space backed by a fresh git worktree: one space per branch, no file conflicts.
