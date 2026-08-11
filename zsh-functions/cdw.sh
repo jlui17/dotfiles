@@ -48,12 +48,20 @@ cdw() {
   elif [[ $1 == - ]]; then
     cd "$root"
   else
+    local -a matches
     local p
     for p in $paths; do
-      [[ ${p:t} == $1 ]] && { cd "$p"; return }
+      [[ ${p:t} == $1 ]] && matches+=("$p")
     done
-    echo "cdw: worktree '$1' not found in \`git worktree list\`" >&2
-    return 1
+    if (( ${#matches} == 0 )); then
+      echo "cdw: worktree '$1' not found in \`git worktree list\`" >&2
+      return 1
+    elif (( ${#matches} > 1 )); then
+      printf 'cdw: %s is ambiguous:\n' "$1" >&2
+      printf '  %s\n' "${matches[@]}" >&2
+      return 1
+    fi
+    cd "${matches[1]}"
   fi
 }
 
@@ -74,36 +82,61 @@ cdwrm() {
   local -a paths
   paths=(${(f)"$(_cdw_worktree_paths)"})
 
-  local -a targets
+  local -a target_paths
   if (( $# == 0 )); then
     if (( ${#paths} == 0 )); then
       echo "cdwrm: no linked worktrees in this repository" >&2
       return 1
     fi
-    targets=("${(@f)$(printf '%s\n' "${paths[@]:t}" | fzf --prompt="rm worktree> " --height=~10 --tac -m)}")
-    [[ -z $targets ]] && return 0
+    # name\tpath entries so duplicate basenames stay distinguishable rows.
+    local -a entries selected
+    local p
+    for p in $paths; do
+      entries+=("${p:t}"$'\t'"$p")
+    done
+    selected=("${(@f)$(printf '%s\n' "${entries[@]}" |
+      fzf --prompt="rm worktree> " --height=~10 --tac -m --delimiter=$'\t' --with-nth=1)}")
+    [[ -z $selected ]] && return 0
+    target_paths=("${selected[@]#*$'\t'}")
   else
-    targets=("$@")
+    local name p
+    local -a matches
+    for name in "$@"; do
+      matches=()
+      for p in $paths; do
+        [[ ${p:t} == $name ]] && matches+=("$p")
+      done
+      if (( ${#matches} == 0 )); then
+        echo "cdwrm: worktree '$name' not found in \`git worktree list\`" >&2
+        return 1
+      elif (( ${#matches} > 1 )); then
+        printf 'cdwrm: %s is ambiguous:\n' "$name" >&2
+        printf '  %s\n' "${matches[@]}" >&2
+        return 1
+      fi
+      target_paths+=("${matches[1]}")
+    done
   fi
 
-  local name p found moved
-  for name in $targets; do
-    found=""
-    for p in $paths; do
-      [[ ${p:t} == $name ]] && { found=$p; break }
-    done
-    if [[ -z $found ]]; then
-      echo "cdwrm: worktree '$name' not found in \`git worktree list\`" >&2
-      continue
-    fi
+  # Step out before removing so the shell is never left in a deleted
+  # directory, but step back if the removal fails (e.g. dirty worktree
+  # without -f) so a failed remove leaves the shell where it was.
+  local found came_from failed=0
+  for found in $target_paths; do
+    came_from=""
     if [[ $PWD == $found || $PWD == $found/* ]]; then
+      came_from=$PWD
       cd "$root"
-      moved=1
     fi
-    git -C "$root" worktree remove "${force_args[@]}" "$found" && echo "cdwrm: removed $found"
+    if git -C "$root" worktree remove "${force_args[@]}" "$found"; then
+      echo "cdwrm: removed $found"
+      [[ -n $came_from ]] && echo "cdwrm: moved to $root (was inside the removed worktree)"
+    else
+      failed=1
+      [[ -n $came_from ]] && cd "$came_from"
+    fi
   done
-
-  [[ -n $moved ]] && echo "cdwrm: moved to $root (was inside a removed worktree)"
+  return $failed
 }
 
 _cdw() {
