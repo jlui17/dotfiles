@@ -13,9 +13,12 @@ This covers *task-level* worktrees the user works in. Your own delegation isolat
 
 ```sh
 wtnew <name> [summary...]     # e.g. wtnew colony-562 flow viewer
+wtnew --space <name> [summary...]   # kickoff: also open the herdr space
 ```
 
 `wtnew` (zsh function, `zsh-functions/wtnew.sh`) runs in order: look up the repo's setup file (refuse loudly if missing), create the worktree (its own `git worktree add .worktrees/<name> -b <name>` plus `wt_setup`, or the repo's `wt_create` — see the registry below), then open a focused herdr space labeled `[<name>] <summary...>` bound to it. Outside herdr it cd's into the worktree instead. Two non-obvious facts: wtnew's own path branches from the main checkout's *current HEAD*, not `origin/main`, so check what it's parked on first; and a failed hook leaves the worktree in place with no space — fix and bind it with `herdr worktree open`, or drop it with `cdwrm`.
+
+**From an agent shell (`CLAUDECODE=1`), wtnew skips the herdr space by default**: a session doing the task itself works from its own tab and can't inhabit the new space's pane, so the space would sit as an empty tab. Just `cd` into the worktree and work. A **kickoff** is the one agent flow that wants the space — the new agent starts in its root pane — so it passes `--space` (opened unfocused) and takes `root_pane.pane_id` from the JSON output for `herdr agent start`. Forgot `--space` on a kickoff → the worktree exists with no space; bind it with `herdr worktree open`, don't re-run wtnew.
 
 ## The setup registry
 

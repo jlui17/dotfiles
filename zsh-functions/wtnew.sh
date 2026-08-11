@@ -1,12 +1,17 @@
 #!/bin/zsh
 
-# wtnew <name> [summary...] — start a task: worktree + per-repo setup + herdr space
+# wtnew [--space] <name> [summary...] — start a task: worktree + per-repo setup + herdr space
 #
 # Creates <repo>/.worktrees/<name> on a new branch <name>, runs the repo's
 # setup from worktree-setups/<repo>.sh, then opens a herdr space labeled
 # "[<name>] <summary>" bound to the worktree (or cd's there outside herdr).
 # Refuses to run on a repo with no setup file, so an unknown repo can never
 # produce a silently half-set-up worktree.
+#
+# Agent shells (CLAUDECODE=1) skip the herdr space by default: an agent
+# session can't move itself into the new space's pane, so the space would
+# sit as an empty tab. --space opts back in (unfocused) for kickoff flows
+# that start a fresh agent in the space's root pane.
 #
 # A setup file defines exactly one of two hooks:
 #   wt_setup()  — post-create: wtnew does `git worktree add -b` itself, then
@@ -21,8 +26,13 @@ typeset -g _WT_SETUPS_DIR="${${(%):-%x}:A:h}/worktree-setups"
 
 wtnew() {
   emulate -L zsh
+  local want_space=0
+  if [[ ${1:-} == --space ]]; then
+    want_space=1
+    shift
+  fi
   if (( $# < 1 )); then
-    echo "usage: wtnew <name> [summary...]" >&2
+    echo "usage: wtnew [--space] <name> [summary...]" >&2
     return 2
   fi
   local name=$1
@@ -96,12 +106,21 @@ wtnew() {
   local label="[$name]"
   [[ -n $summary ]] && label="[$name] $summary"
 
-  if [[ ${HERDR_ENV:-} == 1 ]]; then
+  local is_agent=0
+  [[ ${CLAUDECODE:-} == 1 ]] && is_agent=1
+
+  if [[ ${HERDR_ENV:-} == 1 ]] && (( !is_agent || want_space )); then
     # --cwd anchors repo resolution; the default is the UI-focused workspace,
-    # which may be a different repo entirely.
-    herdr worktree open --cwd "$repo_root" --path "$wt_path" --label "$label" --focus
+    # which may be a different repo entirely. Agents open unfocused so a bot
+    # never yanks the user's view.
+    local focus_flag=--focus
+    (( is_agent )) && focus_flag=--no-focus
+    herdr worktree open --cwd "$repo_root" --path "$wt_path" --label "$label" $focus_flag
   else
     cd "$wt_path"
     echo "wtnew: $label ready at $wt_path"
+    if [[ ${HERDR_ENV:-} == 1 ]]; then
+      echo "wtnew: no herdr space opened (agent shell); kickoffs pass --space"
+    fi
   fi
 }
