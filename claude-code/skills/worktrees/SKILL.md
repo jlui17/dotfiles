@@ -1,6 +1,6 @@
 ---
 name: worktrees
-description: "Justin's task-level git worktree flow. Use when starting task work that needs its own checkout or herdr space; when the user says wtnew, cdw, cdwrm, or 'start a worktree/space for this task'; when wtnew fails with 'no setup defined' and a repo's setup file must be written; or when tearing down a finished task's worktree and space. Covers the space = task = worktree model and the worktree-setups registry in the dotfiles repo."
+description: "Justin's task-level git worktree flow. Use when starting task work that needs its own checkout or herdr space; when the user says wtnew, cdw, cdwrm, or 'start a worktree/space for this task'; when wtnew fails with 'no setup defined' and a repo's setup file must be written; or when tearing down a finished task's worktree and space. Covers the worktree-per-task model and the worktree-setups registry in the dotfiles repo."
 ---
 
 # Task worktrees
@@ -15,7 +15,7 @@ This covers *task-level* worktrees the user works in. Your own delegation isolat
 wtnew <name> [summary...]     # e.g. wtnew colony-562 flow viewer
 ```
 
-`wtnew` (zsh function, `zsh-functions/wtnew.sh`) runs in order: look up the repo's setup file (refuse loudly if missing), `git worktree add .worktrees/<name> -b <name>` from the main checkout, run `wt_setup` inside the new worktree, then open a focused herdr space labeled `[<name>] <summary...>` bound to it. Outside herdr it cd's into the worktree instead.
+`wtnew` (zsh function, `zsh-functions/wtnew.sh`) runs in order: look up the repo's setup file (refuse loudly if missing), create the worktree (its own `git worktree add .worktrees/<name> -b <name>` plus `wt_setup`, or the repo's `wt_create` — see the registry below), then open a focused herdr space labeled `[<name>] <summary...>` bound to it. Outside herdr it cd's into the worktree instead. Two non-obvious facts: wtnew's own path branches from the main checkout's *current HEAD*, not `origin/main`, so check what it's parked on first; and a failed hook leaves the worktree in place with no space — fix and bind it with `herdr worktree open`, or drop it with `cdwrm`.
 
 ## The setup registry
 
@@ -24,11 +24,11 @@ wtnew <name> [summary...]     # e.g. wtnew colony-562 flow viewer
 - `wt_setup()` — post-create hook: wtnew runs `git worktree add -b` itself, then this inside the fresh worktree. Empty body (`:`) when a repo needs nothing; the explicit file is the point.
 - `wt_create()` — creation owner, for a repo with its own worktree tooling: runs from the repo root, delegates creation wholesale (colony's is one line calling `scripts/worktree.sh new "$BRANCH"`), and must leave a worktree at `WORKTREE_PATH` on branch `BRANCH`. wtnew skips its own `git worktree add` and only binds the herdr space to the result.
 
-**When `wtnew` refuses with "no setup defined", discovery goes docs-first**: search the repo's docs and scripts for repo-specific worktree tooling (colony's `scripts/worktree.sh` is the canonical example); when it exists, write a `wt_create()` delegating to it — never re-implement a slice of it (a hand-copied step drifts the moment the repo's script changes). When no such tooling exists, read the repo's dev-setup docs for what a fresh checkout needs (env files, deps, generated code) and confirm the proposed setup with Justin before adding anything. Either way the file commits to dotfiles as its own change; the refusal is the onboarding path, so never bypass it by creating the worktree manually.
+**When `wtnew` refuses with "no setup defined", discovery goes docs-first**: search the repo's docs and scripts for repo-specific worktree tooling (colony's `scripts/worktree.sh` is the canonical example); when it exists, write a `wt_create()` delegating to it — never re-implement a slice of it (a hand-copied step drifts the moment the repo's script changes). When no such tooling exists, read the repo's dev-setup docs for what a fresh checkout needs (env files, deps, generated code) and confirm the proposed setup with Justin before adding anything. Either way the file commits to dotfiles as its own change; the refusal is the onboarding path, so never bypass it by creating the worktree manually — raw `herdr worktree create` and the TUI's new-worktree binding are the same bypass (neither runs the registry).
 
 ## Navigate and tear down
 
 - `cdw` / `cdw <name>` / `cdw -` — fzf over, jump to, or leave the repo's worktrees. Reads `git worktree list`, so it sees every worktree regardless of who created it (wtnew, an agent, plain `git worktree add`).
-- `cdwrm <name>` (`-f` to force) — remove worktrees.
-- A worktree that exists but has no space yet: `herdr worktree open --cwd <repo-root> --path <worktree> --label '[<name>] <summary>'`.
-- Task done: close the space (`herdr workspace close` or `prefix+shift+d`) and remove the worktree; `herdr worktree remove --workspace <id>` does both at once. Closing a space alone never deletes the worktree.
+- `cdwrm [-f] [<name>...]` — remove worktrees; bare `cdwrm` opens an fzf multi-select, and an ambiguous basename errors listing the candidate paths.
+- A worktree that exists but has no space yet: `herdr worktree open --cwd <repo-root> --path <worktree> --label <space label>`.
+- Task done: close the space (`herdr workspace close <id>` or `prefix+shift+d`) and remove the worktree; `herdr worktree remove --workspace <id>` does both at once. Closing a space alone never deletes the worktree, no path deletes the task branch, and a dirty checkout needs `--force`/`-f` on either removal path.
