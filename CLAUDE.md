@@ -9,6 +9,7 @@ Canonical config source. Single setup across macOS (Homebrew), Arch Linux (Pacma
 - **Symlinks**: Configs symlinked from repo → standard paths. No copies.
 - **Declarative**: Package lists and manifests over imperative scripts.
 - **Minimal friction**: Plugin managers auto-install. One command setup.
+- **Fast startup**: interactive startup paths are latency-budgeted. Work that forks or is slow (subprocess `eval`s, plugin loads, compinit) gets deferred past the first prompt or cached, never added synchronously; when touching a startup path, measure before/after (`/usr/bin/time zsh -i -c exit`). The zsh mechanics (turbo ordering, `_cached_eval`) live in the zshrc skill.
 - **Durable docs**: Docs capture intent, patterns, and design decisions — not file trees or config values that agents can read directly.
 
 ## Design
