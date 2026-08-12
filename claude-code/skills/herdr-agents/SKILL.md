@@ -51,6 +51,8 @@ Agents are named at `start`; every later command takes the name, not the pane ID
 
 Only use `--wait` if you need the agent's output; a kickoff is fire-and-forget.
 
+Every message to another herdr agent names the sender: your session, space, and tab (the `HERDR_*` env vars from Orient first), so the recipient knows who's asking and where to address a reply.
+
 ## Check on / wait for an agent
 
 Herdr tracks each agent pane through semantic states: `working` (mid-turn), `blocked` (waiting on the user: a permission prompt or a question), `idle`/`done` (settled). `done` is `idle` in a tab nobody has focused since the work finished, and CLI reads don't mark it seen — so in a fleet listing, `done` agents are the ones with results the user hasn't looked at. `unknown` means herdr can't classify the pane; it doesn't prove completion.
