@@ -13,6 +13,10 @@ When a review objects to a decision or assumption we made, and the objection onl
 
 "Where the reader will hit it" is ranked, and defers to the code-comments rule: first encode it in code or pin it with a test; then the package's docs (README, design doc) for context that outlives the change; a code comment only if it clears the comment bar. Lifetime picks the venue: **information that persists lives in the package; information true only for the PR's lifetime (deploy status, merge order, what exists yet, review dispositions) lives in the PR, always the PR, never the package.**
 
+## Watch both surfaces while waiting
+
+Babysitting a review round means watching the PR (reviews, inline comments) *and* the review-request Slack thread, not one of them. Reviewers split their output across the two — an agent reviewer posts the verdict on the PR with only a summary in the thread, humans sometimes answer only in Slack — so a watcher pointed at a single surface reports "no feedback yet" while the other surface already has it.
+
 ## Close the loop in Slack
 
 After pushing fixes, reply in the requester's Slack thread (the original review-request message) with a short note that the comments are addressed. Claude monitors Slack, not the PR: dispositions posted only on the PR won't be seen. Details stay in the PR; the thread reply is the ping (the depth-pairing rule in the style skill's `resources/slack.md`).
