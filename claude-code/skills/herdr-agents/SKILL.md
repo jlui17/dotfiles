@@ -51,7 +51,7 @@ Agents are named at `start`; every later command takes the name, not the pane ID
 
 Only use `--wait` if you need the agent's output; a kickoff is fire-and-forget.
 
-Every message to another herdr agent names the sender: your session, space, and tab (the `HERDR_*` env vars from Orient first), so the recipient knows who's asking and where to address a reply.
+Every message to another herdr agent opens with a sender tag in a fixed shape: `[Agent tab <tab_id>, space <space_id>, session <name>]: <message>`, values from the `HERDR_*` env vars in Orient first, so the recipient knows who's asking and where to address a reply.
 
 ## Check on / wait for an agent
 
