@@ -172,7 +172,15 @@ alias src-zsh='source ~/.zshrc'
 alias vim-zsh='nvim ~/.zshrc'
 alias lg='lazygit'
 alias claude='claude --dangerously-skip-permissions'
-alias gauth='gcloud auth login && gcloud auth application-default login'
+# colony's script owns the ADC scope roster and probes before re-authing;
+# the fallback is the pre-script two-command form for machines without colony.
+gauth() {
+  if [[ -x "$HOME/src/colony/scripts/gcloud-auth.sh" ]]; then
+    "$HOME/src/colony/scripts/gcloud-auth.sh" "$@"
+  else
+    gcloud auth login && gcloud auth application-default login
+  fi
+}
 # Force a completion-dump rebuild now instead of waiting for the daily full
 # compinit pass (e.g. right after installing a tool). exec, not an in-place
 # compinit: the replay list holding the manual compdef registrations is
