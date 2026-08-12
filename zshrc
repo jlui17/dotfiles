@@ -5,9 +5,38 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# Cache for `eval "$(tool init ...)"` shell integrations: the tools emit
+# static init scripts, so paying their fork+startup on every shell buys
+# nothing. Generation runs in a scrubbed env because the output may embed it
+# (mise activate, seeing a nested shell's live activation, prepends a
+# deactivation block with that shell's PATH baked in as a literal export).
+# The scrub cuts both ways: tool config vars that alter the emitted script
+# (zoxide's _ZO_*) are ignored at generation, so they can't be set via env.
+# Invalidated on the newer of the binary's stat/lstat mtimes: brew repoints
+# the symlink on install but bottle targets keep build-time mtimes (which can
+# predate the cache), while `brew update` rewrites the target behind the
+# never-repointed `brew` link.
+_cached_eval() {
+  local cache="${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval/${(j:-:)${(@)argv//[^A-Za-z0-9._-]/_}}.zsh"
+  local bin="${commands[$1]:-$1}"
+  zmodload -F zsh/stat b:zstat
+  local -A st
+  local bin_mtime=0 cache_mtime=0
+  zstat -H st -- "$bin" 2>/dev/null && bin_mtime=$st[mtime]
+  zstat -L -H st -- "$bin" 2>/dev/null && (( st[mtime] > bin_mtime )) && bin_mtime=$st[mtime]
+  zstat -H st -- "$cache" 2>/dev/null && cache_mtime=$st[mtime]
+  if [[ ! -s "$cache" ]] || (( bin_mtime > cache_mtime )); then
+    local tmp="$cache.new.$$"
+    mkdir -p "${cache:h}"
+    command env -i HOME="$HOME" PATH="$PATH" "$@" >| "$tmp" \
+      && command mv -f "$tmp" "$cache" || command rm -f "$tmp"
+  fi
+  [[ -s "$cache" ]] && source "$cache"
+}
+
 # Homebrew shellenv (macOS)
 if [[ -f "/opt/homebrew/bin/brew" ]] then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
+  _cached_eval /opt/homebrew/bin/brew shellenv
 fi
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
@@ -30,18 +59,49 @@ source "${ZINIT_HOME}/zinit.zsh"
 # Add in Powerlevel10k
 zinit ice depth=1; zinit light romkatv/powerlevel10k
 
-# Add in zsh plugins
-zinit light zsh-users/zsh-syntax-highlighting
-zinit light zsh-users/zsh-completions
-zinit light zsh-users/zsh-autosuggestions
-zinit light Aloxaf/fzf-tab
+# Trust the existing completion dump (-C) unless it's older than a day: the
+# daily full pass picks up newly installed completions, -C skips the audit
+# and fpath scan on every other startup.
+_cached_compinit() {
+  setopt localoptions extendedglob
+  autoload -Uz compinit
+  local dump="${ZDOTDIR:-$HOME}/.zcompdump"
+  if [[ -n ${dump}(#qN.mh-24) ]]; then
+    compinit -C -d "$dump"
+  else
+    compinit -d "$dump"
+    touch "$dump"
+  fi
+  # zcompile writes in place (no temp+rename), and a concurrent shell sourcing
+  # a torn .zwc ranges from silently-stale to SIGBUS — so compile to a temp
+  # name and rename over.
+  if [[ ! -s "${dump}.zwc" || "$dump" -nt "${dump}.zwc" ]]; then
+    zcompile "${dump}.$$" "$dump" 2>/dev/null \
+      && command mv -f "${dump}.$$.zwc" "${dump}.zwc" \
+      || command rm -f "${dump}.$$.zwc"
+  fi
+}
 
-# Zinit snippets
-zinit snippet OMZP::git
+# Plugins load after the first prompt (zinit turbo); p10k instant prompt
+# covers the gap. Ordering: compinit before fzf-tab (its requirement), fzf-tab
+# before the widget-wrapping plugins (syntax-highlighting, autosuggestions),
+# and the compdef replay in the LAST entry's atload — zinit captures compdef
+# calls made while sourcing each plugin (OMZP::git makes ten) into the replay
+# list, so replaying any earlier would drop them.
+zinit wait lucid light-mode for \
+  atinit'_cached_compinit' \
+    Aloxaf/fzf-tab \
+  blockf \
+    zsh-users/zsh-completions \
+  OMZP::git \
+  zsh-users/zsh-syntax-highlighting \
+  atload'_zsh_autosuggest_start; zicdreplay; zinit cdclear -q' \
+    zsh-users/zsh-autosuggestions
 
-# Load completions
-autoload -Uz compinit && compinit
-zinit cdreplay -q
+# compinit is deferred to the turbo block above, so compdef doesn't exist yet
+# for the zsh-functions files below; queue calls into zinit's replay list
+# (drained by zicdreplay after compinit defines the real compdef).
+compdef() { ZINIT_COMPDEF_REPLAY+=( "${(j: :)${(q)@}}" ) }
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -113,26 +173,29 @@ alias vim-zsh='nvim ~/.zshrc'
 alias lg='lazygit'
 alias claude='claude --dangerously-skip-permissions'
 alias gauth='gcloud auth login && gcloud auth application-default login'
+# update_pkgs also evicts the zsh-eval cache: _cached_eval's mtime check can't
+# see upgrades of mise-shimmed tools (the shim never changes) and can miss
+# Homebrew bottles whose build predates the cache.
 if command -v brew &>/dev/null; then
-  alias update_pkgs='brew update && brew upgrade && mise up && zinit update && zinit cclear'
+  alias update_pkgs='brew update && brew upgrade && mise up && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval"'
   alias update_cc='brew update && brew upgrade claude-code@latest'
 elif command -v pacman &>/dev/null; then
-  alias update_pkgs='sudo pacman -Syu && mise up && zinit update && zinit cclear'
+  alias update_pkgs='sudo pacman -Syu && mise up && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval"'
 elif command -v apt-get &>/dev/null; then
-  alias update_pkgs='sudo apt-get update && sudo apt-get upgrade && mise up && zinit update && zinit cclear'
+  alias update_pkgs='sudo apt-get update && sudo apt-get upgrade && mise up && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval"'
 fi
 
 # Mise (before shell integrations that depend on mise-managed tools)
 if command -v mise &>/dev/null; then
-  eval "$(mise activate zsh)"
+  _cached_eval mise activate zsh
 fi
 
 # Bun-installed global CLIs (after mise so mise-managed tools keep precedence)
 export PATH="$PATH:$HOME/.bun/bin"
 
-# Shell integrations
-eval "$(fzf --zsh)"
-enable-fzf-tab
+# Shell integrations (fzf-tab re-wraps fzf's Tab binding when it loads
+# post-prompt, so no explicit enable-fzf-tab here)
+_cached_eval fzf --zsh
 
 # Custom functions
 DOTFILES_DIR="${${(%):-%x}:A:h}"
@@ -153,7 +216,7 @@ unsetopt NULL_GLOB
 # POWERLEVEL9K_* vars on load — e.g. POWERLEVEL9K_DISABLE_GITSTATUS lives here.
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
-eval "$(zoxide init --cmd cd zsh)"
+_cached_eval zoxide init --cmd cd zsh
 
 # OpenClaw Completion
 [ -f "/home/openclaw/.openclaw/completions/openclaw.zsh" ] && source "/home/openclaw/.openclaw/completions/openclaw.zsh"
