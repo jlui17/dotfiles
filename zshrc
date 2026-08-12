@@ -173,6 +173,12 @@ alias vim-zsh='nvim ~/.zshrc'
 alias lg='lazygit'
 alias claude='claude --dangerously-skip-permissions'
 alias gauth='gcloud auth login && gcloud auth application-default login'
+# Force a completion-dump rebuild now instead of waiting for the daily full
+# compinit pass (e.g. right after installing a tool). exec, not an in-place
+# compinit: the replay list holding the manual compdef registrations is
+# drained after startup, so re-running compinit in this shell would lose them.
+alias update_zcomp='rm -f "${ZDOTDIR:-$HOME}/.zcompdump" "${ZDOTDIR:-$HOME}/.zcompdump.zwc" && exec zsh'
+
 # update_pkgs also evicts the zsh-eval cache: _cached_eval's mtime check can't
 # see upgrades of mise-shimmed tools (the shim never changes) and can miss
 # Homebrew bottles whose build predates the cache.
