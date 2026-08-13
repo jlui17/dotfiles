@@ -191,12 +191,12 @@ alias update_zcomp='rm -f "${ZDOTDIR:-$HOME}/.zcompdump" "${ZDOTDIR:-$HOME}/.zco
 # see upgrades of mise-shimmed tools (the shim never changes) and can miss
 # Homebrew bottles whose build predates the cache.
 if command -v brew &>/dev/null; then
-  alias update_pkgs='brew update && brew upgrade && mise up && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval"'
+  alias update_pkgs='brew update && brew upgrade && mise up && bunx skills update -g && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval"'
   alias update_cc='brew update && brew upgrade claude-code@latest'
 elif command -v pacman &>/dev/null; then
-  alias update_pkgs='sudo pacman -Syu && mise up && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval"'
+  alias update_pkgs='sudo pacman -Syu && mise up && bunx skills update -g && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval"'
 elif command -v apt-get &>/dev/null; then
-  alias update_pkgs='sudo apt-get update && sudo apt-get upgrade && mise up && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval"'
+  alias update_pkgs='sudo apt-get update && sudo apt-get upgrade && mise up && bunx skills update -g && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval"'
 fi
 
 # Mise (before shell integrations that depend on mise-managed tools)
