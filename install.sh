@@ -160,10 +160,15 @@ GUI_APPS=(
   "Herdr|command -v herdr|brew install herdr|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\"|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\""
 )
 
-# Ordered module registry: name:function. main() runs every entry through
-# run_module, which honors SKIP_MODULES. The knob template appended to
+# Ordered module registry: name:function[:os,os]. main() runs every entry
+# through run_module, which honors SKIP_MODULES. The knob template appended to
 # .dotfiles-local derives its module list from here too (as a snapshot at
 # append time), so this is the single place a module is named.
+#
+# The optional OS list is what makes the progress counter honest: a module that
+# can't apply here is filtered out before numbering rather than occupying a
+# slot that prints nothing. Ubuntu is a headless VPS, so no terminal emulator
+# config; Hyprland and the macOS defaults are their own platforms' business.
 MODULES=(
   packages:install_packages
   mise:setup_mise
@@ -172,15 +177,15 @@ MODULES=(
   zshrc:setup_zshrc
   tmux:setup_tmux
   nvim:setup_nvim
-  ghostty:setup_ghostty
-  omarchy:setup_omarchy
+  ghostty:setup_ghostty:macos,arch
+  omarchy:setup_omarchy:arch
   opencode:setup_opencode
   pi:setup_pi
   herdr:setup_herdr
   claude-code:setup_claude_code
   gitignore:setup_gitignore
   git-config:setup_git_config
-  macos-defaults:setup_macos_defaults
+  macos-defaults:setup_macos_defaults:macos
 )
 
 # ──────────────────────────────────────────────
@@ -305,8 +310,13 @@ track() {
   # an `if` with no `else` resets $? to 0 when the condition is false.
   "$@" && return 0
   local rc=$?
+  # Read the tail before warning: warn writes to the log too, and would
+  # otherwise be the last thing the tail picks up.
+  local tail_text
+  tail_text=$(tail -n +$((start_line + 1)) "$INSTALL_LOG" | tail -n 15 | sed 's/^/      /')
   warn "$label failed (exit $rc):"
-  tail -n +$((start_line + 1)) "$INSTALL_LOG" | tail -n 15 | sed 's/^/      /' >&3
+  # Terminal only — this text is already in the log, a few lines up.
+  print -r -- "$tail_text" >&3
   FAILURES+=("$label")
   return $rc
 }
@@ -569,6 +579,19 @@ merge_json() {
 #  PHASE 1 — OS packages
 # ──────────────────────────────────────────────
 
+# brew update prints every outdated formula and cask — 26 lines of package
+# names on this machine. The count is the part worth knowing; the names are a
+# `brew outdated` away. Only macOS: pacman -Syu upgrades as it updates, and
+# apt-get update reports its own drift.
+report_brew_drift() {
+  [[ "$OS" == "macos" ]] || return 0
+  local formulae casks
+  formulae=$(brew outdated --formula --quiet | wc -l | tr -d ' ')
+  casks=$(brew outdated --cask --quiet | wc -l | tr -d ' ')
+  (( formulae + casks )) || return 0
+  note "$formulae outdated brew formulae, $casks casks — run brew upgrade"
+}
+
 install_packages() {
   echo "==> Installing packages..."
 
@@ -607,16 +630,20 @@ install_packages() {
 
   echo "  Updating $PKG_MANAGER..."
   track "update $PKG_MANAGER" "$PKG_UPDATE[@]"
+  report_brew_drift
 
-  local -a mise_tools=()
+  local -a mise_tools=() installed=() skipped=()
+  local current=0
   for package in "${COMMON_PACKAGES[@]}"; do
     if (( ${SKIP_PACKAGES[(Ie)$package]} )); then
       echo "  $package skipped (SKIP_PACKAGES)."
+      skipped+=("$package")
       continue
     fi
     if [[ "$OS" == "ubuntu" ]]; then
       if (( ${UBUNTU_DROP_PACKAGES[(Ie)$package]} )); then
         echo "  $package skipped (no headless use on Ubuntu)."
+        skipped+=("$package")
         continue
       fi
       if (( ${+UBUNTU_MISE_PACKAGES[$package]} )); then
@@ -627,11 +654,19 @@ install_packages() {
     fi
     if "$PKG_QUERY[@]" "$package" >/dev/null 2>&1; then
       echo "  $package is already installed."
+      (( current++ ))
     else
       echo "  Installing $package..."
-      track "install $package" "$PKG_INSTALL[@]" "$package"
+      track "install $package" "$PKG_INSTALL[@]" "$package" && installed+=("$package")
     fi
   done
+
+  local -a bits=()
+  (( ${#installed[@]} ))  && bits+=("installed ${(j:, :)installed}")
+  (( ${#mise_tools[@]} )) && bits+=("${#mise_tools[@]} routed to mise")
+  (( ${#skipped[@]} ))    && bits+=("${#skipped[@]} skipped")
+  (( current ))           && bits+=("$current up to date")
+  result "${(j:, :)bits}"
 
   # The mise-routed tools land in a conf.d overlay (like the Python one in
   # setup_mise) rather than the machine-local config.toml, so the dotfiles-
@@ -719,7 +754,7 @@ TOML
 
   if ! command_exists mise; then
     warn "mise not found — skipping global runtime install."
-    echo ""
+    result "skipped — mise not found"
     return
   fi
 
@@ -745,7 +780,10 @@ TOML
       run_if_os "ubuntu" track "apt python3" sudo apt-get install -y python3
       ;;
   esac
-  echo ""
+
+  # mise install and uv both no-op silently when everything is present, so
+  # there's nothing to count — say what this machine is configured for instead.
+  result "runtimes current; Python $MISE_PYTHON_VERSION via $python_provider"
 }
 
 # ──────────────────────────────────────────────
@@ -759,9 +797,11 @@ setup_tpm() {
     echo "  tpm is already installed."
   else
     echo "  Cloning tpm..."
-    track "clone tpm" git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+    if track "clone tpm" git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"; then
+      changed "cloned tpm"
+      note "To install tmux plugins, start tmux and press prefix + I (Ctrl+b, then I)."
+    fi
   fi
-  echo ""
 }
 
 # ──────────────────────────────────────────────
@@ -772,8 +812,9 @@ setup_zshrc() {
   echo "==> zshrc..."
   if [[ "$IS_WORK_COMPUTER" == true ]]; then
     echo "  Work computer detected — skipping zshrc symlink."
-  else
-    backup_and_link "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"
+    result "skipped — work computer"
+  elif backup_and_link "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"; then
+    note "Zsh plugins install automatically the first time you open zsh."
   fi
 
   # SSH logins must land in zsh for any of this config to run. macOS and
@@ -783,12 +824,13 @@ setup_zshrc() {
     login_shell="$(getent passwd "$CURRENT_USER" | cut -d: -f7)"
     if [[ "$login_shell" != *zsh ]]; then
       echo "  Setting login shell to zsh..."
-      track "chsh to zsh" sudo chsh -s "$(command -v zsh)" "$CURRENT_USER"
+      track "chsh to zsh" sudo chsh -s "$(command -v zsh)" "$CURRENT_USER" \
+        && changed "login shell → zsh"
     else
       echo "  Login shell is already zsh."
+      (( MODULE_UNCHANGED++ ))
     fi
   fi
-  echo ""
 }
 
 setup_tmux() {
@@ -796,7 +838,6 @@ setup_tmux() {
   local tmux_dir="${XDG_CONFIG_HOME:-$HOME/.config}/tmux"
   ensure_dir "$tmux_dir"
   backup_and_link "$DOTFILES_DIR/tmux.conf" "$tmux_dir/tmux.conf"
-  echo ""
 }
 
 setup_nvim() {
@@ -806,42 +847,42 @@ setup_nvim() {
   # Safety net: ensure nvim is installed (normally handled by install_packages)
   if ! command_exists nvim; then
     echo "  Neovim not found. Installing..."
-    run_if_os "macos" brew install neovim
-    run_if_os "arch" sudo pacman -S --noconfirm neovim
+    run_if_os "macos" track "install neovim" brew install neovim
+    run_if_os "arch" track "install neovim" sudo pacman -S --noconfirm neovim
     # Ubuntu's neovim comes from mise (declared in conf.d/dotfiles-apt-gaps.toml).
-    run_if_os "ubuntu" mise install neovim
+    run_if_os "ubuntu" track "install neovim" mise install neovim
+    changed "installed neovim"
   else
     echo "  Neovim is already installed."
+    (( MODULE_UNCHANGED++ ))
   fi
 
   if [[ -L "$nvim_dir" && "$(readlink "$nvim_dir")" == "$DOTFILES_DIR/nvim" ]]; then
     echo "  Neovim configuration is already linked to dotfiles."
-  elif [[ -d "$nvim_dir" || -e "$nvim_dir" ]]; then
-    warn "Existing Neovim configuration found at $nvim_dir"
-    echo ""
-    ask response "  Backup existing config and replace with symlink? [y/N] "
-    if [[ "$response" =~ ^[Yy]$ ]]; then
-      local backup_dir="$DOTFILES_DIR/nvim-bak.$(date +%Y%m%d-%H%M%S)"
-      echo "  Backing up to $backup_dir..."
-      mv "$nvim_dir" "$backup_dir"
-      echo "  Creating symlink for Neovim configuration..."
-      ln -sf "$DOTFILES_DIR/nvim" "$nvim_dir"
-    else
-      echo "  Skipping nvim setup."
-    fi
-  else
-    echo "  Creating symlink for Neovim configuration..."
-    ln -sf "$DOTFILES_DIR/nvim" "$nvim_dir"
+    (( MODULE_UNCHANGED++ ))
+    return
   fi
-  echo ""
+
+  local response=y
+  if [[ -d "$nvim_dir" || -e "$nvim_dir" ]]; then
+    warn "Existing Neovim configuration found at $nvim_dir"
+    ask response "  Backup existing config and replace with symlink? [y/N] "
+    if [[ ! "$response" =~ ^[Yy]$ ]]; then
+      result "skipped — kept the existing config"
+      return
+    fi
+    local backup_dir="$DOTFILES_DIR/nvim-bak.$(date +%Y%m%d-%H%M%S)"
+    echo "  Backing up to $backup_dir..."
+    mv "$nvim_dir" "$backup_dir"
+  fi
+
+  echo "  Creating symlink for Neovim configuration..."
+  ln -sf "$DOTFILES_DIR/nvim" "$nvim_dir"
+  changed "linked nvim config"
+  note "Neovim: open nvim and wait for vim.pack to install plugins, then run :checkhealth."
 }
 
 setup_ghostty() {
-  # Ubuntu means a headless VPS — no terminal emulator runs there, so neither
-  # the ghostty package (dropped in install_packages) nor its config applies.
-  if [[ "$OS" == "ubuntu" ]]; then
-    return
-  fi
   echo "==> Ghostty configuration..."
   # Ghostty reads its config from the macOS-native path but only scans the XDG
   # path for user themes, so on macOS the two land in different directories.
@@ -857,9 +898,9 @@ setup_ghostty() {
   esac
   ensure_dir "$ghostty_dir"
   ensure_dir "$xdg_dir"
-  backup_and_link "$DOTFILES_DIR/ghostty/config" "$ghostty_dir/config"
+  backup_and_link "$DOTFILES_DIR/ghostty/config" "$ghostty_dir/config" \
+    && note "Ghostty config landed at $ghostty_dir — restart Ghostty to pick it up."
   backup_and_link "$DOTFILES_DIR/ghostty/themes" "$xdg_dir/themes"
-  echo ""
 }
 
 # ──────────────────────────────────────────────
@@ -867,9 +908,6 @@ setup_ghostty() {
 # ──────────────────────────────────────────────
 
 setup_omarchy() {
-  if [[ "$OS" != "arch" ]]; then
-    return
-  fi
   echo "==> Omarchy Hyprland overrides..."
   if command_exists omarchy-update; then
     local hypr_dir="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
@@ -877,8 +915,7 @@ setup_omarchy() {
 
     local override
     for override in bindings-override.conf input-override.conf; do
-      ln -sf "$DOTFILES_DIR/omarchy/hypr/$override" "$hypr_dir/$override"
-      echo "  Linked $override."
+      backup_and_link "$DOTFILES_DIR/omarchy/hypr/$override" "$hypr_dir/$override"
 
       if ! grep -q "source = $override" "$hypr_dir/hyprland.conf" 2>/dev/null; then
         {
@@ -886,14 +923,16 @@ setup_omarchy() {
           echo "source = $override"
         } >> "$hypr_dir/hyprland.conf"
         echo "  Added source directive for $override to hyprland.conf."
+        changed "sourced $override"
       else
         echo "  hyprland.conf already sources $override."
+        (( MODULE_UNCHANGED++ ))
       fi
     done
   else
     echo "  omarchy-update not found — skipping Omarchy setup."
+    result "skipped — omarchy-update not found"
   fi
-  echo ""
 }
 
 # ──────────────────────────────────────────────
@@ -916,7 +955,6 @@ setup_opencode() {
     (( ${#existing_keys} )) && mv -n "${existing_keys[@]}" "$DOTFILES_DIR/opencode/env/"
   fi
   backup_and_link "$DOTFILES_DIR/opencode/env" "$opencode_dir/env"
-  echo ""
 }
 
 # ──────────────────────────────────────────────
@@ -954,11 +992,12 @@ setup_pi() {
   # Lives at the global scope (~/.pi/agent/settings.json) so the theme and
   # other preferences apply in every project, not just the dotfiles repo.
   ensure_dir "$pi_agent_dir"
-  ln -sf "$DOTFILES_DIR/pi/settings.json" "$pi_agent_dir/settings.json"
-  echo "  Linked global pi settings."
+  backup_and_link "$DOTFILES_DIR/pi/settings.json" "$pi_agent_dir/settings.json" \
+    && note "Pi theme is linked. Select it in pi via /settings or edit settings.json."
 
   # -- Pi packages ----------------------------------------------------------
   if command_exists pi; then
+    local pkg_count=0
     while IFS= read -r pkg_source; do
       # Skip empty lines and comments
       [[ -z "$pkg_source" || "$pkg_source" == \#* ]] && continue
@@ -969,20 +1008,22 @@ setup_pi() {
       echo "  Installing pi package: $pkg_source"
       # Show real errors (no 2>/dev/null) and record genuine failures rather
       # than assuming every failure means "already installed."
-      track "pi package $pkg_source" pi install "$pkg_source"
+      track "pi package $pkg_source" pi install "$pkg_source" && (( pkg_count++ ))
     done < "$DOTFILES_DIR/pi/packages.txt"
+    # pi install is idempotent and says nothing useful when the package is
+    # already there, so the honest report is the count it kept current.
+    (( MODULE_UNCHANGED += pkg_count ))
   else
     warn "pi CLI not found. Install pi first: https://pi.dev"
-    echo "     Packages to install manually:"
+    result "skipped — pi CLI not found"
     while IFS= read -r pkg_source; do
       [[ -z "$pkg_source" || "$pkg_source" == \#* ]] && continue
       pkg_source="${pkg_source## }"
       pkg_source="${pkg_source%% }"
       [[ -z "$pkg_source" ]] && continue
-      echo "       pi install $pkg_source"
+      note "Install by hand once pi is available: pi install $pkg_source"
     done < "$DOTFILES_DIR/pi/packages.txt"
   fi
-  echo ""
 }
 
 # ──────────────────────────────────────────────
@@ -995,7 +1036,6 @@ setup_herdr() {
   ensure_dir "$herdr_dir"
 
   backup_and_link "$DOTFILES_DIR/herdr/config.toml" "$herdr_dir/config.toml"
-  echo ""
 }
 
 # ──────────────────────────────────────────────
@@ -1120,7 +1160,6 @@ setup_claude_code_skills() {
 
   ensure_dir "$HOME/.claude/output-styles"
   assemble_output_style "$HOME/.claude/output-styles/justin.md"
-  echo ""
 }
 
 # ──────────────────────────────────────────────
@@ -1151,8 +1190,7 @@ setup_claude_plugins() {
 
   if ! command_exists claude; then
     warn "claude CLI not found — skipping. Install Claude Code and re-run."
-    echo "     Plugins are declared in claude-code/plugins.txt."
-    echo ""
+    note "Claude Code plugins are declared in claude-code/plugins.txt and none were installed."
     return
   fi
 
@@ -1177,7 +1215,8 @@ setup_claude_plugins() {
       echo "  Keeping machine-local plugin: $installed"
     elif (( ! ${wanted_plugins[(Ie)$installed]} )); then
       echo "  Uninstalling removed plugin: $installed"
-      track "claude plugins uninstall $installed" claude plugins uninstall "$installed"
+      track "claude plugins uninstall $installed" claude plugins uninstall "$installed" \
+        && changed "uninstalled $installed"
     fi
   done < <(claude plugins list 2>/dev/null | awk '/❯/{print $NF}')
 
@@ -1189,10 +1228,12 @@ setup_claude_plugins() {
     track "claude marketplace $repo" claude plugin marketplace add "$repo"
     for plugin in ${=line#$repo}; do      # remaining tokens: plugin@marketplace
       echo "  Installing plugin: $plugin"
-      track "claude plugin $plugin" claude plugin install "$plugin"
+      # The CLI is idempotent here and reports "already installed" itself, so
+      # there's no new state to name — count it as held current.
+      track "claude plugin $plugin" claude plugin install "$plugin" \
+        && (( MODULE_UNCHANGED++ ))
     done
   done < "$manifest"
-  echo ""
 }
 
 # ──────────────────────────────────────────────
@@ -1204,7 +1245,6 @@ setup_gitignore() {
   local git_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/git"
   ensure_dir "$git_config_dir"
   backup_and_link "$DOTFILES_DIR/gitignore/ignore" "$git_config_dir/ignore"
-  echo ""
 }
 
 # ──────────────────────────────────────────────
@@ -1232,8 +1272,10 @@ setup_git_config() {
 	path = ~/.config/git/config-personal
 EOF
     echo "  Created $git_config."
+    changed "created config"
   else
     echo "  $git_config already exists — skipping."
+    (( MODULE_UNCHANGED++ ))
   fi
 
   if [[ ! -f "$git_config_personal" ]]; then
@@ -1241,11 +1283,11 @@ EOF
     ask personal_email "  Personal git email (for ~/src/personal/): "
     printf '[user]\n\temail = %s\n' "$personal_email" > "$git_config_personal"
     echo "  Created config-personal."
+    changed "created config-personal"
   else
     echo "  config-personal already exists — skipping."
+    (( MODULE_UNCHANGED++ ))
   fi
-
-  echo ""
 }
 
 # ──────────────────────────────────────────────
@@ -1257,6 +1299,8 @@ setup_apps() {
   # Declared once, outside the loop: zsh's `local` on an already-local name
   # prints its value, so re-declaring per iteration spams the output.
   local row name check macos_cmd arch_cmd ubuntu_cmd cmd
+  local -a installed=() skipped=()
+  local current=0
   for row in "${GUI_APPS[@]}"; do
     IFS='|' read -r name check macos_cmd arch_cmd ubuntu_cmd <<< "$row"
     case "$OS" in
@@ -1268,16 +1312,23 @@ setup_apps() {
     [[ -z "$cmd" ]] && continue          # not available on this OS
     if (( ${SKIP_APPS[(Ie)$name]} )); then
       echo "  $name skipped (SKIP_APPS)."
+      skipped+=("$name")
       continue
     fi
     if eval "$check" >/dev/null 2>&1; then
       echo "  $name already installed."
+      (( current++ ))
     else
       echo "  Installing $name..."
-      track "install $name" eval "$cmd"
+      track "install $name" eval "$cmd" && installed+=("$name")
     fi
   done
-  echo ""
+
+  local -a bits=()
+  (( ${#installed[@]} )) && bits+=("installed ${(j:, :)installed}")
+  (( ${#skipped[@]} ))   && bits+=("${#skipped[@]} skipped")
+  (( current ))          && bits+=("$current up to date")
+  result "${(j:, :)bits}"
 }
 
 # ──────────────────────────────────────────────
@@ -1285,15 +1336,13 @@ setup_apps() {
 # ──────────────────────────────────────────────
 
 setup_macos_defaults() {
-  if [[ "$OS" != "macos" ]]; then
-    return
-  fi
   echo "==> macOS defaults..."
 
   defaults write com.apple.dock autohide -bool true
   defaults write com.apple.dock autohide-time-modifier -float 0.2
 
   killall Dock 2>/dev/null || true
+  result "dock defaults applied"
 }
 
 # ──────────────────────────────────────────────
