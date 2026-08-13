@@ -1,6 +1,6 @@
 ---
 name: terminal
-description: Tmux (TPM + Catppuccin) and Ghostty (font/theme/size) configs. Use when changing tmux or Ghostty config, plugins, themes, or fonts.
+description: Use when changing tmux or Ghostty config — keybindings, plugins, theme, or font — or when a tmux plugin isn't loading.
 ---
 
 Symlink-based install. Tmux is a single file; Ghostty is a config file plus a `themes/` directory. Ghostty config changes apply instantly — no restart needed.

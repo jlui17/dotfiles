@@ -1,6 +1,6 @@
 ---
 name: gitignore
-description: Global gitignore configuration — XDG path under ~/.config/git/ignore, symlinked from dotfiles.
+description: Use when adding or changing a global git ignore pattern, or when a file that should be ignored in every repo still shows up in git status.
 ---
 
 Global gitignore sits at `~/.config/git/ignore`, symlinked from `gitignore/ignore` in the repo. Git reads it automatically per XDG spec — no `git config` needed.

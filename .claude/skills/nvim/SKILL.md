@@ -1,6 +1,6 @@
 ---
 name: nvim
-description: Neovim config using kickstart.nvim with native vim.pack plugin management. Use when adding or configuring plugins, LSP servers, formatters, or the theme, or when debugging plugin/Mason install failures.
+description: Use when adding or configuring a Neovim plugin, LSP server, formatter, or theme; when editing init.lua; or when debugging a plugin or Mason install failure.
 ---
 
 Uses [kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim) as a starting point. Plugin management via Neovim 0.11+ built-in `vim.pack`. LSP/formatter installs via Mason.

@@ -1,6 +1,6 @@
 ---
 name: opencode
-description: OpenCode AI coding tool config — MCP servers and credential management. Use when adding/removing MCP servers, editing opencode.json, or handling OpenCode credentials.
+description: Use when adding or removing an OpenCode MCP server, editing opencode.json, or handling OpenCode credential files.
 ---
 
 OpenCode is configured declaratively in opencode.json. MCP servers and their env vars (file paths only, never raw secrets) live there; credential files (service account keys, tokens) live in env/. Config is read at OpenCode startup; edits (or a re-run of install.sh) take effect on the next launch.

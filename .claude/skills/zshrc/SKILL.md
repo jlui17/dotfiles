@@ -1,6 +1,6 @@
 ---
 name: zshrc
-description: Zsh config using Zinit plugin manager with custom functions in zsh-functions/. Use when adding zsh plugins, aliases, functions, or prompt/p10k tweaks.
+description: Use when adding a zsh plugin, alias, function, or prompt tweak; when shell startup gets slow or a completion or plugin is missing; or when editing zshrc or zsh-functions/.
 ---
 
 Single zshrc with Zinit as the sole plugin manager. zsh-functions/ is a "drop-in" dir: any .sh file there is auto-sourced at shell startup, resolved at runtime relative to zshrc's location (no symlink).

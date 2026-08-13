@@ -1,6 +1,6 @@
 ---
 name: mise
-description: Global language runtimes (node, go) managed by mise, plus a machine-local Python provider (uv or system). Use when changing runtime or Python versions, switching the Python provider, editing mise config, or debugging Mason/LSP server install failures on a fresh machine.
+description: Use when changing a global language runtime or Python version, switching the Python provider, editing mise config, or debugging a Mason/LSP server install that fails on a fresh machine.
 ---
 
 [mise](https://mise.jdx.dev) manages global language runtime versions. `~/.config/mise/config.toml` (node, go) is machine-local and untracked; `install.sh` seeds a node/go baseline on a fresh machine (never clobbering an existing one) and runs `mise install` to realize it.

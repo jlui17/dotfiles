@@ -1,6 +1,6 @@
 ---
 name: herdr-config
-description: Herdr terminal/agent multiplexer config (keybindings, theme, sidebar). Use when changing herdr keybindings, theme, or other config.toml settings.
+description: Use when changing herdr keybindings, theme, or sidebar config; when a herdr split or pane binding should match tmux's; or when editing herdr/config.toml.
 ---
 
 Single-file config with symlink-based install, like ghostty/opencode.

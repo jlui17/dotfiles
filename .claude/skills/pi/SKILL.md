@@ -1,6 +1,6 @@
 ---
 name: pi
-description: Pi coding agent module — themes, skills, packages, settings. Use when changing pi themes, skills, extensions, packages, or settings.
+description: Use when changing a pi theme, skill, extension, package, or setting.
 ---
 
 Manages pi agent config via declarative files. All changes land here, symlinked into ~/.pi/agent/.

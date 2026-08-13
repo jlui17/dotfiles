@@ -1,6 +1,6 @@
 ---
 name: claude-code
-description: Maintains the claude-code module, Justin's complete Claude Code setup: global skills, slash commands, rules.d/ instruction fragments, and the output style deployed to ~/.claude, plus user-level settings.json deep-merged by install.sh (per-machine overrides in gitignored settings.local.json), plugins replayed from plugins.txt, and the statusline script. Use when adding or editing a global skill, slash command, CLAUDE.md rule, or the output style; when writing or reviewing any skill or CLAUDE.md (the writing guidance lives here); when adding/removing plugins or changing shared/per-machine settings; or when a plugin unexpectedly disappears after install.sh (the manifest sync uninstalls unlisted plugins).
+description: Use when adding or editing a global skill, slash command, CLAUDE.md rule fragment, or the output style; when writing or reviewing any skill or CLAUDE.md (the writing guidance lives here); when adding or removing Claude Code plugins; when changing shared or per-machine settings.json; or when a plugin unexpectedly disappears after install.sh.
 ---
 
 Deployed by install.sh `setup_claude_code` (the comment there describes the module split). The shared rules ship to Claude Code only: the old `~/AGENTS.md` assembly was dropped when the module went Claude Code-specific, so other harnesses (pi, opencode) have no default voice. If one later needs the rules, add a harness-native sink over the same `rules.d/` fragments rather than a parallel rules source; the deleted AGENTS.md assembly in git history is the template.
