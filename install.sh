@@ -74,7 +74,10 @@ case "$OS" in
   macos)
     PKG_MANAGER="brew"
     PKG_INSTALL=(brew install)
-    PKG_QUERY=(brew list --formula)
+    # No --formula: some COMMON_PACKAGES are casks (ghostty), and a
+    # formula-only query reports them missing forever, so every run claims to
+    # install one. Bare `brew list <name>` matches either kind.
+    PKG_QUERY=(brew list)
     PKG_UPDATE=(brew update)
     ;;
   arch)
