@@ -50,6 +50,32 @@ KEEP_PLUGINS=()
 # on non-zero exit codes as normal control flow (presence checks, greps).
 FAILURES=()
 
+# -- Output plumbing --------------------------------------------------------
+# The terminal is the exception, not the default. open_log points stdout and
+# stderr at the log for the whole run and keeps the terminal on fd 3, so the
+# only route to the screen is the output API below (emit/result/warn/note/ask).
+# A module that ignores the API can't leak: its output lands in the log, which
+# costs a summary line and nothing else. See .agents/skills/installer.
+INSTALL_LOG="/tmp/dotfiles-install.log"
+
+# Terminal lines the module loop is composing. LABEL_PENDING holds the open
+# (newline-less) progress label; LABEL_INTERRUPTED records that a warning
+# broke that line, so the result knows to re-print the label.
+LABEL_PENDING=""
+LABEL_INTERRUPTED=""
+
+# Per-module state, reset by run_module. MODULE_CHANGES names what changed (one
+# entry per change, all of them printed); MODULE_UNCHANGED counts the no-ops;
+# MODULE_RESULT is an explicit override for modules whose story isn't links.
+MODULE_CHANGES=()
+MODULE_UNCHANGED=0
+MODULE_RESULT=""
+
+# Follow-up actions, printed at the end. A note is registered by the module
+# that did the work making it relevant, so a re-run that changes nothing
+# prints no notes at all.
+NOTES=()
+
 # -- OS detection -----------------------------------------------------------
 OS=""
 case "$(uname)" in
@@ -165,6 +191,38 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+# Park the terminal on fd 3 and give the log stdout and stderr for the rest of
+# the run. Overwrites the log, so it always describes the run you just did.
+#
+# maybe_relocate_dotfiles re-execs this script; DOTFILES_LOG_OPEN travels with
+# it so the second pass appends rather than truncating, and doesn't re-derive
+# fd 3 from a stdout that now points at the log.
+open_log() {
+  if [[ -n "$DOTFILES_LOG_OPEN" ]]; then
+    exec >>"$INSTALL_LOG" 2>&1
+    return
+  fi
+  exec 3>&1
+  export DOTFILES_LOG_OPEN=1
+  : > "$INSTALL_LOG"
+  exec >>"$INSTALL_LOG" 2>&1
+}
+
+# What run this log describes. Written after the machine profile is resolved,
+# because a skip list silently changing behaviour is exactly the thing you'd
+# otherwise chase for twenty minutes.
+log_run_header() {
+  print -r -- "════ run"
+  print -r -- "  date:    $(date '+%Y-%m-%d %H:%M:%S %Z')"
+  print -r -- "  os:      $OS"
+  print -r -- "  user:    $CURRENT_USER"
+  print -r -- "  script:  $DOTFILES_DIR/install.sh ${(j: :)SCRIPT_ARGS}"
+  print -r -- "  work:    $IS_WORK_COMPUTER"
+  print -r -- "  python:  ${PYTHON_PROVIDER:-uv}"
+  print -r -- "  skips:   modules=(${(j: :)SKIP_MODULES}) packages=(${(j: :)SKIP_PACKAGES}) apps=(${(j: :)SKIP_APPS})"
+  print -r -- "           rules=(${(j: :)SKIP_RULES}) skills=(${(j: :)SKIP_SKILLS}) keep-plugins=(${(j: :)KEEP_PLUGINS})"
+}
+
 # Run a command only when the current OS matches one of the
 # comma-separated values in $1.
 run_if_os() {
@@ -177,16 +235,78 @@ ensure_dir() {
   [[ -d "$1" ]] || mkdir -p "$1"
 }
 
-# Run a fallible command without aborting the install. On failure, record a
-# human-readable label in FAILURES (surfaced in the final summary) and return
-# the command's exit code so callers can branch if they want.
+# -- The output API ---------------------------------------------------------
+
+# Send a line to the terminal and the log, keeping the log a superset of what
+# was shown.
+emit() { print -r -- "$*" >&3; print -r -- "$*"; }
+
+# The progress label is terminal-only: it's an unfinished line waiting for a
+# result, and in the log the "════ <module>" banner already marks the module.
+label_partial() { print -rn -- "$*" >&3 }
+
+# Close an open progress label so an out-of-band line (a warning, a failure
+# tail) starts on its own row instead of colliding with the label.
+label_break() {
+  [[ -n "$LABEL_PENDING" ]] || return 0
+  print -r -- "" >&3
+  LABEL_INTERRUPTED=1
+}
+
+# A problem worth the user's attention that doesn't stop the install. Failure
+# bookkeeping is the caller's (track does it, so do the merge_json paths).
+warn() {
+  label_break
+  emit "  ⚠️  $*"
+}
+
+# Register a follow-up action for the closing Notes block.
+note() { NOTES+=("$*") }
+
+# Record one thing this module changed. Every recorded change is named in the
+# module's result line; a no-op bumps MODULE_UNCHANGED instead.
+changed() { MODULE_CHANGES+=("$*") }
+
+# Override the synthesized result line for modules whose work isn't symlinks
+# and packages (mise's provider, the plugin replay).
+result() { MODULE_RESULT="$*" }
+
+# Prompt on the terminal. zsh's `read -r "var?prompt"` writes its prompt to
+# stderr, which the log now owns — the prompt would vanish and the install
+# would look hung, so the prompt goes to fd 3 by hand. stdin is untouched.
+ask() {
+  local var="$1" prompt="$2"
+  print -rn -- "$prompt" >&3
+  print -rn -- "$prompt"
+  read -r "$var"
+  print -r -- "${(P)var}"
+}
+
+# An unrecoverable problem. Says where the log is, since the summary that
+# normally prints the path is never reached.
+die() {
+  warn "$*"
+  emit "  Log: $INSTALL_LOG"
+  exit 1
+}
+
+# Run a fallible command with its output routed to the log, under a label
+# written before the command starts so a hung or interrupted run still leaves
+# evidence of what it was doing. On failure, record a human-readable label in
+# FAILURES (surfaced in the final summary), show a bounded tail of the output
+# on the terminal, and return the command's exit code so callers can branch.
 track() {
   local label="$1"; shift
+  print -r -- ""
+  print -r -- "--- $label: $*"
+  local start_line
+  start_line=$(wc -l < "$INSTALL_LOG")
   # `&&` (not `if`) so $? still holds the command's real exit code on failure —
   # an `if` with no `else` resets $? to 0 when the condition is false.
   "$@" && return 0
   local rc=$?
-  echo "  ⚠️  $label failed (exit $rc)."
+  warn "$label failed (exit $rc):"
+  tail -n +$((start_line + 1)) "$INSTALL_LOG" | tail -n 15 | sed 's/^/      /' >&3
   FAILURES+=("$label")
   return $rc
 }
@@ -216,16 +336,68 @@ global_skill_names() {
 # listed fragment loads twice in a main session (CLAUDE.md + output style).
 OUTPUT_STYLE_RULES=(style session-replies)
 
-# Run one module through the skip list. A skipped module prints why (so an
-# install log never looks like a phase silently vanished) and still succeeds.
+# Column the result lines align to. "macos-defaults" is the longest module name.
+MODULE_LABEL_WIDTH=16
+
+# Does a MODULES entry apply to this OS? An entry's optional third field is a
+# comma-separated OS list; without one the module runs everywhere.
+module_applies() {
+  local -a fields=("${(s.:.)1}")
+  [[ -z "${fields[3]}" ]] && return 0
+  [[ ",${fields[3]}," == *",$OS,"* ]]
+}
+
+# Run one module: open its progress label, run it, close the label with a
+# result. A skipped module prints why (so an install never looks like a phase
+# silently vanished) and still succeeds.
+#
+# The result line is synthesized from what the shared helpers recorded, so a
+# module made of symlinks needs no reporting code of its own. Reporting nothing
+# means nothing changed, which is the honest default for an idempotent phase.
 run_module() {
-  local name="$1" fn="$2"
+  local name="$1" fn="$2" index="$3" total="$4"
   if (( ${SKIP_MODULES[(Ie)$name]} )); then
-    echo "==> $name — skipped (SKIP_MODULES in ${DOTFILES_LOCAL_CONFIG:t})."
-    echo ""
+    print -r -- "$(module_label "$name" "$index" "$total")skipped (SKIP_MODULES in ${DOTFILES_LOCAL_CONFIG:t})" >&3
+    print -r -- "════ $name — skipped (SKIP_MODULES)"
     return 0
   fi
+
+  MODULE_CHANGES=()
+  MODULE_UNCHANGED=0
+  MODULE_RESULT=""
+  LABEL_PENDING="$(module_label "$name" "$index" "$total")"
+  LABEL_INTERRUPTED=""
+  print -r -- "" ; print -r -- "════ $name"
+  label_partial "$LABEL_PENDING"
+
+  local start=$SECONDS
   "$fn"
+  local elapsed=$(( SECONDS - start ))
+
+  local line
+  if [[ -n "$MODULE_RESULT" ]]; then
+    line="$MODULE_RESULT"
+  elif (( ${#MODULE_CHANGES[@]} )); then
+    line="${(j:, :)MODULE_CHANGES}"
+  else
+    line="up to date"
+  fi
+  # Timing only when it's news. Every line carrying "(0s)" would be the same
+  # noise this output exists to remove.
+  (( elapsed > 5 )) && line+=" (${elapsed}s)"
+
+  [[ -n "$LABEL_INTERRUPTED" ]] && label_partial "$LABEL_PENDING"
+  print -r -- "$line" >&3
+  print -r -- "──> $line"
+  LABEL_PENDING=""
+  LABEL_INTERRUPTED=""
+}
+
+# "[ 3/15] ghostty ........ " — dot leader to a fixed column so results align.
+module_label() {
+  local name="$1" index="$2" total="$3" dots=""
+  repeat $(( MODULE_LABEL_WIDTH - ${#name} )) dots+="."
+  printf '[%2d/%d] %s %s ' "$index" "$total" "$name" "$dots"
 }
 
 # Append the commented knob blocks to a local config that predates them. Each
@@ -255,7 +427,7 @@ append_local_config_knobs() {
 # uninstalls plugins missing from claude-code/plugins.txt unless listed here.
 #KEEP_PLUGINS=(some-plugin@some-marketplace)
 EOF
-    echo "  Added the skip-list template to ${DOTFILES_LOCAL_CONFIG:t} — edit it to skip modules, packages, or apps."
+    note "Added the skip-list template to ${DOTFILES_LOCAL_CONFIG:t} — edit it to skip modules, packages, or apps."
   fi
   if ! grep -q "SKIP_RULES" "$DOTFILES_LOCAL_CONFIG" 2>/dev/null; then
     cat >> "$DOTFILES_LOCAL_CONFIG" <<EOF
@@ -265,7 +437,7 @@ EOF
 #   ${(j: :)${(f)"$(rule_section_slugs)"}}
 #SKIP_RULES=(worker-cost)
 EOF
-    echo "  Added the SKIP_RULES knob to ${DOTFILES_LOCAL_CONFIG:t} — edit it to exclude global-rules sections."
+    note "Added the SKIP_RULES knob to ${DOTFILES_LOCAL_CONFIG:t} — edit it to exclude global-rules sections."
   fi
   if ! grep -q "SKIP_SKILLS" "$DOTFILES_LOCAL_CONFIG" 2>/dev/null; then
     cat >> "$DOTFILES_LOCAL_CONFIG" <<EOF
@@ -275,7 +447,7 @@ EOF
 #   ${(j: :)${(f)"$(global_skill_names)"}}
 #SKIP_SKILLS=(gog)
 EOF
-    echo "  Added the SKIP_SKILLS knob to ${DOTFILES_LOCAL_CONFIG:t} — edit it to exclude global skills."
+    note "Added the SKIP_SKILLS knob to ${DOTFILES_LOCAL_CONFIG:t} — edit it to exclude global skills."
   fi
 }
 
@@ -283,19 +455,17 @@ EOF
 # only the work-computer question; the commented knob template is appended to
 # fresh AND pre-existing configs, so configuring a restricted machine is
 # "uncomment a line", not answering a prompt per module.
-# Note: `read -r "var?prompt"` is the zsh prompt idiom; bash's `read -p` means
-# "read from coprocess" in zsh and silently returns empty.
 resolve_local_config() {
   if [[ ! -f "$DOTFILES_LOCAL_CONFIG" ]]; then
     local response
-    read -r "response?  Is this a work computer? (skips personal zshrc symlink) [y/N] "
+    ask response "  Is this a work computer? (skips personal zshrc symlink) [y/N] "
     [[ "$response" =~ ^[Yy]$ ]] && IS_WORK_COMPUTER=true || IS_WORK_COMPUTER=false
     cat > "$DOTFILES_LOCAL_CONFIG" <<EOF
 # dotfiles machine-local config — gitignored, never committed.
 # Delete this file to be prompted again on the next install.
 IS_WORK_COMPUTER=$IS_WORK_COMPUTER
 EOF
-    echo "  Saved machine config to ${DOTFILES_LOCAL_CONFIG:t}."
+    emit "  Saved machine config to ${DOTFILES_LOCAL_CONFIG:t}."
   fi
   append_local_config_knobs
   source "$DOTFILES_LOCAL_CONFIG"
@@ -307,24 +477,24 @@ EOF
 validate_skip_lists() {
   local entry module_names=("${(@)MODULES%%:*}") app_names=("${(@)GUI_APPS%%|*}")
   for entry in "${SKIP_MODULES[@]}"; do
-    (( ${module_names[(Ie)$entry]} )) || echo "⚠️  SKIP_MODULES: unknown module '$entry' (ignored)."
+    (( ${module_names[(Ie)$entry]} )) || warn "SKIP_MODULES: unknown module '$entry' (ignored)."
   done
   for entry in "${SKIP_PACKAGES[@]}"; do
-    (( ${COMMON_PACKAGES[(Ie)$entry]} )) || echo "⚠️  SKIP_PACKAGES: unknown package '$entry' (ignored)."
+    (( ${COMMON_PACKAGES[(Ie)$entry]} )) || warn "SKIP_PACKAGES: unknown package '$entry' (ignored)."
   done
   for entry in "${SKIP_APPS[@]}"; do
-    (( ${app_names[(Ie)$entry]} )) || echo "⚠️  SKIP_APPS: unknown app '$entry' (ignored)."
+    (( ${app_names[(Ie)$entry]} )) || warn "SKIP_APPS: unknown app '$entry' (ignored)."
   done
   local rule_slugs=($(rule_section_slugs))
   for entry in "${SKIP_RULES[@]}"; do
-    (( ${rule_slugs[(Ie)$entry]} )) || echo "⚠️  SKIP_RULES: unknown rules section '$entry' (ignored)."
+    (( ${rule_slugs[(Ie)$entry]} )) || warn "SKIP_RULES: unknown rules section '$entry' (ignored)."
   done
   local skill_names=($(global_skill_names))
   for entry in "${SKIP_SKILLS[@]}"; do
-    (( ${skill_names[(Ie)$entry]} )) || echo "⚠️  SKIP_SKILLS: unknown skill '$entry' (ignored)."
+    (( ${skill_names[(Ie)$entry]} )) || warn "SKIP_SKILLS: unknown skill '$entry' (ignored)."
   done
   for entry in "${OUTPUT_STYLE_RULES[@]}"; do
-    (( ${rule_slugs[(Ie)$entry]} )) || echo "⚠️  OUTPUT_STYLE_RULES: unknown rules section '$entry' (ignored)."
+    (( ${rule_slugs[(Ie)$entry]} )) || warn "OUTPUT_STYLE_RULES: unknown rules section '$entry' (ignored)."
   done
 }
 
@@ -334,11 +504,15 @@ validate_skip_lists() {
 #   - real file/dir OR foreign    → moved to dst.bak before linking
 #     symlink (points elsewhere)
 # Uses `ln -sfn` so an existing dst directory is replaced, not linked into.
+#
+# Returns 0 when it linked something and 1 when the link was already correct,
+# so a caller can register a note that only applies to first-time setup.
 backup_and_link() {
   local src="$1" dst="$2"
   if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
     echo "  $(basename "$dst") already linked."
-    return
+    (( MODULE_UNCHANGED++ ))
+    return 1
   fi
   if [[ -e "$dst" || -L "$dst" ]]; then
     echo "  Backing up existing $(basename "$dst")..."
@@ -346,6 +520,8 @@ backup_and_link() {
   fi
   ln -sfn "$src" "$dst"
   echo "  Linked $(basename "$dst")."
+  changed "linked $(basename "$dst")"
+  return 0
 }
 
 # Deep-merge a tracked JSON file into a machine-local one, repo values winning
@@ -360,22 +536,31 @@ merge_json() {
   if [[ ! -f "$dst" ]]; then
     ensure_dir "$(dirname "$dst")"
     cp "$src" "$dst"
-    echo "  Created $(basename "$dst")."
+    changed "created $(basename "$dst")"
     return
   fi
   if ! command_exists jq; then
-    echo "  ⚠️  jq not found — left $(basename "$dst") untouched. Merge $src by hand."
+    warn "jq not found — left $(basename "$dst") untouched. Merge $src by hand."
     FAILURES+=("merge $(basename "$dst")")
     return
   fi
   local tmp
   tmp="$(mktemp)"
   if jq -s '.[0] * .[1]' "$dst" "$src" > "$tmp" && [[ -s "$tmp" ]]; then
-    mv "$tmp" "$dst"
-    echo "  Merged repo settings into $(basename "$dst")."
+    # A merge that changes nothing is the steady state, so compare before
+    # claiming it: only a real difference is worth a line in the result.
+    if cmp -s "$tmp" "$dst"; then
+      rm -f "$tmp"
+      echo "  $(basename "$dst") already carries the repo settings."
+      (( MODULE_UNCHANGED++ ))
+    else
+      mv "$tmp" "$dst"
+      echo "  Merged repo settings into $(basename "$dst")."
+      changed "merged $(basename "$dst")"
+    fi
   else
     rm -f "$tmp"
-    echo "  ⚠️  Failed to merge $(basename "$dst") — left unchanged."
+    warn "Failed to merge $(basename "$dst") — left unchanged."
     FAILURES+=("merge $(basename "$dst")")
   fi
 }
@@ -388,28 +573,23 @@ install_packages() {
   echo "==> Installing packages..."
 
   if [[ "$OS" == "unknown" ]]; then
-    echo "Unsupported OS. This script supports macOS, Arch Linux, and Ubuntu/Debian."
-    exit 1
+    die "Unsupported OS. This script supports macOS, Arch Linux, and Ubuntu/Debian."
   fi
 
   # Ensure the package manager itself is available. On macOS we bootstrap
   # Homebrew when missing, then load it into this run's PATH so the package
   # installs below can see it (Apple Silicon and Intel use different prefixes).
   if [[ "$OS" == "macos" ]] && ! command_exists brew; then
-    echo "  Homebrew not found. Installing..."
     track "install Homebrew" /bin/bash -c \
       "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew; do
       [[ -x "$brew_bin" ]] && eval "$("$brew_bin" shellenv)" && break
     done
-    if ! command_exists brew; then
-      echo "Homebrew installation failed. Install it manually: https://brew.sh/"
-      exit 1
-    fi
+    command_exists brew || die "Homebrew installation failed. Install it manually: https://brew.sh/"
+    changed "installed Homebrew"
   fi
   if [[ "$OS" != "macos" ]] && ! command_exists sudo; then
-    echo "sudo is required to install packages on Linux."
-    exit 1
+    die "sudo is required to install packages on Linux."
   fi
 
   # mise has no package in Ubuntu's repos; add its official apt repo so the
@@ -538,7 +718,7 @@ TOML
   fi
 
   if ! command_exists mise; then
-    echo "  ⚠️  mise not found — skipping global runtime install."
+    warn "mise not found — skipping global runtime install."
     echo ""
     return
   fi
@@ -637,9 +817,9 @@ setup_nvim() {
   if [[ -L "$nvim_dir" && "$(readlink "$nvim_dir")" == "$DOTFILES_DIR/nvim" ]]; then
     echo "  Neovim configuration is already linked to dotfiles."
   elif [[ -d "$nvim_dir" || -e "$nvim_dir" ]]; then
-    echo "  ⚠️  Existing Neovim configuration found at $nvim_dir"
+    warn "Existing Neovim configuration found at $nvim_dir"
     echo ""
-    read -r "response?  Backup existing config and replace with symlink? [y/N] "
+    ask response "  Backup existing config and replace with symlink? [y/N] "
     if [[ "$response" =~ ^[Yy]$ ]]; then
       local backup_dir="$DOTFILES_DIR/nvim-bak.$(date +%Y%m%d-%H%M%S)"
       echo "  Backing up to $backup_dir..."
@@ -792,7 +972,7 @@ setup_pi() {
       track "pi package $pkg_source" pi install "$pkg_source"
     done < "$DOTFILES_DIR/pi/packages.txt"
   else
-    echo "  ⚠️  pi CLI not found. Install pi first: https://pi.dev"
+    warn "pi CLI not found. Install pi first: https://pi.dev"
     echo "     Packages to install manually:"
     while IFS= read -r pkg_source; do
       [[ -z "$pkg_source" || "$pkg_source" == \#* ]] && continue
@@ -845,7 +1025,7 @@ assemble_global_rules() {
   local lines
   lines=$(wc -l < "$tmp")
   install_generated_file "$tmp" "$dst"
-  (( lines >= 300 )) && echo "⚠️  $(basename "$dst") is $lines lines (budget: under 300) — distill fragments or push detail into a skill."
+  (( lines >= 300 )) && warn "$(basename "$dst") is $lines lines (budget: under 300) — distill fragments or push detail into a skill."
 }
 
 # Move an assembled tmp file into place, quiet when dst is already current.
@@ -857,6 +1037,7 @@ install_generated_file() {
   if [[ -f "$dst" && ! -L "$dst" ]] && cmp -s "$tmp" "$dst"; then
     rm -f "$tmp"
     echo "  $(basename "$dst") already up to date."
+    (( MODULE_UNCHANGED++ ))
     return
   fi
   if [[ -L "$dst" ]]; then
@@ -868,6 +1049,7 @@ install_generated_file() {
   mv "$tmp" "$dst"
   chmod 644 "$dst"   # mktemp creates 0600; match the old symlink target's visibility
   echo "  Generated $(basename "$dst")."
+  changed "generated $(basename "$dst")"
 }
 
 # Build the Claude Code output style from the OUTPUT_STYLE_RULES fragments:
@@ -968,7 +1150,7 @@ setup_claude_plugins() {
   local manifest="$DOTFILES_DIR/claude-code/plugins.txt"
 
   if ! command_exists claude; then
-    echo "  ⚠️  claude CLI not found — skipping. Install Claude Code and re-run."
+    warn "claude CLI not found — skipping. Install Claude Code and re-run."
     echo "     Plugins are declared in claude-code/plugins.txt."
     echo ""
     return
@@ -1040,7 +1222,7 @@ setup_git_config() {
 
   if [[ ! -f "$git_config" ]]; then
     local primary_email
-    read -r "primary_email?  Primary git email: "
+    ask primary_email "  Primary git email: "
     cat > "$git_config" <<EOF
 [user]
 	name = Justin Lui
@@ -1056,7 +1238,7 @@ EOF
 
   if [[ ! -f "$git_config_personal" ]]; then
     local personal_email
-    read -r "personal_email?  Personal git email (for ~/src/personal/): "
+    ask personal_email "  Personal git email (for ~/src/personal/): "
     printf '[user]\n\temail = %s\n' "$personal_email" > "$git_config_personal"
     echo "  Created config-personal."
   else
@@ -1122,16 +1304,15 @@ maybe_relocate_dotfiles() {
   local desired="$HOME/src/personal/dotfiles"
   [[ "$DOTFILES_DIR" == "$desired" ]] && return
 
-  echo "==> Dotfiles at $DOTFILES_DIR, expected $desired. Relocating..."
+  emit "  Dotfiles at $DOTFILES_DIR, expected $desired. Relocating..."
 
   if [[ -e "$desired" ]]; then
-    echo "  ERROR: $desired already exists. Move or remove it, then re-run."
-    exit 1
+    die "$desired already exists. Move or remove it, then re-run."
   fi
 
   ensure_dir "$HOME/src/personal"
   mv "$DOTFILES_DIR" "$desired"
-  echo "  Moved to $desired."
+  emit "  Moved to $desired."
 
   local old="$DOTFILES_DIR"
   find "$HOME" -maxdepth 6 -type l 2>/dev/null | while read -r link; do
@@ -1143,40 +1324,56 @@ maybe_relocate_dotfiles() {
     fi
   done
 
-  echo "  Re-executing from new location..."
+  emit "  Re-executing from new location..."
   exec "$desired/install.sh" "${SCRIPT_ARGS[@]}"
 }
 
 main() {
-  echo "───────────────────────────────────────"
-  echo "  dotfiles — $OS ($CURRENT_USER)"
-  echo "───────────────────────────────────────"
-  echo ""
+  open_log
+  emit "───────────────────────────────────────"
+  emit "  dotfiles — $OS ($CURRENT_USER)"
+  emit "───────────────────────────────────────"
+  emit ""
 
   maybe_relocate_dotfiles
   resolve_local_config
+  log_run_header
   validate_skip_lists
 
+  # Modules that don't apply to this OS are not part of this machine's install,
+  # so they're filtered out before numbering rather than printing an empty slot.
   local entry
+  local -a applicable=()
   for entry in "${MODULES[@]}"; do
-    run_module "${entry%%:*}" "${entry#*:}"
+    module_applies "$entry" && applicable+=("$entry")
   done
 
+  local index=0
+  for entry in "${applicable[@]}"; do
+    (( index++ ))
+    run_module "${${(s.:.)entry}[1]}" "${${(s.:.)entry}[2]}" "$index" "${#applicable[@]}"
+  done
+
+  emit ""
   if (( ${#FAILURES[@]} )); then
-    echo "⚠️  Dotfiles installation finished with ${#FAILURES[@]} issue(s):"
+    emit "⚠️  Finished with ${#FAILURES[@]} issue(s):"
+    local f
     for f in "${FAILURES[@]}"; do
-      echo "   - $f"
+      emit "   - $f"
     done
   else
-    echo "✅ Dotfiles installation complete!"
+    emit "✅ Dotfiles installation complete."
   fi
-  echo ""
-  echo "Notes:"
-  echo "- Zsh plugins will be installed automatically the first time you open zsh."
-  echo "- To install tmux plugins, start tmux and press prefix + I (Ctrl+b, then I)."
-  echo "- Neovim: open nvim and wait for vim.pack to install plugins, then run :checkhealth."
-  [[ "$OS" != "ubuntu" ]] && echo "- Ghostty config is linked to the platform-appropriate path."
-  echo "- Pi theme is linked. Select it in pi via /settings or edit settings.json."
+  emit "   Log: $INSTALL_LOG"
+
+  if (( ${#NOTES[@]} )); then
+    emit ""
+    emit "Notes:"
+    local n
+    for n in "${NOTES[@]}"; do
+      emit "- $n"
+    done
+  fi
 
   # Non-zero exit if anything failed, so callers/CI can detect a partial install.
   (( ${#FAILURES[@]} == 0 ))
