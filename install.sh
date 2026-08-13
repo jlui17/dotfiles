@@ -697,10 +697,11 @@ install_packages() {
 # stable line. Used by both providers (uv pin / mise tool version).
 MISE_PYTHON_VERSION="3.12"
 
-# Seed a machine-local runtime config (node/go) on a fresh machine and realize
-# it. config.toml is untracked, so per-machine tools like bun stay out of the
-# shared repo. Without global node/go, nvim's Mason can't build the servers it
-# auto-installs (gopls needs Go; ts_ls and pyright need Node).
+# Seed a machine-local runtime config (node/go/bun) on a fresh machine and
+# realize it. config.toml is untracked, so per-machine tool additions stay out
+# of the shared repo. Without global node/go, nvim's Mason can't build the
+# servers it auto-installs (gopls needs Go; ts_ls and pyright need Node); bun
+# provides bunx for the external-skills replay in setup_claude_code_skills.
 #
 # Python is machine-local. PYTHON_PROVIDER in .dotfiles-local picks the strategy:
 #   uv     (default) — mise installs uv; uv owns Python (install + global pin).
@@ -726,14 +727,15 @@ setup_mise() {
     rm "$mise_dir/config.toml"
     echo "  Removed dangling config.toml symlink."
   fi
-  # config.toml is machine-local (untracked). Seed a node/go baseline on a fresh
-  # machine; never clobber an existing one so per-machine edits stick.
+  # config.toml is machine-local (untracked). Seed a node/go/bun baseline on a
+  # fresh machine; never clobber an existing one so per-machine edits stick.
   if [[ ! -e "$mise_dir/config.toml" ]]; then
     cat > "$mise_dir/config.toml" <<'TOML'
 # Machine-local mise runtimes (not tracked by dotfiles). Edit freely.
 [tools]
 node = "lts"
 go = "latest"
+bun = "latest"
 TOML
   fi
 
@@ -758,8 +760,8 @@ TOML
     return
   fi
 
-  [[ "$python_provider" == "uv" ]] && echo "  Installing mise tools (node, go, uv)..." \
-                                   || echo "  Installing mise tools (node, go)..."
+  [[ "$python_provider" == "uv" ]] && echo "  Installing mise tools (node, go, bun, uv)..." \
+                                   || echo "  Installing mise tools (node, go, bun)..."
   track "mise install" mise install
 
   # Put mise-managed tool bins on this run's PATH: later phases check and use
@@ -1155,6 +1157,35 @@ setup_claude_code_skills() {
     (( ${SKIP_SKILLS[(Ie)$(basename "$skill_dir")]} )) && continue
     backup_and_link "${skill_dir%/}" "$skills_dir/$(basename "$skill_dir")"
   done
+
+  # External skills (claude-code/external-skills.txt) come from other people's
+  # repos, so they install via the skills CLI instead of symlinks: the CLI
+  # copies them into ~/.claude/skills, and replaying the add is what keeps
+  # them current (re-adding overwrites, picking up upstream updates).
+  local manifest="$DOTFILES_DIR/claude-code/external-skills.txt"
+  if ! command_exists bunx; then
+    warn "bunx not found — skipping external skills."
+    note "External skills are declared in claude-code/external-skills.txt; add bun = \"latest\" to ~/.config/mise/config.toml, run mise install, and re-run."
+  else
+    local line source skill
+    local -a ext_skills new_skills
+    while IFS= read -r line; do
+      [[ -z "$line" || "$line" == \#* ]] && continue
+      source="${line%%[[:space:]]*}"
+      ext_skills=() new_skills=()
+      for skill in ${=line#$source}; do
+        (( ${SKIP_SKILLS[(Ie)$skill]} )) && continue
+        ext_skills+=("$skill")
+        [[ -e "$skills_dir/$skill" ]] || new_skills+=("$skill")
+      done
+      (( ${#ext_skills[@]} )) || continue
+      echo "  Installing external skills from $source: ${(j:, :)ext_skills}"
+      if track "skills add $source" bunx skills add "$source" --skill "${ext_skills[@]}" -g -y -a claude-code; then
+        for skill in "${new_skills[@]}"; do changed "installed $skill"; done
+        (( MODULE_UNCHANGED += ${#ext_skills[@]} - ${#new_skills[@]} ))
+      fi
+    done < "$manifest"
+  fi
 
   assemble_global_rules "$HOME/CLAUDE.md"
 

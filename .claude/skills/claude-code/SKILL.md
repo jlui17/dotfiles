@@ -13,6 +13,8 @@ The fragments listed in `OUTPUT_STYLE_RULES` (install.sh) are additionally assem
 
 Skills named in this machine's `SKIP_SKILLS` (`.dotfiles-local`) are not linked; removing an already-linked skill from a machine also means deleting its symlink from `~/.claude/skills` manually (install.sh never prunes).
 
+**External skills** (other people's repos, e.g. humanlayer/skills) are declared in `claude-code/external-skills.txt` (format in its header) and installed by replaying `bunx skills add <repo> --skill <names> -g -y -a claude-code` — the [skills CLI](https://github.com/vercel-labs/skills) copies them into `~/.claude/skills`, so re-running the add is also the update path. `SKIP_SKILLS` filters them like repo skills. Removal is manual: delete the manifest entry, then `bunx skills remove <skill> -g`. bun ships in the mise seed baseline so bunx exists on fresh machines; a machine without it gets a warn + note instead.
+
 ## Settings, statusline, plugins
 
 **settings.json** is not symlinked, because Claude Code rewrites `~/.claude/settings.json` at runtime (theme, model, `/fast`). It stays a real machine-local file; install.sh deep-merges the repo's tracked keys into it, **repo winning on conflicts** (merge_json in install.sh), while machine-only keys the repo doesn't declare are preserved.

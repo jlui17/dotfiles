@@ -3,9 +3,9 @@ name: mise
 description: Use when changing a global language runtime or Python version, switching the Python provider, editing mise config, or debugging a Mason/LSP server install that fails on a fresh machine.
 ---
 
-[mise](https://mise.jdx.dev) manages global language runtime versions. `~/.config/mise/config.toml` (node, go) is machine-local and untracked; `install.sh` seeds a node/go baseline on a fresh machine (never clobbering an existing one) and runs `mise install` to realize it.
+[mise](https://mise.jdx.dev) manages global language runtime versions. `~/.config/mise/config.toml` (node, go, bun) is machine-local and untracked; `install.sh` seeds a node/go/bun baseline on a fresh machine (never clobbering an existing one) and runs `mise install` to realize it.
 
-**Why this exists:** nvim's Mason auto-installs language servers on first launch, and several are built from a runtime that must already be on PATH — `gopls` needs Go, `ts_ls` and `pyright` need Node. Without global versions set, those installs fail. Pinning runtimes here makes a fresh machine's first `nvim` launch succeed. See [[nvim]].
+**Why this exists:** nvim's Mason auto-installs language servers on first launch, and several are built from a runtime that must already be on PATH — `gopls` needs Go, `ts_ls` and `pyright` need Node. Without global versions set, those installs fail. Pinning runtimes here makes a fresh machine's first `nvim` launch succeed. See [[nvim]]. bun is in the baseline because the external-skills replay in `setup_claude_code_skills` runs through `bunx`; existing machines never get re-seeded, so a missing bun surfaces as that module's warn (add it like any tool, per Tasks below).
 
 **Python is machine-local, not in the shared manifest.** `PYTHON_PROVIDER` in `.dotfiles-local` (gitignored) picks `uv` (default) or `system`, the escape hatch for locked-down machines whose security policy SIGKILLs Astral's standalone binaries (that kills both uv and mise-managed Python). Full rationale, overlay mechanics, and the version pin live at `setup_mise` in install.sh.
 
