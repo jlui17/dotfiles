@@ -17,9 +17,8 @@
 #   wt_setup()  — post-create: wtnew does `git worktree add -b` itself, then
 #                 runs this inside the fresh worktree.
 #   wt_create() — owns creation: the repo has its own worktree tooling and
-#                 this delegates to it (e.g. colony's scripts/worktree.sh new).
-#                 Runs from the repo root; must leave a worktree at
-#                 $WORKTREE_PATH on branch $BRANCH.
+#                 this delegates to it. Runs from the repo root; must leave a
+#                 worktree at $WORKTREE_PATH on branch $BRANCH.
 # Both run in a subshell with REPO_ROOT, WORKTREE_PATH, and BRANCH set.
 
 typeset -g _WT_SETUPS_DIR="${${(%):-%x}:A:h}/worktree-setups"
