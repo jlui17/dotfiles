@@ -169,6 +169,12 @@ GUI_APPS=(
 # can't apply here is filtered out before numbering rather than occupying a
 # slot that prints nothing. Ubuntu is a headless VPS, so no terminal emulator
 # config; Hyprland and the macOS defaults are their own platforms' business.
+#
+# Order is load-bearing in two places: packages must precede mise and nvim (it
+# installs both, though setup_nvim carries its own safety net), and mise must
+# precede apps — the Arch/Ubuntu app rows npm-install into mise's node, which
+# setup_mise puts on this run's PATH (setup_apps fails loud when npm is
+# missing rather than silently skipping those rows).
 MODULES=(
   packages:install_packages
   mise:setup_mise
@@ -1413,6 +1419,12 @@ setup_apps() {
     if eval "$check" >/dev/null 2>&1; then
       echo "  $name already installed."
       (( current++ ))
+    elif [[ "$cmd" == npm\ * ]] && ! command_exists npm; then
+      # npm comes from mise's node; its absence here means the mise module was
+      # reordered after apps or its install failed — say so instead of letting
+      # every npm row fail with a bare command-not-found.
+      warn "$name needs npm (mise's node provides it) — keep the mise module before apps in MODULES."
+      FAILURES+=("install $name")
     else
       echo "  Installing $name..."
       track "install $name" eval "$cmd" && installed+=("$name")
