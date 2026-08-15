@@ -1369,11 +1369,28 @@ setup_apps() {
 setup_macos_defaults() {
   echo "==> macOS defaults..."
 
-  defaults write com.apple.dock autohide -bool true
-  defaults write com.apple.dock autohide-time-modifier -float 0.2
+  local dock_changed=0
 
-  killall Dock 2>/dev/null || true
-  result "dock defaults applied"
+  # apply_default domain key type desired current-normalized
+  # `defaults read` prints booleans as 1/0 and floats as written, so the
+  # desired value is passed in its read form for comparison.
+  apply_default() {
+    local domain="$1" key="$2" type="$3" desired="$4" read_form="$5"
+    local current
+    current=$(defaults read "$domain" "$key" 2>/dev/null) || current=""
+    if [[ "$current" != "$read_form" ]]; then
+      defaults write "$domain" "$key" "-$type" "$desired"
+      changed "$key → $desired"
+      dock_changed=1
+    else
+      (( MODULE_UNCHANGED++ ))
+    fi
+  }
+
+  apply_default com.apple.dock autohide bool true 1
+  apply_default com.apple.dock autohide-time-modifier float 0.2 "0.2"
+
+  (( dock_changed )) && killall Dock 2>/dev/null || true
 }
 
 # ──────────────────────────────────────────────
