@@ -414,9 +414,7 @@ module_label() {
 # block carries its own grep guard, so a machine whose config was written
 # before a knob existed still gains that knob's block on the next run, while
 # re-runs stay quiet and saved answers are never touched. The embedded module
-# and slug lists are snapshots at append time — additions to the registry or
-# rules.d/ later show up in install.sh, not in configs already carrying the
-# block.
+# and slug lists are kept current by refresh_local_config_knob_lists.
 append_local_config_knobs() {
   if ! grep -q "SKIP_MODULES" "$DOTFILES_LOCAL_CONFIG" 2>/dev/null; then
     cat >> "$DOTFILES_LOCAL_CONFIG" <<EOF
@@ -461,6 +459,38 @@ EOF
   fi
 }
 
+# The knob blocks are appended once, so their embedded "Available:" lists go
+# stale as MODULES, rules.d/, and skills/ evolve. Rewrite just those snapshot
+# lines on every run: for each knob, the snapshot is the "#   ..." line
+# nearest above the knob's (commented or live) assignment — true of every
+# template version shipped. Prose and saved answers are never touched.
+refresh_local_config_knob_lists() {
+  [[ -f "$DOTFILES_LOCAL_CONFIG" ]] || return 0
+  local -a rule_slugs=($(rule_section_slugs)) skill_names=($(global_skill_names))
+  local -A fresh_list=(
+    SKIP_MODULES "${(j: :)${(@)MODULES%%:*}}"
+    SKIP_RULES   "${(j: :)rule_slugs}"
+    SKIP_SKILLS  "${(j: :)skill_names}"
+  )
+  local knob tmp refreshed=0
+  for knob in ${(k)fresh_list}; do
+    tmp="$(mktemp)"
+    awk -v knob="$knob" -v fresh="#   ${fresh_list[$knob]}" '
+      { lines[NR] = $0 }
+      /^#   / { pending = NR }
+      $0 ~ ("^#?" knob "=") { if (pending) { lines[pending] = fresh; pending = 0 } }
+      END { for (i = 1; i <= NR; i++) print lines[i] }
+    ' "$DOTFILES_LOCAL_CONFIG" > "$tmp"
+    if ! cmp -s "$tmp" "$DOTFILES_LOCAL_CONFIG"; then
+      cat "$tmp" > "$DOTFILES_LOCAL_CONFIG"
+      refreshed=1
+    fi
+    rm -f "$tmp"
+  done
+  (( refreshed )) && note "Refreshed the knob lists in ${DOTFILES_LOCAL_CONFIG:t} — the module/rule/skill sets changed since they were written."
+  return 0
+}
+
 # Load this machine's profile from the gitignored local config. First run asks
 # only the work-computer question; the commented knob template is appended to
 # fresh AND pre-existing configs, so configuring a restricted machine is
@@ -478,6 +508,7 @@ EOF
     emit "  Saved machine config to ${DOTFILES_LOCAL_CONFIG:t}."
   fi
   append_local_config_knobs
+  refresh_local_config_knob_lists
   source "$DOTFILES_LOCAL_CONFIG"
 }
 
