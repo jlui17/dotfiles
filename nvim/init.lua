@@ -123,6 +123,9 @@ do
   --  See `:help 'clipboard'`
   vim.schedule(function() vim.o.clipboard = 'unnamedplus' end)
 
+  -- OSC 52 clipboard provider for tmux/SSH/herdr sessions.
+  require('config.remote_clipboard').setup()
+
   -- Enable break indent
   vim.o.breakindent = true
 
