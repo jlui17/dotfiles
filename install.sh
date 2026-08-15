@@ -916,18 +916,18 @@ setup_omarchy() {
     ensure_dir "$hypr_dir"
 
     local override
-    for override in bindings-override.conf input-override.conf; do
-      backup_and_link "$DOTFILES_DIR/omarchy/hypr/$override" "$hypr_dir/$override"
+    for override in bindings-override input-override; do
+      backup_and_link "$DOTFILES_DIR/omarchy/hypr/$override.lua" "$hypr_dir/$override.lua"
 
-      if ! grep -q "source = $override" "$hypr_dir/hyprland.conf" 2>/dev/null; then
+      if ! grep -q "require(\"hypr.$override\")" "$hypr_dir/hyprland.lua" 2>/dev/null; then
         {
           echo ""
-          echo "source = $override"
-        } >> "$hypr_dir/hyprland.conf"
-        echo "  Added source directive for $override to hyprland.conf."
-        changed "sourced $override"
+          echo "require(\"hypr.$override\")"
+        } >> "$hypr_dir/hyprland.lua"
+        echo "  Added require for $override to hyprland.lua."
+        changed "required $override"
       else
-        echo "  hyprland.conf already sources $override."
+        echo "  hyprland.lua already requires $override."
         (( MODULE_UNCHANGED++ ))
       fi
     done
