@@ -1366,26 +1366,27 @@ setup_apps() {
 #  PHASE 9 — macOS defaults
 # ──────────────────────────────────────────────
 
+# apply_default domain key type desired current-normalized
+# `defaults read` prints booleans as 1/0 and floats as written, so the
+# desired value is passed in its read form for comparison. On a write it sets
+# dock_changed — the caller's local, reached through zsh's dynamic scoping.
+apply_default() {
+  local domain="$1" key="$2" type="$3" desired="$4" read_form="$5"
+  local current
+  current=$(defaults read "$domain" "$key" 2>/dev/null) || current=""
+  if [[ "$current" != "$read_form" ]]; then
+    defaults write "$domain" "$key" "-$type" "$desired"
+    changed "$key → $desired"
+    dock_changed=1
+  else
+    (( MODULE_UNCHANGED++ ))
+  fi
+}
+
 setup_macos_defaults() {
   echo "==> macOS defaults..."
 
   local dock_changed=0
-
-  # apply_default domain key type desired current-normalized
-  # `defaults read` prints booleans as 1/0 and floats as written, so the
-  # desired value is passed in its read form for comparison.
-  apply_default() {
-    local domain="$1" key="$2" type="$3" desired="$4" read_form="$5"
-    local current
-    current=$(defaults read "$domain" "$key" 2>/dev/null) || current=""
-    if [[ "$current" != "$read_form" ]]; then
-      defaults write "$domain" "$key" "-$type" "$desired"
-      changed "$key → $desired"
-      dock_changed=1
-    else
-      (( MODULE_UNCHANGED++ ))
-    fi
-  }
 
   apply_default com.apple.dock autohide bool true 1
   apply_default com.apple.dock autohide-time-modifier float 0.2 "0.2"
