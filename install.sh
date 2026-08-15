@@ -240,6 +240,17 @@ ensure_dir() {
   [[ -d "$1" ]] || mkdir -p "$1"
 }
 
+# The non-blank, non-comment lines of a manifest file. Every manifest this
+# repo reads (pi/packages.txt, claude-code/external-skills.txt, plugins.txt)
+# shares this shape; splitting a line into tokens stays with the caller.
+manifest_lines() {
+  local line
+  while IFS= read -r line; do
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    print -r -- "$line"
+  done < "$1"
+}
+
 # -- The output API ---------------------------------------------------------
 
 # Send a line to the terminal and the log, keeping the log a superset of what
@@ -1029,20 +1040,15 @@ setup_pi() {
     && note "Pi theme is linked. Select it in pi via /settings or edit settings.json."
 
   # -- Pi packages ----------------------------------------------------------
+  local pkg_source
   if command_exists pi; then
     local pkg_count=0
     while IFS= read -r pkg_source; do
-      # Skip empty lines and comments
-      [[ -z "$pkg_source" || "$pkg_source" == \#* ]] && continue
-      # Trim whitespace
-      pkg_source="${pkg_source## }"
-      pkg_source="${pkg_source%% }"
-      [[ -z "$pkg_source" ]] && continue
       echo "  Installing pi package: $pkg_source"
       # Show real errors (no 2>/dev/null) and record genuine failures rather
       # than assuming every failure means "already installed."
       track "pi package $pkg_source" pi install "$pkg_source" && (( pkg_count++ ))
-    done < "$DOTFILES_DIR/pi/packages.txt"
+    done < <(manifest_lines "$DOTFILES_DIR/pi/packages.txt")
     # pi install is idempotent and says nothing useful when the package is
     # already there, so the honest report is the count it kept current.
     (( MODULE_UNCHANGED += pkg_count ))
@@ -1050,12 +1056,8 @@ setup_pi() {
     warn "pi CLI not found. Install pi first: https://pi.dev"
     result "skipped — pi CLI not found"
     while IFS= read -r pkg_source; do
-      [[ -z "$pkg_source" || "$pkg_source" == \#* ]] && continue
-      pkg_source="${pkg_source## }"
-      pkg_source="${pkg_source%% }"
-      [[ -z "$pkg_source" ]] && continue
       note "Install by hand once pi is available: pi install $pkg_source"
-    done < "$DOTFILES_DIR/pi/packages.txt"
+    done < <(manifest_lines "$DOTFILES_DIR/pi/packages.txt")
   fi
 }
 
@@ -1201,7 +1203,6 @@ setup_claude_code_skills() {
     local line source skill
     local -a ext_skills new_skills
     while IFS= read -r line; do
-      [[ -z "$line" || "$line" == \#* ]] && continue
       source="${line%%[[:space:]]*}"
       ext_skills=() new_skills=()
       for skill in ${=line#$source}; do
@@ -1215,7 +1216,7 @@ setup_claude_code_skills() {
         for skill in "${new_skills[@]}"; do changed "installed $skill"; done
         (( MODULE_UNCHANGED += ${#ext_skills[@]} - ${#new_skills[@]} ))
       fi
-    done < "$manifest"
+    done < <(manifest_lines "$manifest")
   fi
 
   assemble_global_rules "$HOME/CLAUDE.md"
@@ -1260,12 +1261,11 @@ setup_claude_plugins() {
   local -a wanted_plugins=()
   local line repo plugin
   while IFS= read -r line; do
-    [[ -z "$line" || "$line" == \#* ]] && continue
     repo="${line%%[[:space:]]*}"
     for plugin in ${=line#$repo}; do
       wanted_plugins+=("$plugin")
     done
-  done < "$manifest"
+  done < <(manifest_lines "$manifest")
 
   # Uninstall plugins present on this machine but removed from the manifest.
   # KEEP_PLUGINS (machine-local config) exempts plugins this machine installed
@@ -1284,7 +1284,6 @@ setup_claude_plugins() {
 
   # Install/no-op wanted plugins.
   while IFS= read -r line; do
-    [[ -z "$line" || "$line" == \#* ]] && continue
     repo="${line%%[[:space:]]*}"          # first token: the marketplace repo
     echo "  Adding marketplace: $repo"
     track "claude marketplace $repo" claude plugin marketplace add "$repo"
@@ -1295,7 +1294,7 @@ setup_claude_plugins() {
       track "claude plugin $plugin" claude plugin install "$plugin" \
         && (( MODULE_UNCHANGED++ ))
     done
-  done < "$manifest"
+  done < <(manifest_lines "$manifest")
 }
 
 # ──────────────────────────────────────────────
