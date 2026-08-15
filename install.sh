@@ -576,6 +576,25 @@ backup_and_link() {
   return 0
 }
 
+# Remove symlinks in dst_dir that point into src_root but are no longer in
+# the desired set (source deleted from the repo, or skipped on this machine),
+# so a link farm converges instead of accumulating. Only repo-pointing
+# symlinks are candidates: hand-made files, copied-in external skills, and
+# foreign links are never touched.
+prune_stale_links() {
+  local dst_dir="$1" src_root="$2"; shift 2
+  local -a desired=("$@")
+  local link name
+  for link in "$dst_dir"/*(N@); do
+    [[ "$(readlink "$link")" == "$src_root"/* ]] || continue
+    name="${link:t}"
+    (( ${desired[(Ie)$name]} )) && continue
+    rm "$link"
+    echo "  Pruned stale link $name."
+    changed "pruned $name"
+  done
+}
+
 # Deep-merge a tracked JSON file into a machine-local one, repo values winning
 # on conflicting keys (jq's `*` recurses into nested objects). Used instead of a
 # symlink when the tool rewrites the file at runtime (e.g. Claude Code's
@@ -1010,27 +1029,36 @@ setup_pi() {
   local pi_agent_dir="$HOME/.pi/agent"
 
   # -- Themes ---------------------------------------------------------------
+  local -a desired=()
   ensure_dir "$pi_agent_dir/themes"
   # (N) = nullglob: an empty match skips the loop; zsh's default aborts the
   # whole script on a glob with no matches.
   for theme_file in "$DOTFILES_DIR/pi/themes/"*.json(N); do
     [[ -f "$theme_file" ]] || continue
+    desired+=("$(basename "$theme_file")")
     backup_and_link "$theme_file" "$pi_agent_dir/themes/$(basename "$theme_file")"
   done
+  prune_stale_links "$pi_agent_dir/themes" "$DOTFILES_DIR/pi/themes" "${desired[@]}"
 
   # -- Skills ---------------------------------------------------------------
+  desired=()
   ensure_dir "$pi_agent_dir/skills"
   for skill_dir in "$DOTFILES_DIR/pi/skills/"*/(N); do
     [[ -d "$skill_dir" ]] || continue
+    desired+=("$(basename "$skill_dir")")
     backup_and_link "${skill_dir%/}" "$pi_agent_dir/skills/$(basename "$skill_dir")"
   done
+  prune_stale_links "$pi_agent_dir/skills" "$DOTFILES_DIR/pi/skills" "${desired[@]}"
 
   # -- Extensions ------------------------------------------------------------
+  desired=()
   ensure_dir "$pi_agent_dir/extensions"
   for ext_file in "$DOTFILES_DIR/pi/extensions/"*.ts(N); do
     [[ -f "$ext_file" ]] || continue
+    desired+=("$(basename "$ext_file")")
     backup_and_link "$ext_file" "$pi_agent_dir/extensions/$(basename "$ext_file")"
   done
+  prune_stale_links "$pi_agent_dir/extensions" "$DOTFILES_DIR/pi/extensions" "${desired[@]}"
 
   # -- Global settings ------------------------------------------------------
   # Lives at the global scope (~/.pi/agent/settings.json) so the theme and
@@ -1176,20 +1204,26 @@ setup_claude_code_skills() {
     echo "  $skipped skipped (SKIP_SKILLS)."
   done
 
+  local -a desired=()
   local commands_dir="$HOME/.claude/commands"
   ensure_dir "$commands_dir"
   for cmd_file in "$module_dir/commands/"*.md(N); do
     [[ -f "$cmd_file" ]] || continue
+    desired+=("$(basename "$cmd_file")")
     backup_and_link "$cmd_file" "$commands_dir/$(basename "$cmd_file")"
   done
+  prune_stale_links "$commands_dir" "$module_dir/commands" "${desired[@]}"
 
+  desired=()
   local skills_dir="$HOME/.claude/skills"
   ensure_dir "$skills_dir"
   for skill_dir in "$module_dir/skills/"*/(N); do
     [[ -d "$skill_dir" ]] || continue
     (( ${SKIP_SKILLS[(Ie)$(basename "$skill_dir")]} )) && continue
+    desired+=("$(basename "$skill_dir")")
     backup_and_link "${skill_dir%/}" "$skills_dir/$(basename "$skill_dir")"
   done
+  prune_stale_links "$skills_dir" "$module_dir/skills" "${desired[@]}"
 
   # External skills (claude-code/external-skills.txt) come from other people's
   # repos, so they install via the skills CLI instead of symlinks: the CLI

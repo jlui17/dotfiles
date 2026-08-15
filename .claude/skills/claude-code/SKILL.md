@@ -11,7 +11,7 @@ Deployed by install.sh `setup_claude_code` (the comment there describes the modu
 
 The fragments listed in `OUTPUT_STYLE_RULES` (install.sh) are additionally assembled into the output style `~/.claude/output-styles/justin.md`, selected via `outputStyle` in `claude-code/settings.json`. `~/CLAUDE.md` keeps its copy of the same fragments because subagents load CLAUDE.md but never see output styles.
 
-Skills named in this machine's `SKIP_SKILLS` (`.dotfiles-local`) are not linked; removing an already-linked skill from a machine also means deleting its symlink from `~/.claude/skills` manually (install.sh never prunes).
+Skills named in this machine's `SKIP_SKILLS` (`.dotfiles-local`) are not linked, and an already-linked skill added to the list gets its symlink pruned on the next run (prune_stale_links in install.sh — repo-pointing symlinks only, so copied-in external skills and hand-made files survive).
 
 **External skills** (other people's repos, e.g. humanlayer/skills) are declared in `claude-code/external-skills.txt` (format in its header) and installed by replaying `bunx skills add <repo> --skill <names> -g -y -a claude-code` — the [skills CLI](https://github.com/vercel-labs/skills) copies them into `~/.claude/skills`, so re-running the add updates in place (`update_pkgs` in zshrc also runs `bunx skills update -g`). `SKIP_SKILLS` filters them like repo skills. Removal is manual: delete the manifest entry, then `bunx skills remove <skill> -g`. bun ships in the mise seed baseline so bunx exists on fresh machines; a machine without it gets a warn + note instead.
 
@@ -49,7 +49,7 @@ From the Claude 5 context-engineering guidance (https://claude.com/blog/the-new-
 ## Tasks
 
 - Any add/edit (command, skill, rule fragment, setting) lands by re-running `./install.sh`.
-- Remove a capability: delete the file/dir, then remove the stale symlink from `~/.claude` manually (install.sh only links, never prunes).
+- Remove a capability: delete the file/dir, re-run `./install.sh` (the run prunes the stale symlink from `~/.claude`).
 - Remove a plugin: delete its manifest line, re-run install.sh (the sync uninstalls it).
 - Keep a plugin on this machine only: install it by hand, add it to `KEEP_PLUGINS`.
 
