@@ -194,7 +194,13 @@ if command -v brew &>/dev/null; then
   alias update_pkgs='brew update && brew upgrade && mise up && bunx skills update -g && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval"'
   alias update_cc='brew update && brew upgrade claude-code@latest'
 elif command -v pacman &>/dev/null; then
-  alias update_pkgs='sudo pacman -Syu && mise up && bunx skills update -g && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval"'
+  # omarchy update wraps pacman, AUR and mise up, and adds the snapshot and the
+  # migrations that ship with new packages. -y skips only its opening
+  # confirmation; the reboot question at the end still gets asked.
+  alias update_pkgs='omarchy update -y && bunx skills update -g && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval"'
+  # mise withholds releases younger than its cooldown, so a plain up leaves
+  # claude days behind.
+  alias update_cc='MISE_MINIMUM_RELEASE_AGE=0 mise up claude'
 elif command -v apt-get &>/dev/null; then
   alias update_pkgs='sudo apt-get update && sudo apt-get upgrade && mise up && bunx skills update -g && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval"'
 fi
