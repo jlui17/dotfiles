@@ -998,6 +998,13 @@ setup_omarchy() {
         (( MODULE_UNCHANGED++ ))
       fi
     done
+
+    local themes_dir="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/themes"
+    ensure_dir "$themes_dir"
+    local theme
+    for theme in "$DOTFILES_DIR"/omarchy/themes/*(N/); do
+      backup_and_link "$theme" "$themes_dir/${theme:t}"
+    done
   else
     echo "  omarchy-update not found — skipping Omarchy setup."
     result "skipped — omarchy-update not found"

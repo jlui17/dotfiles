@@ -1,0 +1,34 @@
+# Palette canonical in ghostty/themes/fleet-dark-colorblind; ANSI roles copied
+# verbatim from its slots (red=orange, green=blue is that file's deliberate
+# colorblind retune), neutrals extended from its single background.
+mode = "dark"
+
+accent = "#639bfb"
+selection = "#163761"
+muted = "#363636"
+
+background = "#181818"
+dark_background = "#101010"
+darker_background = "#0a0a0a"
+lighter_background = "#242424"
+
+foreground = "#d6d6dd"
+dark_foreground = "#6d6d6d"
+light_foreground = "#e6e6ec"
+bright_foreground = "#ffffff"
+
+red = "#ce8a47"
+yellow = "#fbd67e"
+orange = "#dda46e"
+green = "#88bafc"
+cyan = "#53bc96"
+blue = "#6088db"
+magenta = "#b570ac"
+brown = "#8a6f5c"
+
+bright_red = "#dda46e"
+bright_yellow = "#fef3ad"
+bright_green = "#afd6fd"
+bright_cyan = "#61e5b2"
+bright_blue = "#639bfb"
+bright_magenta = "#d98fc2"
