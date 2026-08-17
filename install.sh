@@ -1369,31 +1369,37 @@ setup_git_config() {
   ensure_dir "$HOME/src/personal"
 
   if [[ ! -f "$git_config" ]]; then
-    local primary_email
-    ask primary_email "  Primary git email: "
     cat > "$git_config" <<EOF
 [user]
 	name = Justin Lui
-	email = $primary_email
+	email = justin@scorecard.io
 
 [includeIf "gitdir:~/src/personal/"]
 	path = ~/.config/git/config-personal
 EOF
     echo "  Created $git_config."
     changed "created config"
+  elif ! grep -q 'includeIf "gitdir:~/src/personal/"' "$git_config"; then
+    cat >> "$git_config" <<EOF
+
+[includeIf "gitdir:~/src/personal/"]
+	path = ~/.config/git/config-personal
+EOF
+    echo "  Added ~/src/personal/ includeIf to existing $git_config."
+    changed "added personal includeIf"
   else
-    echo "  $git_config already exists — skipping."
+    echo "  $git_config already set up."
     (( MODULE_UNCHANGED++ ))
   fi
 
-  if [[ ! -f "$git_config_personal" ]]; then
-    local personal_email
-    ask personal_email "  Personal git email (for ~/src/personal/): "
-    printf '[user]\n\temail = %s\n' "$personal_email" > "$git_config_personal"
-    echo "  Created config-personal."
-    changed "created config-personal"
+  local personal_content='[user]
+	email = justinlui17@gmail.com'
+  if [[ ! -f "$git_config_personal" ]] || [[ "$(<"$git_config_personal")" != "$personal_content" ]]; then
+    printf '%s\n' "$personal_content" > "$git_config_personal"
+    echo "  Wrote config-personal."
+    changed "wrote config-personal"
   else
-    echo "  config-personal already exists — skipping."
+    echo "  config-personal already set up."
     (( MODULE_UNCHANGED++ ))
   fi
 }
