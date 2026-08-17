@@ -983,7 +983,7 @@ setup_omarchy() {
     ensure_dir "$hypr_dir"
 
     local override
-    for override in bindings-override input-override; do
+    for override in bindings-override input-override windows-override; do
       backup_and_link "$DOTFILES_DIR/omarchy/hypr/$override.lua" "$hypr_dir/$override.lua"
 
       if ! grep -q "require(\"hypr.$override\")" "$hypr_dir/hyprland.lua" 2>/dev/null; then
