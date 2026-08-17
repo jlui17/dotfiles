@@ -7,22 +7,22 @@ inherits = "vicinae-dark"
 icon = "/home/atif/.local/share/omarchy/icon.png"
 
 [colors.core]
-background = "#1e1e2e"
-foreground = "#cdd6f4"
+background = "#0f1011"
+foreground = "#dfe1e5"
 secondary_background = "#232333"
-border = "#585b70"
+border = "#43454a"
 accent = "#f9e2af"
 
 [colors.list.item.hover]
 background = "#282838"
-foreground = "#cdd6f4"
+foreground = "#dfe1e5"
 
 [colors.list.item.selection]
 background = "#2d2d3d"
-foreground = "#cdd6f4"
+foreground = "#dfe1e5"
 
 [colors.accents]
-blue = "#89b4fa"
+blue = "#7d9cc9"
 green = "#56b09a"
 magenta = "#f5c2e7"
 orange = "#f9e2af"

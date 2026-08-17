@@ -6,25 +6,25 @@
  */
 
 /* Dynamic Color Palette */
-@define-color background #1e1e2e;
-@define-color foreground #cdd6f4;
+@define-color background #0f1011;
+@define-color foreground #dfe1e5;
 
-@define-color color0 #45475a;
+@define-color color0 #2b2d30;
 @define-color color1 #e57a3f;
 @define-color color2 #56b09a;
 @define-color color3 #f9e2af;
-@define-color color4 #89b4fa;
+@define-color color4 #7d9cc9;
 @define-color color5 #cba6f7;
 @define-color color6 #94e2d5;
-@define-color color7 #bac2de;
-@define-color color8 #585b70;
+@define-color color7 #b8bcc2;
+@define-color color8 #43454a;
 @define-color color9 #e57a3f;
 @define-color color10 #56b09a;
 @define-color color11 #f9e2af;
-@define-color color12 #89b4fa;
+@define-color color12 #7d9cc9;
 @define-color color13 #cba6f7;
 @define-color color14 #94e2d5;
-@define-color color15 #cdd6f4;
+@define-color color15 #dfe1e5;
 
 /* Base GTK theme variables */
 @define-color theme_bg_color @background;

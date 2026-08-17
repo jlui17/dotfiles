@@ -27,13 +27,13 @@ theme[inactive_fg]="#7d8291"
 theme[proc_misc]="#bfc6d4"
 
 # Box outlines – subtle bluish-grey (window frame color)
-theme[cpu_box]="#292b3b"
-theme[mem_box]="#292b3b"
-theme[net_box]="#292b3b"
-theme[proc_box]="#292b3b"
+theme[cpu_box]="#1e1f22"
+theme[mem_box]="#1e1f22"
+theme[net_box]="#1e1f22"
+theme[proc_box]="#1e1f22"
 
 # Divider lines – same subtle outline tone
-theme[div_line]="#292b3b"
+theme[div_line]="#1e1f22"
 
 # Graph gradients – smooth blue-grey (rain & neon reflections)
 theme[temp_start]="#4a4f65"
