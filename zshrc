@@ -171,7 +171,6 @@ alias vim='nvim'
 alias src-zsh='source ~/.zshrc'
 alias vim-zsh='nvim ~/.zshrc'
 alias lg='lazygit'
-alias claude='claude --dangerously-skip-permissions'
 # colony's script owns the ADC scope roster and probes before re-authing;
 # the fallback is the pre-script two-command form for machines without colony.
 gauth() {
