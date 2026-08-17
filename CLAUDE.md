@@ -12,6 +12,10 @@ Canonical config source. Single setup across macOS (Homebrew), Arch Linux (Pacma
 - **Fast startup**: interactive startup paths are latency-budgeted. Work that forks or is slow (subprocess `eval`s, plugin loads, compinit) gets deferred past the first prompt or cached, never added synchronously; when touching a startup path, measure before/after (`/usr/bin/time zsh -i -c exit`). The zsh mechanics (turbo ordering, `_cached_eval`) live in the zshrc skill.
 - **Durable docs**: Docs capture intent, patterns, and design decisions — not file trees or config values that agents can read directly.
 
+## Colorblind-safe visuals
+
+Justin is red-green color impaired (deuteranopia/protanopia family). Any palette or visual shipped by this repo (themes, terminal palettes, status colors, prompt colors) never uses a red-vs-green distinction to carry meaning: put opposed meanings on the blue-yellow or blue-orange axis instead, keep a luminance gap between them, and back color with a second channel (shape, label, position) where the medium allows. The verification recipe for terminal palettes (Vienot simulation, ΔE76 and contrast thresholds) lives in the terminal skill.
+
 ## Design
 
 - `install.sh` — OS detection → packages → symlinks → plugin managers. Each section idempotent.
