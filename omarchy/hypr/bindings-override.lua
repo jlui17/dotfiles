@@ -15,3 +15,7 @@ o.bind("SUPER + SHIFT + S", "Toggle scratchpad", hl.dsp.workspace.toggle_special
 hl.unbind("SUPER + P")
 hl.unbind("SUPER + SHIFT + P")
 o.bind("SUPER + CTRL + P", "Pseudo window", hl.dsp.window.pseudo())
+
+-- Move keybindings menu to SUPER SHIFT, K
+hl.unbind("SUPER + K")
+o.bind("SUPER + SHIFT + K", "Keybindings", "omarchy-menu-keybindings")
