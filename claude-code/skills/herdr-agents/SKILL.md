@@ -41,11 +41,15 @@ For parallel agents on one repo, give each *task* a worktree-backed space via th
 ## Spawn an agent
 
 ```sh
-herdr tab create --cwd <dir> --label <task> --no-focus     # → root pane_id
-herdr agent start <name> --kind claude --pane <pane_id>    # blocks until the agent is ready
-herdr agent prompt <name> "<prompt>"                       # fire-and-forget
+herdr tab create --workspace "$HERDR_WORKSPACE_ID" --cwd <dir> --label <task> --no-focus   # → root pane_id
+herdr agent start <name> --kind claude --pane <pane_id> -- "<prompt>"   # blocks until ready; kickoff rides the launch
+herdr agent prompt <name> "<prompt>"                       # later messages; fire-and-forget
 herdr agent prompt <name> "<prompt>" --wait                # blocks until the agent settles
 ```
+
+`tab create` without `--workspace` lands in whichever space currently has UI focus (usually the user's, not yours): always pass the target space explicitly; your own is `$HERDR_WORKSPACE_ID`.
+
+Pass the kickoff prompt at launch (`-- "<prompt>"`): a fresh `claude` can open in the agents-picker view, where `agent prompt` reports success but the text never lands (if you do prompt a fresh agent, verify with `agent read`). A launch-argv prompt must be one line (multi-line fails with `invalid_agent_argument`): write the full brief to a file and pass a one-liner telling the agent to read and follow it.
 
 Agents are named at `start`; every later command takes the name, not the pane ID. `--kind` covers claude, codex, gemini, opencode, amp, and more (see `herdr agent start --help`). The pane must be sitting at a shell prompt.
 
@@ -61,6 +65,8 @@ Herdr tracks each agent pane through semantic states: `working` (mid-turn), `blo
 - `herdr agent wait <name> --until blocked --until done --timeout <ms>` — block until a state; without `--until` it matches any settled state.
 - `herdr agent read <name> --lines <n>` — the terminal screen, for what the agent actually said or asked.
 - `herdr agent prompt --wait` — submit and block until settled in one call.
+
+An idle worker doesn't mean nothing is pending for it: its own watchers (a PR monitor, a poll loop) can die silently. Verify the external artifact directly (the PR's reviews, the job's state) and deliver missed events with `agent prompt`, rather than trusting `agent list` idle status or the worker's monitors.
 
 ## Teardown
 
