@@ -13,7 +13,7 @@ When a review objects to a decision or assumption we made, and the objection onl
 
 "Where the reader will hit it" is ranked, and defers to the code-comments rule: first encode it in code or pin it with a test; then the package's docs (README, design doc) for context that outlives the change; a code comment only if it clears the comment bar. Lifetime picks the venue: **information that persists lives in the package; information true only for the PR's lifetime (deploy status, merge order, what exists yet, review dispositions) lives in the PR, always the PR, never the package.**
 
-Watching for the next feedback round (both the PR and the Slack thread, never just one) is the `babysit` skill's domain.
+Watching for the next feedback round (both the PR and the Slack thread, never just one) is the `babysit` skill's domain (lives in the colony plugin as `colony:babysit`).
 
 ## Close the loop in Slack
 
