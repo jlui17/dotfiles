@@ -13,7 +13,7 @@ description: Use before drafting OR EDITING anything substantial a reader will s
 
 **Applying feedback.** Wording/style feedback goes into the artifact immediately; noting it for later without editing the doc is a miss. Design *decisions* are the opposite: discuss and confirm first, then apply.
 
-**Where this lives.** The compact core is always-on via `~/CLAUDE.md` plus the Justin output style (rules.d fragments in the dotfiles repo; the `claude-code` module skill has the flow), and the always-on copy is canonical where they overlap. This skill is the full reference: the complete rules plus per-artifact structure in `resources/`.
+**Where this lives.** The compact core is the Justin output style (`claude-code/output-styles/justin.md` in the dotfiles repo; the `claude-code` module skill has the flow), canonical where it overlaps this skill. It loads in main sessions only, so for a subagent this skill is the whole voice, not a supplement. Either way this skill is the full reference: the complete rules plus per-artifact structure in `resources/`.
 
 **Default: cut to the bone, stay smooth.** As concise as the meaning allows while still reading smoothly and carrying the context the reader needs; this governs a one-line chat reply as much as a doc. Cut filler, pleasantries, and hedging (state confidence + its assumption instead, #13), and any word that doesn't change meaning. But keep the small words that make a sentence flow (articles, connectives): this is lean, **not telegraphic**. A fragment is fine where it reads naturally, never as the house style. When in doubt, plainer and shorter.
 
@@ -123,7 +123,7 @@ Same voice, different density; read the matching resource before drafting. Every
 | **Visual artifact (diagram / HTML report / deck)** | Visual encoding first, words last resort. Self-explanatory to a zero-context reader. | `resources/visual-artifacts.md` |
 | **Slack / peer message** (chat ping, DM, thread) | Casual, conversational, flows like speech (not telegraphic). Light greeting OK. Link the one artifact; name only the central identifier(s); state confidence + its assumption (#13). | `resources/slack.md` |
 | **Code comment / inline review** | Most compressed. One claim per line, point at the artifact, drop scaffolding. Still: actor-as-subject, append-reason, no hype. Describing a change? Behavior first (#12), mechanism only if needed. | (inline: this row is the guidance) |
-| **Session reply** (interactive Claude Code turn) | Casual, natural flow, zero filler. Ask when readings diverge; option space flat then the lean; real terms first, analogy as fallback. | `rules.d/13-session-replies.md` (always-on, self-sufficient) |
+| **Session reply** (interactive Claude Code turn) | Casual, natural flow, zero filler. Ask when readings diverge; option space flat then the lean; real terms first, analogy as fallback. | `claude-code/output-styles/justin.md` (always-on in a main session, self-sufficient) |
 
 ## Anti-patterns
 

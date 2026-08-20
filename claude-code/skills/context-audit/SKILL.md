@@ -21,7 +21,7 @@ Before committing a context edit, hunt for twins of what you just wrote:
 2. Classify each hit per the bar. An existing home for the topic means the edit moves there (the addition-is-an-edit rule in `~/CLAUDE.md`); an overlapping statement gets pointerized or named canonical.
 3. Fix in the same round; a context edit that ships a new twin is incomplete.
 
-Corpus for global edits (dotfiles repo): `claude-code/rules.d/*.md`, `claude-code/skills/**/*.md`, `claude-code/commands/*.md`, `.claude/skills/claude-code/SKILL.md`. For a repo-layer edit: that repo's CLAUDE.md, its `.claude`/`.agents` skills, and its docs.
+Corpus for global edits (dotfiles repo): `claude-code/rules.d/*.md`, `claude-code/output-styles/*.md`, `claude-code/skills/**/*.md`, `claude-code/commands/*.md`, `.claude/skills/claude-code/SKILL.md`. For a repo-layer edit: that repo's CLAUDE.md, its `.claude`/`.agents` skills, and its docs.
 
 ## Full audit (on request)
 
