@@ -19,3 +19,10 @@ o.bind("SUPER + CTRL + P", "Pseudo window", hl.dsp.window.pseudo())
 -- Move keybindings menu to SUPER SHIFT, K
 hl.unbind("SUPER + K")
 o.bind("SUPER + SHIFT + K", "Keybindings", "omarchy-menu-keybindings")
+
+-- Swap herdr and the plain terminal: herdr takes SUPER RETURN, terminal moves
+-- to SUPER CTRL RETURN
+hl.unbind("SUPER + RETURN")
+hl.unbind("SUPER + CTRL + RETURN")
+o.bind("SUPER + RETURN", "Herdr", { omarchy = "terminal-herdr" })
+o.bind("SUPER + CTRL + RETURN", "Terminal", { omarchy = "terminal" })
