@@ -45,6 +45,7 @@ Assume the reviewer hasn't read the ticket and doesn't know this corner of the s
 
 - **A cited file or symbol gets a one-clause definition and why it's relevant, never a bare name.** "Same pattern in `vm_warm.py` and `vm_snapshot.py`" tells a stranger nothing; "both build layers that push images (`vm_warm` = warm base, `vm_snapshot` = data restored in), so the fix lands in both" does. Name for findability, but earn the name.
 - **Stand-alone holds per section, not just per document.** Reviewers jump straight to Verification or Limits, so each section re-grounds its own load-bearing nouns instead of borrowing a term ("the crash", "the predicate") only the root-cause prose defined. A section that only parses if you've memorized an earlier one isn't standalone.
+- **The reviewer knows the codebase and the product, never the session's history.** Everything reader-facing on a PR (body, review replies, comments) is written as if the working sessions never happened: no references to closed or superseded PRs, commits in them, earlier scope decisions, or "this was green before the split" — the claim stands on what's verifiable from this PR alone. A reviewer has that history only when the user explicitly says so ("Yash knows about X").
 
 ## Verification and non-goals
 
