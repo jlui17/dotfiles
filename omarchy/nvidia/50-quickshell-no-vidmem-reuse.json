@@ -1,0 +1,8 @@
+{
+    "rules" : [
+        {
+            "pattern" : { "feature" : "procname", "matches" : "quickshell" },
+            "profile" : "No VidMem Reuse"
+        }
+    ]
+}
