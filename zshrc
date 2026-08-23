@@ -5,6 +5,54 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# Startup-latency telemetry: appends one line per interactive shell to
+# ~/.cache/zsh-startup-log.tsv, written in the background after the turbo
+# block finishes so it adds nothing to the interactive path. Marks are
+# EPOCHREALTIME deltas from process exec (t0 recovered via $SECONDS, so
+# zshenv/zprofile are included); $SECONDS itself can't carry the marks
+# because zinit shadows it with a per-plugin local inside atload. load and
+# nclaude are sampled at write time, ~turbo-done: close enough to startup
+# for the 1-minute load average to be honest.
+zmodload zsh/datetime
+typeset -gF SECONDS
+_startup_perf_t0=$(( EPOCHREALTIME - SECONDS ))
+
+_startup_perf_first_prompt() {
+  _startup_perf_prompt=$(( EPOCHREALTIME - _startup_perf_t0 ))
+  precmd_functions=(${precmd_functions:#_startup_perf_first_prompt})
+}
+precmd_functions+=(_startup_perf_first_prompt)
+
+_startup_perf_log() {
+  _startup_perf_turbo=$(( EPOCHREALTIME - _startup_perf_t0 ))
+  (
+    local log="${XDG_CACHE_HOME:-$HOME/.cache}/zsh-startup-log.tsv"
+    local load1=- load5=- ncpu=- nclaude ctx
+    if [[ -r /proc/loadavg ]]; then
+      read -r load1 load5 _ < /proc/loadavg
+      ncpu=$(nproc 2>/dev/null)
+    else
+      local -a l=($(sysctl -n vm.loadavg 2>/dev/null))
+      load1=${l[2]:--} load5=${l[3]:--}
+      ncpu=$(sysctl -n hw.ncpu 2>/dev/null)
+    fi
+    nclaude=$(pgrep -f claude 2>/dev/null | wc -l | tr -d ' ')
+    ctx=${HERDR_ENV:+herdr}; ctx=${ctx:-${TERM_PROGRAM:-tty}}
+    mkdir -p "${log:h}"
+    [[ -s $log ]] || print -r -- \
+      $'ts\trc_ms\tprompt_ms\tturbo_ms\tload1\tload5\tncpu\tnclaude\tctx\tfull_compinit\tregen' >> "$log"
+    local ts; strftime -s ts '%Y-%m-%dT%H:%M:%S' $EPOCHSECONDS
+    printf '%s\t%.0f\t%.0f\t%.0f\t%s\t%s\t%s\t%s\t%s\t%d\t%s\n' \
+      "$ts" \
+      $(( _startup_perf_rc * 1000 )) \
+      $(( _startup_perf_prompt * 1000 )) \
+      $(( _startup_perf_turbo * 1000 )) \
+      "$load1" "$load5" "$ncpu" "$nclaude" "$ctx" \
+      "${_startup_perf_full_compinit:-0}" \
+      "${(j:,:)_startup_perf_regen:--}" >> "$log"
+  ) &!
+}
+
 # Cache for `eval "$(tool init ...)"` shell integrations: the tools emit
 # static init scripts, so paying their fork+startup on every shell buys
 # nothing. Generation runs in a scrubbed env because the output may embed it
@@ -26,6 +74,7 @@ _cached_eval() {
   zstat -L -H st -- "$bin" 2>/dev/null && (( st[mtime] > bin_mtime )) && bin_mtime=$st[mtime]
   zstat -H st -- "$cache" 2>/dev/null && cache_mtime=$st[mtime]
   if [[ ! -s "$cache" ]] || (( bin_mtime > cache_mtime )); then
+    _startup_perf_regen+=("$1")
     local tmp="$cache.new.$$"
     mkdir -p "${cache:h}"
     command env -i HOME="$HOME" PATH="$PATH" "$@" >| "$tmp" \
@@ -69,6 +118,7 @@ _cached_compinit() {
   if [[ -n ${dump}(#qN.mh-24) ]]; then
     compinit -C -d "$dump"
   else
+    _startup_perf_full_compinit=1
     compinit -d "$dump"
     touch "$dump"
   fi
@@ -95,7 +145,7 @@ zinit wait lucid light-mode for \
     zsh-users/zsh-completions \
   OMZP::git \
   zsh-users/zsh-syntax-highlighting \
-  atload'_zsh_autosuggest_start; zicdreplay; zinit cdclear -q' \
+  atload'_zsh_autosuggest_start; zicdreplay; zinit cdclear -q; _startup_perf_log' \
     zsh-users/zsh-autosuggestions
 
 # compinit is deferred to the turbo block above, so compdef doesn't exist yet
@@ -241,3 +291,6 @@ _cached_eval zoxide init --cmd cd zsh
 [ -f "/home/openclaw/.openclaw/completions/openclaw.zsh" ] && source "/home/openclaw/.openclaw/completions/openclaw.zsh"
 export NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache
 export OPENCLAW_NO_RESPAWN=1
+
+# Telemetry mark: keep as the last line so rc_ms covers the whole rc chain.
+_startup_perf_rc=$(( EPOCHREALTIME - _startup_perf_t0 ))
