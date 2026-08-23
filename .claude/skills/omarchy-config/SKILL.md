@@ -1,5 +1,5 @@
 ---
-name: omarchy
+name: omarchy-config
 description: Use when adding, changing, or reverting a Hyprland keybinding on the Arch machine, when a macOS-style shortcut doesn't work under Omarchy, when editing, adding, or re-syncing an Omarchy desktop theme shipped by this repo (fleet, rainynight), or when the Omarchy shell stops drawing — dead command bar, menus that won't open, missing notifications — while a game or other GPU-heavy app holds most of the VRAM.
 ---
 

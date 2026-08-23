@@ -41,7 +41,7 @@ backup_and_link "$src" "$dst" && note "Restart X to pick it up."
 
 1. Add `name:function` to `MODULES` (append an OS list — `name:function:macos,arch` — only if it can't apply everywhere; that's what keeps the `[n/N]` counter honest, and it replaces an early `return` inside the function).
 2. Write the function using `backup_and_link` for symlinks and `track` for anything fallible. Don't add reporting unless synthesis gets it wrong.
-3. Add the maintenance skill under `.agents/skills/<name>/`.
+3. Add the maintenance skill under `.agents/skills/`, named per the convention in this repo's CLAUDE.md — the module name, unless a skill the tool itself ships already claims it.
 
 Nothing needs wiring in `main` — the registry is the single place a module is named, including for the skip-list template appended to `.dotfiles-local`.
 
