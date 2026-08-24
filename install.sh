@@ -973,7 +973,7 @@ setup_omarchy() {
     ensure_dir "$hypr_dir"
 
     local override
-    for override in bindings-override input-override windows-override; do
+    for override in bindings-override input-override windows-override autostart-override; do
       backup_and_link "$DOTFILES_DIR/omarchy/hypr/$override.lua" "$hypr_dir/$override.lua"
 
       if ! grep -q "require(\"hypr.$override\")" "$hypr_dir/hyprland.lua" 2>/dev/null; then
@@ -996,20 +996,14 @@ setup_omarchy() {
       backup_and_link "$theme" "$themes_dir/${theme:t}"
     done
 
-    # NVIDIA ships its "No VidMem Reuse" profile for Hyprland and Xwayland but not
-    # for quickshell, which Omarchy's shell runs as. Without it the shell hoards
-    # freed GL buffers, and since the Wayland driver has no system-RAM fallback, a
-    # game holding most of the VRAM makes the driver refuse the shell's next
-    # allocation — the bar and menus stop rendering. Drop once NVIDIA covers it.
-    if omarchy-hw-nvidia; then
-      local profiles_dir="$HOME/.nv/nvidia-application-profiles-rc.d"
-      ensure_dir "$profiles_dir"
-      local profile
-      for profile in "$DOTFILES_DIR"/omarchy/nvidia/*.json(N); do
-        backup_and_link "$profile" "$profiles_dir/${profile:t}" \
-          && note "Restart the Omarchy shell to load the NVIDIA profile: omarchy-restart-shell"
-      done
-    fi
+    # autostart-override calls this by name, so it has to be on PATH.
+    local bin_dir="$HOME/.local/bin"
+    ensure_dir "$bin_dir"
+    local script
+    for script in "$DOTFILES_DIR"/omarchy/bin/*(N); do
+      backup_and_link "$script" "$bin_dir/${script:t}" \
+        && note "Run omarchy-shell-software to switch the running shell over now."
+    done
   else
     echo "  omarchy-update not found — skipping Omarchy setup."
     result "skipped — omarchy-update not found"

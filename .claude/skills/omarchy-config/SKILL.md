@@ -3,7 +3,7 @@ name: omarchy-config
 description: Use when adding, changing, or reverting a Hyprland keybinding on the Arch machine, when a macOS-style shortcut doesn't work under Omarchy, when editing, adding, or re-syncing an Omarchy desktop theme shipped by this repo (fleet, rainynight), or when the Omarchy shell stops drawing — dead command bar, menus that won't open, missing notifications — while a game or other GPU-heavy app holds most of the VRAM.
 ---
 
-Omarchy module: Hyprland keybinding overrides, the desktop themes this repo ships, and the NVIDIA driver profile the shell needs. Only runs on Arch; skipped entirely on macOS/Ubuntu.
+Omarchy module: Hyprland keybinding overrides, the desktop themes this repo ships, and the software-rendering shim the shell needs on NVIDIA. Only runs on Arch; skipped entirely on macOS/Ubuntu.
 
 ## Keybindings
 
@@ -25,22 +25,20 @@ Each dir under `omarchy/themes/` is symlinked to `~/.config/omarchy/themes/<name
 
 The One Piece wallpaper ships inside `fleet/backgrounds/`. For other themes it's a machine-local extra in `~/.config/omarchy/backgrounds/<theme>/` (user backgrounds sort first, so it becomes the default on theme switch).
 
-## NVIDIA shell profile
+## Software-rendered shell
 
-`omarchy/nvidia/*.json` symlinks into `~/.nv/nvidia-application-profiles-rc.d/` (first entry in the driver's documented search path, Appendix J3 — no root, and nothing in `/etc` to collide with a driver update). Guarded on `omarchy-hw-nvidia`, so an Omarchy box without an NVIDIA card gets nothing.
+`omarchy/bin/*` symlinks into `~/.local/bin`; `autostart-override.lua` calls `omarchy-shell-software` by name on `hyprland.start`, which relaunches the shell with `QT_QUICK_BACKEND=software`.
 
-The driver loads **every** file in that directory and ignores extensions, so `backup_and_link`'s `.bak` is a second live copy of the rule, not an inert backup. Delete it after a first-time link, or a later edit to the repo file leaves the stale duplicate still in force.
+Why: the NVIDIA Wayland driver refuses a client's buffer allocation when VRAM is full instead of spilling to system RAM the way it does on X11 ([egl-wayland#185](https://github.com/NVIDIA/egl-wayland/issues/185), open, no vendor response). A game holding most of an 8GB card leaves quickshell unable to create surfaces, so the bar and menus stop drawing. Rendering on the CPU into shared memory means the shell never asks the GPU for anything, so it cannot be starved. The compositor is unaffected — NVIDIA already ships its `No VidMem Reuse` profile for Hyprland and Xwayland.
 
-Why it exists: the NVIDIA Wayland driver fails a client's buffer allocation outright when VRAM is full instead of spilling to system RAM the way it does on X11 ([egl-wayland#185](https://github.com/NVIDIA/egl-wayland/issues/185), open, no vendor response — the kernel tell is `Failed to allocate NVKMS memory for GEM object`). NVIDIA mitigates it for compositors by shipping the `No VidMem Reuse` profile (`GLVidHeapReuseRatio=0`, stop hoarding freed buffers in the per-process pool) for plasmashell, cosmic-comp, Hyprland, Xwayland, kwin, mutter, wlroots and weston — but not quickshell, which Omarchy's shell runs as. So the compositor survives a VRAM-hungry game and the shell doesn't.
+**Three mechanisms that do not work**, so they don't get retried: a shim named `omarchy-launch-shell` in `~/.local/bin` (Omarchy puts its own bin dir *first* on PATH), editing Omarchy's `default/hypr/autostart.lua` (package-owned, `omarchy-update` overwrites it, and there is no unbind for an exec), and a native knob (quickshell has no backend flag, `shell.json` has no render setting). Relaunching after Omarchy's default has started is what's left, and it costs a visible bar flash at login.
 
-We only add the missing `procname` rule and reuse NVIDIA's own profile by name; never redefine the key. Check what the driver already covers before adding a rule, in `/usr/share/nvidia/nvidia-application-profiles-*-rc` — and drop our file once quickshell appears there.
+`QT_QUICK_BACKEND` stays out of the session environment on purpose: it would also catch moonlight and kdenlive, which want the GPU. Check `ldd` against `libQt6Quick` before assuming an app is unaffected — the variable only touches Qt Quick, not Qt Widgets.
 
-**Verifying a rule.** The driver logs profile parsing to stderr under `__GL_APPLICATION_PROFILE_LOG=1` (not `__GL_DEBUG_APP_PROFILES`, which is not a real variable and silently does nothing). It names files it parses and complains about a rule referencing an unknown profile, but says nothing when a rule resolves — so silence only means "no error", and confirming the log works needs a control: add a second rule pointing at a bogus profile name, see it flagged, delete it. Run it against a throwaway shell rather than the live one, and give it a real window or GL never initializes and nothing is logged at all:
+**The launcher supervises**, relaunching Quickshell on an unclean exit, so anything that swaps the backend must kill the supervisor first or it restores the GPU-backed shell underneath. It also passes its own environment through to Quickshell, which is why setting the variable on the launcher works at all.
 
-```zsh
-__GL_APPLICATION_PROFILE_LOG=1 quickshell -n -p /tmp/probe/shell.qml
-```
+**Reproducing the bug takes seconds, not a session.** With a VRAM-hungry game running, start a throwaway GPU-backed shell against a scratch QML file; every panel open fails with `Could not create EGL surface (EGL error 0x3003)` and `eglSwapBuffers failed with 0x300d`. Measured 18 failures for 18 panel opens on the GPU backend, 0 on software.
 
-Profiles are read at process start, so a change needs `omarchy-restart-shell`.
+**Profiling the shell**: `utime+stime` from `/proc/<pid>/stat` over a fixed window (`CLK_TCK` is 100) is exact where `top` sampling is not, and the `omarchy-shell shell toggle` IPC makes an identical workload scriptable across backends. Idle dominates any real day: measured 0.23% of one core on software vs 0.19% GPU-backed, with interaction 4.3x more expensive on software and still trivial. Don't trust an IPC ping as a startup-time signal — it answers before the shell draws.
 
-**The other half is not in this repo.** Reserving VRAM so the shell always has some to claim is per-game config: DXVK reads `$PWD/dxvk.conf`, and for a Steam/Proton title `$PWD` is the game's install root (verify with `readlink /proc/<pid>/cwd`, not by assuming the exe's directory). `dxgi.maxDeviceMemory = <MiB>` caps what the game thinks the card has. Proton sets `DXVK_LOG_LEVEL=none`, so `PROTON_LOG=1` is what surfaces DXVK's `Found config file:` line in `~/steam-$APPID.log`.
+**The other half is not in this repo.** Reserving VRAM for a game is per-game config: DXVK reads `$PWD/dxvk.conf`, and for a Steam/Proton title `$PWD` is the game's install root (verify with `readlink /proc/<pid>/cwd`, not by assuming the exe's directory). `dxgi.maxDeviceMemory = <MiB>` only changes what DXVK *reports* to the app, so it nudges an engine's streaming budget rather than capping allocations. Proton sets `DXVK_LOG_LEVEL=none`, so `PROTON_LOG=1` is what surfaces DXVK's `Found config file:` line in `~/steam-$APPID.log`.
