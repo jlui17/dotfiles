@@ -30,6 +30,8 @@ Write flow steps at the altitude of architecture, behavior, and process: what th
 
 Each decision opens with the chosen option and its reason in one or two direct sentences (#20): "**Chosen: download the PDF in the browser and extract its text, mostly for simplicity.**" When "why not X" is really what explains the chosen design's boundary (why frontend, not backend), it belongs in this prose, framed as the chosen design's reason.
 
+**Only key decisions get an entry.** A choice with no real competing option ("one agent, not two"; "prose in the system prompt, structured schema later") is obvious to the reader and gets no decision paragraph — stating it reads as padding ("i want to save decisions for key decisions. this one is very straight forward"). When every decision is straightforward, drop the Decisions section entirely and keep just an **Alternatives** section: the one or two live alternatives, each with why it wasn't chosen.
+
 Then a literal **Alternatives considered:** label over the bullets, each **Approach** / **Why rejected** (or **Why deferred**: keep the distinction; *deferred* = viable later, *rejected* = no), one or two sentences each. Only live options qualify: an extension nobody proposed for now is future direction, not an alternative. This is the live-decision form; a settled doc compresses it per "Final design only" above.
 
 ## Tables for tradeoffs/metadata
