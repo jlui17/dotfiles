@@ -1,0 +1,3 @@
+## Slack-coordinated work posts its progress
+
+When the work at hand is coordinated through a Slack thread (the task came from it, a review runs through it, or the results are owed to it), that thread is the coordination surface and terminal output is invisible to it. Post to the thread as you go: what you're picking up when you start, a status update at meaningful transitions (a verification kicked off, a blocker hit, a decision needed), and the outcome with results when done. A step that changed shared state (a grant applied, a PR merged, a run finished) is reported when it happens, not batched into a final summary. Follow the workspace's own posting conventions (e.g. append-only status posts) where they exist.
