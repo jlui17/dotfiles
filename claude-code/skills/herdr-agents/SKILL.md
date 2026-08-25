@@ -1,6 +1,6 @@
 ---
 name: herdr-agents
-description: Use when driving herdr programmatically — starting a new session, space, or tab; launching a coding agent (Claude Code, codex, etc.) in a pane; sending it a prompt; checking or waiting on its output; or tearing any of that down.
+description: Use when driving herdr programmatically — starting a new session, space, or tab; launching a coding agent (Claude Code, codex, etc.) in a pane; sending it a prompt; checking or waiting on its output; or tearing any of that down — including when Justin says "teardown" at the end of a task (that word covers the session's own herdr tab).
 ---
 
 # Driving herdr
@@ -13,7 +13,7 @@ This skill covers cross-session orchestration; pane-level mechanics in the curre
 
 ## Orient first
 
-You may be running inside a herdr pane or in a plain terminal; both are normal, and a SessionStart hook already injects which one at startup. The ground truth is the environment: herdr exports `HERDR_ENV=1`, `HERDR_PANE_ID`, `HERDR_TAB_ID`, and `HERDR_WORKSPACE_ID` into every pane shell, so a set `HERDR_PANE_ID` means you're inside that pane. When inside, treat that pane as yours: don't close it, its tab, or start an agent in it. (`herdr pane current` is NOT you: it returns the session's focused pane, whoever that is.)
+You may be running inside a herdr pane or in a plain terminal; both are normal, and a SessionStart hook already injects which one at startup. The ground truth is the environment: herdr exports `HERDR_ENV=1`, `HERDR_PANE_ID`, `HERDR_TAB_ID`, and `HERDR_WORKSPACE_ID` into every pane shell, so a set `HERDR_PANE_ID` means you're inside that pane. When inside, treat that pane as yours: don't close it, its tab, or start an agent in it (one exception: an explicit teardown ask — see Teardown). (`herdr pane current` is NOT you: it returns the session's focused pane, whoever that is.)
 
 ## When to start a session (and how to kick it off)
 
@@ -71,6 +71,8 @@ An idle worker doesn't mean nothing is pending for it: its own watchers (a PR mo
 ## Teardown
 
 `herdr tab close <tab_id>` kills the tab and whatever runs in it. Sessions: `herdr session stop <name>`, then `herdr session delete <name>` (delete only accepts stopped sessions).
+
+Justin's "teardown" at the end of a task means the full end-of-task cleanup *including* the herdr tab the session runs in — your own tab too (the explicit ask overrides Orient first's don't-close-your-own-tab default). Closing your own tab kills your process, so it is the last action: finish every other cleanup step and the final reply first, then `herdr tab close "$HERDR_TAB_ID"`.
 
 ## Gotchas
 
