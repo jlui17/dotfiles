@@ -189,6 +189,7 @@ MODULES=(
   pi:setup_pi
   herdr:setup_herdr
   claude-code:setup_claude_code
+  agents:setup_agents
   gitignore:setup_gitignore
   git-config:setup_git_config
   macos-defaults:setup_macos_defaults:macos
@@ -1323,6 +1324,29 @@ setup_claude_plugins() {
         && (( MODULE_UNCHANGED++ ))
     done
   done < <(manifest_lines "$manifest")
+}
+
+setup_agents() {
+  echo "==> Agent skills (~/.agents/skills)..."
+  local skills_dir="$HOME/.agents/skills"
+  local claude_skills_dir="$HOME/.claude/skills"
+  local -a desired=()
+  ensure_dir "$skills_dir"
+  ensure_dir "$claude_skills_dir"
+  for skill_dir in "$DOTFILES_DIR/agents/skills/"*/(N); do
+    [[ -d "$skill_dir" ]] || continue
+    desired+=("$(basename "$skill_dir")")
+    backup_and_link "${skill_dir%/}" "$skills_dir/$(basename "$skill_dir")"
+    # Claude Code discovers skills in ~/.claude/skills only, so each agent
+    # skill is linked there too. Safe alongside setup_claude_code's prune:
+    # that prunes only claude-code/skills-pointing links.
+    backup_and_link "${skill_dir%/}" "$claude_skills_dir/$(basename "$skill_dir")"
+  done
+  # src_root is the repo root, not agents/skills, so links left behind by the
+  # removed agent-skills module get pruned too; non-repo links (omarchy's)
+  # are untouched.
+  prune_stale_links "$skills_dir" "$DOTFILES_DIR" "${desired[@]}"
+  prune_stale_links "$claude_skills_dir" "$DOTFILES_DIR/agents/skills" "${desired[@]}"
 }
 
 # ──────────────────────────────────────────────
