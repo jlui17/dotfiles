@@ -59,6 +59,15 @@ next_tab = "prefix+n"
 split_vertical = "prefix+%"
 split_horizontal = "prefix+quote"
 
+# Auto-rename beside the stock manual rename (rename_tab = prefix+shift+t):
+# prefix+t asks the focused tab's agent to re-derive the label from the
+# thread's current state (task id + what it's doing now) and rename the tab
+# itself. Script symlinked next to this file by install.sh.
+[[keys.command]]
+key = "prefix+t"
+type = "shell"
+command = "~/.config/herdr/retitle-tab.sh"
+
 [ui]
 agent_panel_sort = "priority"
 # Unreleased as of 0.8.0. When it ships: distinct shape per state (× blocked,

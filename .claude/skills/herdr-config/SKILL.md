@@ -5,9 +5,11 @@ description: Use when changing herdr keybindings, theme, or sidebar config; when
 
 Single-file config with symlink-based install, like ghostty/opencode.
 
-**Install flow** (install.sh): `setup_herdr` symlinks `herdr/config.toml` → `~/.config/herdr/config.toml`. Installation itself goes through the `GUI_APPS` table (`brew install herdr` on macOS, the `herdr.dev/install.sh` universal installer on Arch/Ubuntu). Both the module (`SKIP_MODULES`) and the app install (`SKIP_APPS`, name `Herdr`) are individually skippable per-machine via `.dotfiles-local`.
+**Install flow** (install.sh): `setup_herdr` symlinks the module's files (`config.toml`, `retitle-tab.sh`) into `~/.config/herdr/`. Installation itself goes through the `GUI_APPS` table (`brew install herdr` on macOS, the `herdr.dev/install.sh` universal installer on Arch/Ubuntu). Both the module (`SKIP_MODULES`) and the app install (`SKIP_APPS`, name `Herdr`) are individually skippable per-machine via `.dotfiles-local`.
 
 **Split keybindings match tmux.conf**: tmux.conf doesn't override tmux's default split bindings, so tmux uses `%` (side-by-side) and `"` (stacked). Herdr's `split_vertical` (side-by-side) and `split_horizontal` (stacked) are bound to the same keys — `prefix+%` and `prefix+quote` — so the muscle memory carries over. Herdr's own naming matches this: "vertical" = side-by-side, "horizontal" = stacked (the reverse of tmux's `-h`/`-v` split-window flags, which is why the keys, not the flag names, are what's mirrored).
+
+**Tab auto-rename (`prefix+t`)**: a `[[keys.command]]` shell binding runs `retitle-tab.sh`, which prompts the focused tab's agent to re-derive the tab label (task id + current phase) and run `herdr tab rename` itself. The agent is deliberately the renamer — it's the only party that knows the thread's state (no scrollback exists for alternate-screen TUIs, and transcripts aren't reachable from outside). The script never prompts a `blocked` agent (text could answer its pending dialog) and reports outcomes via `herdr notification show`.
 
 **Design language** (the intent behind the `[theme.custom]` and sidebar sections; any restyle stays inside it):
 

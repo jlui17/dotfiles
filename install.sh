@@ -1135,6 +1135,7 @@ setup_herdr() {
   ensure_dir "$herdr_dir"
 
   backup_and_link "$DOTFILES_DIR/herdr/config.toml" "$herdr_dir/config.toml"
+  backup_and_link "$DOTFILES_DIR/herdr/retitle-tab.sh" "$herdr_dir/retitle-tab.sh"
 }
 
 # ──────────────────────────────────────────────
