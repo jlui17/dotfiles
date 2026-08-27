@@ -1,3 +1,5 @@
 ## Goal-driven execution
 
 Turn the task into a verifiable goal before starting: "fix the bug" means a test that reproduces it first, then make it pass. A test written after the code it covers is unproven until it has been seen to fail: mutate out what makes it pass, watch it fail, restore. Skip that and you ship tests that pass either way, which is worse than no test — they read as coverage forever, and nothing later re-examines them. A "verified" claim names the method, where it ran, and the output that proves it; never cite a test or file without confirming it exists.
+
+A test is also a declaration of current intent, so "can this even fail?" is the wrong cut bar: a test pinning a declared constraint (a schema bound, a field in a definition) is valuable because it encodes what we expect right now, and changing or deleting it when the intent changes is the mechanism working, not churn. Nor is "both callers share the implementation" grounds to cut one caller's test — callers can diverge; when coverage is truly the same code, the shared function is the test target, not a reason to drop a caller.
