@@ -686,8 +686,17 @@ install_packages() {
       | sudo tee /etc/apt/sources.list.d/mise.list >/dev/null
   fi
 
-  echo "  Updating $PKG_MANAGER..."
-  track "update $PKG_MANAGER" "$PKG_UPDATE[@]"
+  # Omarchy refuses a direct `pacman -Syu` from a transaction hook: its own
+  # update path owns the snapshot, keyrings, migrations, post-update hooks and
+  # shell restart checks, and a bare upgrade silently skips all of them. Only
+  # the system upgrade is refused, so the targeted installs below still
+  # converge packages; plain Arch keeps upgrading here.
+  if [[ "$OS" == "arch" ]] && command_exists omarchy-update; then
+    echo "  Skipping system upgrade — omarchy update owns it."
+  else
+    echo "  Updating $PKG_MANAGER..."
+    track "update $PKG_MANAGER" "$PKG_UPDATE[@]"
+  fi
   report_brew_drift
 
   local -a mise_tools=() installed=() skipped=()
