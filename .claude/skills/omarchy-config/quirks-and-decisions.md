@@ -53,9 +53,42 @@ non-`__lua` dispatcher, no `.conf` is being read.
 tool's next `setup` run and reaches the machine through `install.sh`. First case:
 `SUPER+ALT+D` for hyprwhspr speech-to-text.
 
-**Left alone:** the legacy `.conf` files in `~/.config/hypr/` (including the now-dead
-hyprwhspr line in `bindings.conf`). Machine-local, inert, not ours to prune — but they
-are why a grep for a binding can find it in a file that does nothing.
+**Follow-on, same day:** the legacy `.conf` chain was deleted rather than left in place —
+see the entry below.
+
+## 2026-08-27 — Deleted the dead `.conf` chain, and found what it had been hiding
+
+**Whose:** ours, cleaning up after Omarchy's Lua migration.
+
+Removed `hyprland.conf`, `bindings.conf`, `input.conf`, `looknfeel.conf`, `monitors.conf`,
+`autostart.conf`, `envs.conf` from `~/.config/hypr/`. `hyprctl systeminfo` reports
+`configProvider: lua`, which is the definitive check that none of them were being read.
+
+**Not deleted, and not part of the chain:** `hypridle.conf`, `hyprlock.conf`,
+`hyprsunset.conf`, `xdph.conf`. Those configure separate daemons, not Hyprland, and are
+live. A `.conf` under `~/.config/hypr/` is not automatically dead — check who reads it.
+
+**The real finding:** the Quattro migration silently dropped settings, and the dead files
+were the only record of them. Omarchy's defaults had since claimed the same keys, so
+nothing looked broken — the keys just did something else:
+
+| Was (in `.conf`) | Became (Omarchy default) | Disposition |
+|---|---|---|
+| `SUPER+SHIFT+M` Gmail | Music / Spotify | restored in `bindings-override.lua` |
+| `SUPER+SHIFT+N` Notion | Editor | restored in `bindings-override.lua` |
+| `SUPER+SHIFT+A` chat.zhao.io | ChatGPT | accepted the default |
+| `input.repeat_delay = 600` | `250` | accepted the default |
+| `GDK_SCALE = 1` | `2` | accepted the default |
+
+**The lesson:** a config migration that leaves the old files in place converts *lost
+settings* into *silent drift*. Nothing errors, and the old file keeps reading as if it
+were still in force. Before deleting a superseded config, diff it against live state
+(`hyprctl getoption`, `hyprctl binds`) rather than against its successor file — the
+successor is mostly commented-out template and will look falsely equivalent.
+
+**Decision:** personalizations that must survive the next migration live in this repo's
+`*-override.lua`, never in the Omarchy-seeded `~/.config/hypr/*.lua`, which is machine-local
+and gets restructured. Backup files (`*.bak*`) were left in place; they're the next sweep.
 
 ## 2026-08-23 → 08-27 — Software-rendering the shell took three tries
 
