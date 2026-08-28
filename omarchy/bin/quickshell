@@ -18,4 +18,23 @@
 # Setting QT_QUICK_BACKEND session-wide instead would also catch moonlight and
 # kdenlive, which want the GPU.
 
-exec env QT_QUICK_BACKEND=software /usr/bin/quickshell "$@"
+set -u
+
+# Walk PATH for the real binary rather than naming /usr/bin/quickshell, so a
+# packaging move relocates it instead of leaving the shim exec'ing a file that
+# no longer exists — which costs the whole bar, not just the GPU backend.
+# Skipping ourselves is what keeps this from re-entering: the shim shares its
+# name with the target and shadows it. `-ef` compares device and inode through
+# symlinks as a bash primitive, so the guard holds even on a PATH too minimal
+# to resolve an external realpath.
+IFS=: read -ra path_dirs <<< "${PATH:-/usr/local/bin:/usr/bin}"
+
+for dir in "${path_dirs[@]}"; do
+  candidate="$dir/quickshell"
+  [[ -f $candidate && -x $candidate ]] || continue
+  [[ $candidate -ef $0 ]] && continue
+  exec env QT_QUICK_BACKEND=software "$candidate" "$@"
+done
+
+echo "quickshell shim: no quickshell on PATH besides $0" >&2
+exit 127

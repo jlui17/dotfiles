@@ -27,7 +27,7 @@ The One Piece wallpaper ships inside `fleet/backgrounds/`. For other themes it's
 
 ## Software-rendered shell
 
-`omarchy/bin/quickshell` symlinks to `/usr/local/bin/quickshell` and execs the real `/usr/bin/quickshell` with `QT_QUICK_BACKEND=software`.
+`omarchy/bin/quickshell` symlinks to `/usr/local/bin/quickshell` and execs the real binary with `QT_QUICK_BACKEND=software`, found by walking PATH and skipping itself (`-ef`, a bash primitive, so the guard survives a PATH too minimal to resolve `realpath`).
 
 Why: the NVIDIA Wayland driver refuses a client's buffer allocation when VRAM is full instead of spilling to system RAM the way it does on X11 ([egl-wayland#185](https://github.com/NVIDIA/egl-wayland/issues/185), open, no vendor response). A game holding most of an 8GB card leaves quickshell unable to create surfaces, so the bar and menus stop drawing. Rendering on the CPU into shared memory means the shell never asks the GPU for anything, so it cannot be starved. The compositor is unaffected — NVIDIA already ships its `No VidMem Reuse` profile for Hyprland and Xwayland.
 
