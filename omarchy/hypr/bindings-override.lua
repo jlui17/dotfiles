@@ -7,9 +7,10 @@ hl.unbind("SUPER + CTRL + V")
 o.bind("SUPER + CTRL + V", "Capture menu", "omarchy-menu toggle capture")
 o.bind("SUPER + CTRL + C", "Clipboard manager", "omarchy-shell shell toggle omarchy.clipboard")
 
--- Move scratchpad to SUPER SHIFT, S
-hl.unbind("SUPER + S")
-o.bind("SUPER + SHIFT + S", "Toggle scratchpad", hl.dsp.workspace.toggle_special("scratchpad"))
+-- Screenshot straight to the clipboard, no file left on disk
+-- (unbinds the preinstalled Google Maps webapp on the same key)
+hl.unbind("SUPER + SHIFT + S")
+o.bind("SUPER + SHIFT + S", "Screenshot to clipboard", "omarchy-capture-screenshot smart copy")
 
 -- Move pseudo window to SUPER CTRL, P
 hl.unbind("SUPER + P")
@@ -26,3 +27,7 @@ hl.unbind("SUPER + RETURN")
 hl.unbind("SUPER + CTRL + RETURN")
 o.bind("SUPER + RETURN", "Herdr", { omarchy = "terminal-herdr" })
 o.bind("SUPER + CTRL + RETURN", "Terminal", { omarchy = "terminal" })
+
+-- Speech-to-text. hyprwhspr setup writes this to ~/.config/hypr/bindings.conf,
+-- which Omarchy's Lua config no longer reads.
+o.bind("SUPER + ALT + D", "Speech-to-text", "/usr/lib/hyprwhspr/config/hyprland/hyprwhspr-tray.sh record")
