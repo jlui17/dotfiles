@@ -149,10 +149,18 @@ UBUNTU_DROP_PACKAGES=(ghostty)
 # An empty install cell means "not available on that OS" (skipped). Arch AUR
 # installs use yay, which Omarchy ships by default. Ubuntu is a headless VPS,
 # so its column carries only CLI tools, npm-installed into mise's node.
+# Arch's zed package installs the binary as `zeditor`, so a `command -v zed`
+# check never matches and every run reinstalls an already-current package. The
+# check column is shared across OSes and `|` delimits it, so the either-or
+# can't live in the table.
+zed_installed() {
+  command_exists zed || command_exists zeditor
+}
+
 GUI_APPS=(
   "Raycast|brew list --cask raycast|brew install --cask raycast||"
   "AltTab|brew list --cask alt-tab|brew install --cask alt-tab||"
-  "Zed|command -v zed|brew install --cask zed|sudo pacman -S --noconfirm zed|"
+  "Zed|zed_installed|brew install --cask zed|sudo pacman -S --noconfirm zed|"
   "1Password CLI|command -v op|brew install --cask 1password-cli|yay -S --noconfirm 1password-cli|"
   "Hunk|command -v hunk|brew tap modem-dev/tap 2>/dev/null; brew install hunk|npm i -g hunkdiff|npm i -g hunkdiff"
   "OpenCode|command -v opencode|brew install opencode||npm i -g opencode-ai"
