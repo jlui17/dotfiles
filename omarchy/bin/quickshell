@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Force Quickshell onto Qt Quick's software backend, for every launch path.
+#
+# The NVIDIA Wayland driver refuses a client's buffer allocation when VRAM is
+# full rather than spilling to system RAM (egl-wayland#185), so a game holding
+# most of an 8GB card leaves the shell unable to create surfaces and the bar and
+# menus stop drawing. Rendering on the CPU into shared memory means the shell
+# never asks the GPU for anything, so it cannot be starved. Measured cost is
+# 0.23% of one core idle, indistinguishable from GPU rendering.
+#
+# This has to be a PATH shim rather than an autostart hook: Omarchy restarts the
+# shell on pacman transactions, theme changes and omarchy-update, and each of
+# those re-execs the launcher from Hyprland, inheriting an environment an
+# autostart hook never touches. Omarchy calls `quickshell` unqualified, and
+# /usr/local/bin precedes /usr/bin, so every path arrives here.
+#
+# Setting QT_QUICK_BACKEND session-wide instead would also catch moonlight and
+# kdenlive, which want the GPU.
+
+exec env QT_QUICK_BACKEND=software /usr/bin/quickshell "$@"

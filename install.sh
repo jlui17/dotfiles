@@ -974,7 +974,7 @@ setup_omarchy() {
     ensure_dir "$hypr_dir"
 
     local override
-    for override in bindings-override input-override windows-override autostart-override; do
+    for override in bindings-override input-override windows-override; do
       backup_and_link "$DOTFILES_DIR/omarchy/hypr/$override.lua" "$hypr_dir/$override.lua"
 
       if ! grep -q "require(\"hypr.$override\")" "$hypr_dir/hyprland.lua" 2>/dev/null; then
@@ -997,14 +997,20 @@ setup_omarchy() {
       backup_and_link "$theme" "$themes_dir/${theme:t}"
     done
 
-    # autostart-override calls this by name, so it has to be on PATH.
-    local bin_dir="$HOME/.local/bin"
-    ensure_dir "$bin_dir"
-    local script
-    for script in "$DOTFILES_DIR"/omarchy/bin/*(N); do
-      backup_and_link "$script" "$bin_dir/${script:t}" \
-        && note "Run omarchy-shell-software to switch the running shell over now."
-    done
+    # The only hook every shell launch passes through — see the omarchy-config
+    # skill for why an autostart hook isn't enough. Reading the link needs no
+    # privileges, so sudo is only reached when the wrapper is actually missing
+    # or stale, and a steady-state run never prompts.
+    local wrapper="$DOTFILES_DIR/omarchy/bin/quickshell"
+    local wrapper_link=/usr/local/bin/quickshell
+    if [[ "$(readlink "$wrapper_link" 2>/dev/null)" == "$wrapper" ]]; then
+      echo "  quickshell wrapper already linked."
+      (( MODULE_UNCHANGED++ ))
+    elif track "link quickshell wrapper" sudo ln -sfn "$wrapper" "$wrapper_link"; then
+      echo "  Linked quickshell wrapper."
+      changed "linked quickshell wrapper"
+      note "Restart the Omarchy shell to render it on the CPU: omarchy-restart-shell"
+    fi
   else
     echo "  omarchy-update not found — skipping Omarchy setup."
     result "skipped — omarchy-update not found"
