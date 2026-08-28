@@ -31,3 +31,9 @@ o.bind("SUPER + CTRL + RETURN", "Terminal", { omarchy = "terminal" })
 -- Speech-to-text. hyprwhspr setup writes this to ~/.config/hypr/bindings.conf,
 -- which Omarchy's Lua config no longer reads.
 o.bind("SUPER + ALT + D", "Speech-to-text", "/usr/lib/hyprwhspr/config/hyprland/hyprwhspr-tray.sh record")
+
+-- Gmail and Notion keep the keys Omarchy reassigned to Spotify and its editor
+hl.unbind("SUPER + SHIFT + M")
+hl.unbind("SUPER + SHIFT + N")
+o.bind("SUPER + SHIFT + M", "Gmail", { webapp = "https://mail.google.com" })
+o.bind("SUPER + SHIFT + N", "Notion", { webapp = "https://notion.so" })
