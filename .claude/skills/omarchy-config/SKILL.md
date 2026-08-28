@@ -5,15 +5,18 @@ description: Use when adding, changing, or reverting a Hyprland keybinding on th
 
 Omarchy module: Hyprland keybinding overrides, the desktop themes this repo ships, and the PATH shim that keeps the shell off the GPU on NVIDIA. Only runs on Arch; skipped entirely on macOS/Ubuntu.
 
+Omarchy is in active development and restructures its own config between releases. `quirks-and-decisions.md` in this directory is the dated log of what it changed under us, what quirk cost time, and what we decided in response — read it when a change behaves in a way this file doesn't explain, and append to it when a new quirk or decision lands.
+
 ## Keybindings
 
-Single override file that unbinds and rebinds Omarchy's default keybindings to match macOS Cmd-key muscle memory. Edits propagate via symlink + hyprctl reload.
+`bindings-override.lua` unbinds and rebinds Omarchy's defaults to match macOS Cmd-key muscle memory, and re-declares third-party tools' bindings so their installers can't strand them (see the log's 2026-08-27 entry). Edits propagate via symlink + `hyprctl reload`.
 
-**Install flow** (install.sh): guards on OS=arch + omarchy-update exists. Symlinks bindings-override.conf → ~/.config/hypr/bindings-override.conf. Appends `source = bindings-override.conf` to hyprland.conf if missing.
+**Install flow** (install.sh): guards on OS=arch + omarchy-update exists. Symlinks each of `bindings-override.lua`, `input-override.lua`, `windows-override.lua` → `~/.config/hypr/`, and appends `require("hypr.<override>")` to `hyprland.lua` if missing.
 
 **Tasks:**
-- Add/modify binding: edit bindd lines, `hyprctl reload`
-- Revert to default: comment/remove unbind+bindd lines for that binding, `hyprctl reload`
+- Add/modify binding: edit the `o.bind(...)` calls, `hyprctl reload`
+- Revert to default: drop the `hl.unbind` + `o.bind` pair for that binding, `hyprctl reload`
+- Verify a binding is live: `hyprctl binds` — not by grepping `~/.config/hypr`, where the dead `.conf` files still hold plausible-looking entries
 - SUPER key: Cmd on Apple keyboards, Windows key on PC — set by Omarchy, not this module
 
 ## Themes
