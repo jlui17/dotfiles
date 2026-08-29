@@ -51,7 +51,7 @@ non-`__lua` dispatcher, no `.conf` is being read.
 **Decision:** any third-party tool's Hyprland binding gets re-declared in our
 `bindings-override.lua` rather than left where its installer put it. That survives the
 tool's next `setup` run and reaches the machine through `install.sh`. First case:
-`SUPER+ALT+D` for hyprwhspr speech-to-text.
+`SUPER+CTRL+SPACE` for hyprwhspr speech-to-text.
 
 **Follow-on, same day:** the legacy `.conf` chain was deleted rather than left in place —
 see the entry below.
