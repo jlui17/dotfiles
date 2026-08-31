@@ -1,0 +1,20 @@
+#!/bin/bash
+# Update the T3 Code service to the current nightly build.
+#
+# `t3 service update` npm-installs the CLI's own version as the pinned runtime
+# under ~/.t3/runtime/versions/ and repoints the unit at it, and does nothing at
+# all when the installed runtime already matches. That no-op is what makes this
+# safe on a timer: an unchanged day never restarts the server, so a live coding
+# session is only ever interrupted by a real version bump.
+set -euo pipefail
+
+# systemd hands the timer a minimal environment, and zsh's PATH block lives in
+# .zshrc, which a non-interactive shell never reads. The shims cover the machine
+# whose node is mise-managed; the inherited /usr/bin covers the one whose isn't.
+PATH="$HOME/.local/share/mise/shims:$PATH"
+
+# npx can serve a dist-tag from its cache; it can't do that with an exact
+# version, so resolve the tag here rather than handing `nightly` to npx.
+version="$(npm view t3@nightly version)"
+echo "nightly is t3@$version"
+exec npx -y "t3@$version" service update

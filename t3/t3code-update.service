@@ -1,0 +1,6 @@
+[Unit]
+Description=Update T3 Code to the current nightly build
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/t3-update
