@@ -1,18 +1,18 @@
 ---
 name: t3
-description: Use when changing how the T3 Code server is updated or supervised on sfx or the VPS — the nightly channel, the daily update timer, the t3-update script, or the systemd units behind t3code.service. Also for debugging a t3 server that won't start or is stuck on an old version.
+description: Use when changing how the T3 Code server is updated or supervised on sfx or the VPS — the nightly channel, the daily update timer, the update_t3 script, or the systemd units behind t3code.service. Also for debugging a t3 server that won't start or is stuck on an old version.
 ---
 
 The T3 Code server runs as a systemd **user** service (`t3code.service`) on sfx and on the VPS under the `openclaw` user. Both track the npm `nightly` dist-tag and update daily at 8am Pacific.
 
 ## How updating works
 
-`t3 service update` npm-installs the version of the CLI running the command into `~/.t3/runtime/versions/<version>/`, writes a `.install-complete` sentinel, and repoints `t3code.service` at the launcher. It is a no-op when the installed runtime already matches, which is what makes it safe on a timer — an unchanged day never restarts the server.
+`t3 service update` npm-installs the version of the CLI running the command into `~/.t3/runtime/versions/<version>/`, writes a `.install-complete` sentinel, and repoints `t3code.service` at the launcher. It is a no-op when the installed runtime already matches, which is what makes it safe on a timer: an unchanged day never restarts the server.
 
-`t3-update` (this module's script, on PATH via `~/.local/bin`) resolves `nightly` to an exact version first, because npx can serve a dist-tag from its cache but never an exact version. The timer and a manual run execute the same script, so the two paths can't drift.
+`update_t3` (this module's script, on PATH via `~/.local/bin`) resolves `nightly` to an exact version first, because npx can serve a dist-tag from its cache but never an exact version. The timer and a manual run execute the same script, so the two paths can't drift.
 
 ```
-t3-update                                    # update now
+update_t3                                    # update now
 systemctl --user list-timers t3code-update   # when it next fires
 journalctl --user -u t3code-update -n 50     # what the last run did
 ```

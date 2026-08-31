@@ -1143,7 +1143,7 @@ setup_herdr() {
 # ──────────────────────────────────────────────
 
 # The T3 Code server tracks the `nightly` dist-tag, updated daily at 8am
-# Pacific by a systemd timer and on demand by the same `t3-update` script, so
+# Pacific by a systemd timer and on demand by the same `update_t3` script, so
 # the scheduled path and the manual one can't drift.
 setup_t3() {
   echo "==> T3 Code updates..."
@@ -1152,10 +1152,10 @@ setup_t3() {
   ensure_dir "$HOME/.local/bin"
   ensure_dir "$units_dir"
 
-  backup_and_link "$module_dir/t3-update" "$HOME/.local/bin/t3-update"
+  backup_and_link "$module_dir/update_t3" "$HOME/.local/bin/update_t3"
   backup_and_link "$module_dir/t3code-update.service" "$units_dir/t3code-update.service"
   backup_and_link "$module_dir/t3code-update.timer" "$units_dir/t3code-update.timer" \
-    && note "Daily T3 Code nightly update is on (8am Pacific). Run t3-update to update now."
+    && note "Daily T3 Code nightly update is on (8am Pacific). Run update_t3 to update now."
 
   [[ "$OS" == "ubuntu" ]] && write_t3_bind_dropin "$units_dir"
 
