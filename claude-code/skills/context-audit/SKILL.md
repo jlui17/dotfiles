@@ -1,31 +1,42 @@
 ---
 name: context-audit
-description: Use after editing any standing-context artifact (a rules.d fragment, a global skill, a slash command, a repo CLAUDE.md or repo skill) to sweep for twins of the edit before committing, and for the full overlap audit of the context corpus when asked ("audit the rules", "context audit"). Finds the same instruction stated in more than one home, classifies each copy, and consolidates to one canonical home.
+description: Use whenever standing context is created, changed, questioned, or audited. Fires when Justin says to remember something or corrects the same thing twice; when a lesson from the current task looks worth keeping; when deciding whether something should persist at all and in which layer; before adding or editing a rules.d fragment, a global or repo skill, a slash command, an output style, or a CLAUDE.md; when existing context looks stale, wrong, or duplicated; and on any ask to audit the rules, consolidate context, find overlapping instructions, or check an edit for twins before committing.
 ---
 
-# Context audit
+# Maintaining standing context
 
-The bar is the claude-code skill's "one home per instruction": every rule, threshold, or workflow step legislates in exactly one place; everything else points. Classify every overlap:
+## Which layer a piece of context belongs to
+
+Standing context has two homes, routed by scope. Useful to every session regardless of project → global (a rules.d fragment or global skill). Useful to every session in one project → that repo's CLAUDE.md, skills, or docs. Useful only to this task or session → nowhere: point-in-time facts, session-scoped rules, and workarounds never persist.
+
+Within a layer, split by what the text does. A trigger or gate belongs to the always-on layer, because a skill loads too late to gate its own loading; detail, procedure, and reference material belong to the skill, which pays its cost only when it fires.
+
+Judgment goes to context, determinism goes to code. Decisions, tradeoffs, and taste are prose; a fixed procedure (runbook, check, recovery sequence) gets codified as a script, hook, or skill script, with the prose keeping only the pointer and the why.
+
+## One home per instruction
+
+Every rule, threshold, or workflow step legislates in exactly one place; everything else points. Classify every overlap:
 
 1. **Undeclared duplicate**: same instruction, two homes, neither marked as the copy. Worst when the wordings disagree on substance (different threshold, exception, or default); name the disagreement exactly.
 2. **Declared copy**: one copy names the other canonical. Fine while in sync; flag only drift.
 3. **Pointer**: one home plus a cross-reference. Correct; still verify the reference resolves (section renames strand pointers).
 
-Picking the canonical home: the copy that fires when it's needed wins. A trigger or gate belongs to the always-on layer (a skill loads too late to gate its own loading); detail and procedure belong to the skill.
+Picking the canonical home between two copies: the one that fires when it's needed wins.
 
-## Scoped sweep (after every context edit)
+An addition is an edit. A new lesson lands in its topic's existing home, so grep both layers for prior coverage before writing; a new fragment or skill is for a new topic, not a new lesson. After any context edit, run the scoped sweep (`resources/sweeps.md`) so the edit doesn't ship a twin.
 
-Before committing a context edit, hunt for twins of what you just wrote:
+## Maintain in both directions
 
-1. Grep the corpus for the edit's signature phrases and the topic's key terms; the concept, not just the exact wording.
-2. Classify each hit per the bar. An existing home for the topic means the edit moves there (the addition-is-an-edit rule in `~/CLAUDE.md`); an overlapping statement gets pointerized or named canonical.
-3. Fix in the same round; a context edit that ships a new twin is incomplete.
+Stale or wrong context gets removed with the same energy new lessons get added. Confident in the edit, or it was already discussed → apply and commit it yourself end to end (repo edits get their own commit, never folded into the task's commits), reporting what changed. Unsure → propose and wait. A repeated correction is the deadline, not the trigger: save the lesson the first time when it clearly generalizes.
 
-Corpus for global edits (dotfiles repo): `claude-code/rules.d/*.md`, `claude-code/output-styles/*.md`, `claude-code/skills/**/*.md`, `claude-code/commands/*.md`, `.claude/skills/claude-code/SKILL.md`. For a repo-layer edit: that repo's CLAUDE.md, its `.claude`/`.agents` skills, and its docs.
+The writing bar for both layers — what earns a line in a CLAUDE.md, what earns a skill — lives in the claude-code skill; read it before writing either layer.
 
-## Full audit (on request)
+## Where the global layer lives
 
-1. Spawn two independent subagent auditors, each reading every corpus file, building its own topic index (which file:line legislates on each topic), and reporting overlaps with verbatim quotes, classification, substance disagreements, and a recommended home. Don't share one auditor's findings with the other.
-2. Verify every quoted line at its cited location before reporting or fixing; auditors misread.
-3. Report findings ranked, disagreeing copies first, one disposition per finding; apply per the context-maintenance confidence rule in `~/CLAUDE.md`.
-4. One commit per finding, so a wrong consolidation reverts cleanly.
+`~/CLAUDE.md` is generated by `~/src/personal/dotfiles/install.sh` from the section files in `~/src/personal/dotfiles/claude-code/rules.d/`. Edit the matching section file there (or add a new one), re-run `./install.sh`, then commit the change in the dotfiles repo. Do not edit `~/CLAUDE.md` directly; the next install overwrites it. Machine-only rules go in `rules.d/99-local.md` (gitignored); a machine excludes a section by listing its slug in `SKIP_RULES` in `.dotfiles-local`. How Claude writes and talks in an interactive session is not a rules.d fragment: it lives in the Justin output style (`claude-code/output-styles/justin.md`), which loads for main sessions only.
+
+Before changing anything in that repo's `claude-code` module (a rule fragment, a global skill, a slash command, settings), read `~/src/personal/dotfiles/.claude/skills/claude-code/SKILL.md` first: it carries the deploy mechanics and the guidance for writing skills and CLAUDE.md rules. Sessions outside the dotfiles repo don't autoload that skill, so read the file directly.
+
+## Sweeping for twins
+
+The scoped sweep after an edit, and the full corpus audit on request, are in `resources/sweeps.md`.

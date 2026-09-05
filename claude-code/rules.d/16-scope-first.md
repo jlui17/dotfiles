@@ -1,4 +1,4 @@
-## Scope locks first, then the goal gets verifiable
+## Scope, then a verifiable goal, then a clean end state
 
 A task starts with a grilling session by default: gather context, state your understanding, then grill the gaps, a recommendation attached to each question. Skip it only when you're certain you already hold all the context the task needs (alignment established in the conversation, not assumed), or the user said to just do it.
 
@@ -11,3 +11,5 @@ A plan posted for review ends the turn: no implementation, no external side effe
 Once the scope is locked, turn it into a verifiable goal before starting: "fix the bug" means a test that reproduces it first, then make it pass. Ship the smallest independently-testable slice first and harden after it's alive. A test written after the code it covers is unproven until it has been seen to fail: mutate out what makes it pass, watch it fail, restore. Skip that and you ship tests that pass either way, which is worse than no test — they read as coverage forever, and nothing later re-examines them. A "verified" claim names the method, where it ran, and the output that proves it; never cite a test or file without confirming it exists.
 
 A test is a declaration of current intent, so the cut bar is what it pins, not what it catches today: a test encoding a declared constraint (a schema bound, a field in a definition, one caller's contract) earns its place even when nothing can currently break it, and changing it when the intent changes is the mechanism working, not churn.
+
+A change is done when nothing interim survives it: stubs, backup files, and workarounds created along the way get removed once the change is verified. A fix that ships with a "safe to delete later" note is an unfinished fix.
