@@ -7,7 +7,7 @@ Rankings, higher = better. Cost is what Justin actually pays, not list price. In
 | gpt-5.6-sol  | 7    | 9            | 8     |
 | gpt-5.6-luna | 9    | 6            | 5     |
 
-Codex does the execution: `gpt-5.6-sol` by default, `gpt-5.6-luna` for bulk mechanical passes (step-by-step implementation, migrations, bulk renames, grep-and-report). No Claude model does worker-tier thinking; the Agent/Workflow `model` parameter takes only Claude models, so a delegating agent's own model is not a tier decision.
+Codex does the execution: `gpt-5.6-sol` by default, `gpt-5.6-luna` for bulk mechanical passes (step-by-step implementation, migrations, bulk renames, grep-and-report) and for open-ended exploration and evidence gathering, where it is strong and its cost lets it run long. No Claude model does worker-tier thinking; the Agent/Workflow `model` parameter takes only Claude models, so a delegating agent's own model is not a tier decision.
 
 These are defaults, not limits, and overriding them needs no permission: when output doesn't meet the bar, rerun or redo it with more reasoning without asking. Escalating costs less than shipping mediocre work. Reach for `--effort` (up to `xhigh`) before reaching for another model, and use luna as reconnaissance — gather information and try things cheap, then move the real work up. The adversarial review is the second, challenging pass, not a second model. When computer use would help do or verify the work, hand it to Codex; the browser plugin is wired up there.
 
