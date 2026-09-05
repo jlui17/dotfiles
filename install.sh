@@ -196,6 +196,7 @@ MODULES=(
   retire-pi:retire_pi
   herdr:setup_herdr
   t3:setup_t3:arch,ubuntu
+  codex:setup_codex
   claude-code:setup_claude_code
   agents:setup_agents
   gitignore:setup_gitignore
@@ -590,7 +591,8 @@ prune_stale_links() {
   local dst_dir="$1" src_root="$2"; shift 2
   local -a desired=("$@")
   local link name
-  for link in "$dst_dir"/*(N@); do
+  for link in "$dst_dir"/*(N); do
+    [[ -L "$link" ]] || continue
     [[ "$(readlink "$link")" == "$src_root"/* ]] || continue
     name="${link:t}"
     (( ${desired[(Ie)$name]} )) && continue
@@ -1244,6 +1246,89 @@ install_generated_file() {
 setup_claude_code() {
   setup_claude_code_skills
   setup_claude_plugins
+}
+
+# Merge the portable Codex fragment into a marked block while leaving the
+# surrounding machine-owned config writable. Codex and the ChatGPT desktop app
+# add local MCP bridges and other runtime settings to this same file, so a
+# symlink would either clobber them or turn repo state into mutable app state.
+setup_codex() {
+  echo "==> Codex config..."
+  local src="$DOTFILES_DIR/codex/config.toml"
+  local module_dir="$DOTFILES_DIR/codex"
+  local codex_dir="${CODEX_HOME:-$HOME/.codex}"
+  local dst="$codex_dir/config.toml"
+  local begin="# BEGIN dotfiles managed Codex config"
+  local end="# END dotfiles managed Codex config"
+  local tmp next name skill_dir
+  local -a managed_servers desired_skills=()
+  local needs_auth=0
+
+  ensure_dir "$codex_dir"
+  ensure_dir "$codex_dir/skills"
+  if [[ -L "$HOME/.local/bin/codex-playwright-mcp" &&
+        "$(readlink "$HOME/.local/bin/codex-playwright-mcp")" == "$module_dir/bin/codex-playwright-mcp" ]]; then
+    rm "$HOME/.local/bin/codex-playwright-mcp"
+    changed "removed retired codex-playwright-mcp"
+  fi
+  for skill_dir in "$module_dir/skills/"*/(N); do
+    [[ -d "$skill_dir" ]] || continue
+    name="${skill_dir%/}"
+    name="${name:t}"
+    desired_skills+=("$name")
+    backup_and_link "${skill_dir%/}" "$codex_dir/skills/$name"
+  done
+  prune_stale_links "$codex_dir/skills" "$module_dir/skills" "${desired_skills[@]}"
+
+  tmp="$(mktemp)"
+
+  # First remove the previous generated block. On the first module run there
+  # is no marker yet, so separately remove tables that the tracked fragment is
+  # adopting (including their child tables) to avoid duplicate TOML keys.
+  if [[ -f "$dst" ]]; then
+    awk -v begin="$begin" -v end="$end" '
+      $0 == begin { managed = 1; next }
+      $0 == end   { managed = 0; next }
+      !managed    { print }
+    ' "$dst" > "$tmp"
+  fi
+
+  managed_servers=("${(@f)$(sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/\1/p' "$src")}")
+  for name in "${managed_servers[@]}"; do
+    [[ -n "$name" ]] || continue
+    grep -Fxq "[mcp_servers.$name]" "$dst" 2>/dev/null || needs_auth=1
+    next="$(mktemp)"
+    awk -v name="$name" '
+      /^\[/ {
+        target = "[mcp_servers." name "]"
+        child = "[mcp_servers." name "."
+        if ($0 == target || index($0, child) == 1) { skip = 1; next }
+        skip = 0
+      }
+      !skip { print }
+    ' "$tmp" > "$next"
+    mv "$next" "$tmp"
+  done
+
+  # Avoid accumulating blank lines immediately before the managed block.
+  next="$(mktemp)"
+  awk '{ lines[NR] = $0; if ($0 !~ /^[[:space:]]*$/) last = NR }
+       END { for (i = 1; i <= last; i++) print lines[i] }' "$tmp" > "$next"
+  mv "$next" "$tmp"
+  [[ -s "$tmp" ]] && print >> "$tmp"
+  print -r -- "$begin" >> "$tmp"
+  cat "$src" >> "$tmp"
+  print -r -- "$end" >> "$tmp"
+
+  if [[ -f "$dst" ]] && cmp -s "$tmp" "$dst"; then
+    rm -f "$tmp"
+    (( MODULE_UNCHANGED++ ))
+    return
+  fi
+  mv "$tmp" "$dst"
+  chmod 600 "$dst"
+  changed "merged config.toml"
+  (( needs_auth )) && note "Authenticate newly added Codex MCP servers per machine with: codex mcp login <name>."
 }
 
 setup_claude_code_skills() {
