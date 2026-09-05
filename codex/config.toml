@@ -1,0 +1,14 @@
+# This fragment is merged into the marked dotfiles block in ~/.codex/config.toml.
+# Runtime state, credentials, and machine-local settings stay outside the block.
+
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[mcp_servers.exa]
+url = "https://mcp.exa.ai/mcp"
+
+[mcp_servers.playwright]
+command = "codex-playwright-mcp"
+startup_timeout_sec = 60
+default_tools_approval_mode = "writes"
+disabled_tools = ["browser_run_code"]
