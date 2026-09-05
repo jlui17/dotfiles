@@ -1271,14 +1271,15 @@ setup_codex() {
     rm "$HOME/.local/bin/codex-playwright-mcp"
     changed "removed retired codex-playwright-mcp"
   fi
-  for skill_dir in "$module_dir/skills/"*/(N); do
+  for skill_dir in "$DOTFILES_DIR/claude-code/skills/"*/(N); do
     [[ -d "$skill_dir" ]] || continue
     name="${skill_dir%/}"
     name="${name:t}"
+    (( ${SKIP_SKILLS[(Ie)$name]} )) && continue
     desired_skills+=("$name")
     backup_and_link "${skill_dir%/}" "$codex_dir/skills/$name"
   done
-  prune_stale_links "$codex_dir/skills" "$module_dir/skills" "${desired_skills[@]}"
+  prune_stale_links "$codex_dir/skills" "$DOTFILES_DIR/claude-code/skills" "${desired_skills[@]}"
 
   tmp="$(mktemp)"
 

@@ -9,8 +9,9 @@ description: Use when changing shared Codex CLI configuration, MCP servers, or t
 The destination deliberately remains a real file because Codex and the ChatGPT
 desktop app write machine-local MCP entries and settings there.
 
-Runtime skills live under `codex/skills/` and are linked into
-`~/.codex/skills/`. The installer prunes only repo-pointing links, so bundled,
+Codex shares the Claude Code skills: every `claude-code/skills/` directory not
+in `SKIP_SKILLS` is linked into `~/.codex/skills/`, so a skill has one home and
+both agents read it. The installer prunes only repo-pointing links, so bundled,
 plugin-provided, copied, and hand-made skills survive.
 
 Put only portable, non-secret configuration in the tracked fragment. The
