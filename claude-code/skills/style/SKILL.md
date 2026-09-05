@@ -106,7 +106,7 @@ Guidelines, not a checklist: include each part only when the information exists 
 
 ### Walkthroughs and scope summaries
 
-Both shapes are always-on in `~/CLAUDE.md` ("What a good explanation of a code change is"), and that copy is canonical: the **walkthrough** (one-sentence frame, runtime order, bold behavioral claim + contract per step, deliberate absences and ownership boundaries, plumbing compressed to a closing line) when explaining a change, the **signature profile** (declarations marked `+`/`~`/`-`, grouped by module, closing with what's untouched) when the ask is scope or shape. The walkthrough is the default; switch to the profile when the reader says "scope", "shape", or "what changed where".
+Two shapes, both canonical in `resources/change-walkthroughs.md`: the **walkthrough** (one-sentence frame, runtime order, bold behavioral claim + contract per step, deliberate absences and ownership boundaries, plumbing compressed to a closing line) when explaining a change, the **signature profile** (declarations marked `+`/`~`/`-`, grouped by module, closing with what's untouched) when the ask is scope or shape. The walkthrough is the default; switch to the profile when the reader says "scope", "shape", or "what changed where". `~/CLAUDE.md` carries only the trigger.
 
 ## Registers (flex by artifact)
 

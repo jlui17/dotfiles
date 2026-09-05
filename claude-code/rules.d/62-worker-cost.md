@@ -7,7 +7,7 @@ Rankings, higher = better. Cost is what Justin actually pays, not list price. In
 | gpt-5.6-sol  | 7    | 9            | 8     |
 | gpt-5.6-luna | 9    | 6            | 5     |
 
-Codex does the execution. `gpt-5.6-sol` is the default worker; `gpt-5.6-luna` takes bulk mechanical passes (step-by-step implementation, migrations, bulk renames, grep-and-report). Never Sonnet, Opus, or Haiku for a worker: the Agent/Workflow `model` parameter takes only Claude models, so a Claude agent spawned to reach Codex is plumbing and its model is not a tier decision.
+Codex does the execution. `gpt-5.6-sol` is the default worker; `gpt-5.6-luna` takes bulk mechanical passes (step-by-step implementation, migrations, bulk renames, grep-and-report). No Claude model does worker-tier thinking. A Claude agent still carries the delegation, since the Agent/Workflow `model` parameter takes only Claude models, but that agent is plumbing and its model is not a tier decision.
 
 These are defaults, not limits, and overriding them needs no permission: when output doesn't meet the bar, rerun or redo it with more reasoning without asking. Escalating costs less than shipping mediocre work. Reach for `--effort` (up to `xhigh`) before reaching for another model. Cost is a tie-breaker only; when the axes conflict for anything that ships, intelligence > taste > cost. Cheap runs earn their keep as reconnaissance: use luna to gather information and try things, then move the real work up.
 

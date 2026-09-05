@@ -9,6 +9,8 @@ description: "Justin's task-level git worktree flow. Use when starting task work
 
 This covers *task-level* worktrees the user works in. Your own delegation isolation (subagent worktrees, `isolation: "worktree"`) is separate machinery and doesn't go through this flow.
 
+**Task scaffolding lives at `.luidocs/` inside the worktree** (decision records especially). `.luidocs/` is globally gitignored, so scaffolding can't leak into the task's PR or dirty a checkout, and it dies with the worktree. No worktree yet → keep it in the session scratchpad and move it in once one exists; never write it into a shared or main checkout, or into a repo's tracked docs. A plan the repo treats as a deliverable (reviewed, committed via PR) is a different artifact and follows the repo's own conventions.
+
 ## Start a task
 
 ```sh
