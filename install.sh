@@ -607,6 +607,22 @@ prune_stale_links() {
 # declares get re-asserted each install. Machine-only keys survive. Plain-copies
 # when dst is absent; refuses to touch an existing dst if jq is missing rather
 # than clobber it.
+# Claude Code's plugin state, read from its own JSON rather than `claude
+# plugin ...`: the CLI blocks indefinitely when install.sh runs inside a Claude
+# Code session, so a run that only needs to confirm state would never finish.
+# Both files are what the CLI reports from anyway.
+installed_plugin_ids() {
+  local state="$HOME/.claude/plugins/installed_plugins.json"
+  [[ -f "$state" ]] || return 0
+  jq -r '.plugins // {} | keys[]' "$state" 2>/dev/null
+}
+
+marketplace_known() {
+  local state="$HOME/.claude/plugins/known_marketplaces.json"
+  [[ -f "$state" ]] || return 1
+  jq -e --arg repo "$1" 'any(.[]; .source.repo == $repo)' "$state" >/dev/null 2>&1
+}
+
 merge_json() {
   local src="$1" dst="$2"
   if [[ ! -f "$dst" ]]; then
@@ -1361,19 +1377,26 @@ setup_claude_plugins() {
       track "claude plugins uninstall $installed" claude plugins uninstall "$installed" \
         && changed "uninstalled $installed"
     fi
-  done < <(claude plugins list 2>/dev/null | awk '/❯/{print $NF}')
+  done < <(installed_plugin_ids)
 
   # Install/no-op wanted plugins.
+  local -a installed=("${(@f)$(installed_plugin_ids)}")
   while IFS= read -r line; do
     repo="${line%%[[:space:]]*}"          # first token: the marketplace repo
-    echo "  Adding marketplace: $repo"
-    track "claude marketplace $repo" claude plugin marketplace add "$repo"
+    if marketplace_known "$repo"; then
+      (( MODULE_UNCHANGED++ ))
+    else
+      echo "  Adding marketplace: $repo"
+      track "claude marketplace $repo" claude plugin marketplace add "$repo"
+    fi
     for plugin in ${=line#$repo}; do      # remaining tokens: plugin@marketplace
-      echo "  Installing plugin: $plugin"
-      # The CLI is idempotent here and reports "already installed" itself, so
-      # there's no new state to name — count it as held current.
-      track "claude plugin $plugin" claude plugin install "$plugin" \
-        && (( MODULE_UNCHANGED++ ))
+      if (( ${installed[(Ie)$plugin]} )); then
+        (( MODULE_UNCHANGED++ ))
+      else
+        echo "  Installing plugin: $plugin"
+        track "claude plugin $plugin" claude plugin install "$plugin" \
+          && changed "installed $plugin"
+      fi
     done
   done < <(manifest_lines "$manifest")
 }
