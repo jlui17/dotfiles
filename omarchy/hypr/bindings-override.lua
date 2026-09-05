@@ -34,8 +34,10 @@ o.bind("SUPER + CTRL + RETURN", "Terminal", { omarchy = "terminal" })
 hl.unbind("SUPER + CTRL + SPACE")
 o.bind("SUPER + CTRL + SPACE", "Speech-to-text", "/usr/lib/hyprwhspr/config/hyprland/hyprwhspr-tray.sh record")
 
--- Omaimsg bar plugin
-o.bind("SUPER + M", "Omaimsg", "omarchy-shell io.omaimsg toggle")
+-- Blip messages popover (unbinds Omarchy's Music TUI on the same key).
+-- Double-click the bar icon for the full app window instead.
+hl.unbind("SUPER + M")
+o.bind("SUPER + M", "Blip messages", "omarchy-shell nixfred.blip toggle")
 
 -- Gmail and Notion keep the keys Omarchy reassigned to Spotify and its editor
 hl.unbind("SUPER + SHIFT + M")
