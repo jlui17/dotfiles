@@ -1066,12 +1066,10 @@ setup_opencode() {
 retire_pi() {
   echo "==> Pi retirement..."
   local pi_dir="$HOME/.pi"
-  local pi_installed=0
-  command_exists pi && pi_installed=1
 
-  # Cheap gate: neither the config dir nor the CLI is here, so there is nothing
-  # to probe a package manager about.
-  if [[ ! -e "$pi_dir" ]] && (( ! pi_installed )); then
+  # Cheap gate: no config dir and nothing on PATH means this machine never had
+  # pi (or already ran this), so no package manager gets asked.
+  if [[ ! -e "$pi_dir" ]] && ! command_exists pi; then
     result "already gone"
     return 0
   fi
@@ -1081,26 +1079,26 @@ retire_pi() {
     changed "removed ~/.pi"
   fi
 
-  if (( pi_installed )); then
-    # pi arrived from whichever manager the machine uses, so each is asked only
-    # when it is present and actually knows about pi.
-    if command_exists mise && mise ls --installed pi 2>/dev/null | grep -q pi; then
-      track "mise unuse pi" mise unuse --global pi
-      track "mise uninstall pi" mise uninstall --all pi && changed "uninstalled pi (mise)"
-      # mise's uninstall drops the version dirs but leaves the tool dir behind
-      # as a nest of dangling symlinks.
-      rm -rf "${MISE_DATA_DIR:-$HOME/.local/share/mise}/installs/pi"
-    fi
-    if command_exists brew && brew list pi-coding-agent &>/dev/null; then
-      track "brew uninstall pi-coding-agent" brew uninstall pi-coding-agent \
-        && changed "uninstalled pi (brew)"
-    fi
-    if command_exists npm && npm ls -g --depth=0 @earendil-works/pi-coding-agent &>/dev/null; then
-      track "npm rm -g pi" npm rm -g @earendil-works/pi-coding-agent \
-        && changed "uninstalled pi (npm)"
-    fi
-    command_exists pi && warn "pi is still on PATH at $(command -v pi) — remove it by hand."
+  # pi arrived from whichever manager the machine uses, so each is asked only
+  # when it is present and actually knows about pi. Asked past the gate rather
+  # than behind `command -v pi`, since a manager's bin dir isn't always on the
+  # PATH this script runs with.
+  if command_exists mise && mise ls --installed pi 2>/dev/null | grep -q pi; then
+    track "mise unuse pi" mise unuse --global pi
+    track "mise uninstall pi" mise uninstall --all pi && changed "uninstalled pi (mise)"
+    # mise's uninstall drops the version dirs but leaves the tool dir behind
+    # as a nest of dangling symlinks.
+    rm -rf "${MISE_DATA_DIR:-$HOME/.local/share/mise}/installs/pi"
   fi
+  if command_exists brew && brew list pi-coding-agent &>/dev/null; then
+    track "brew uninstall pi-coding-agent" brew uninstall pi-coding-agent \
+      && changed "uninstalled pi (brew)"
+  fi
+  if command_exists npm && npm ls -g --depth=0 @earendil-works/pi-coding-agent &>/dev/null; then
+    track "npm rm -g pi" npm rm -g @earendil-works/pi-coding-agent \
+      && changed "uninstalled pi (npm)"
+  fi
+  command_exists pi && warn "pi is still on PATH at $(command -v pi) — remove it by hand."
 }
 
 # ──────────────────────────────────────────────
