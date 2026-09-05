@@ -1,6 +1,6 @@
-# External Claude Code skills, installed via the skills CLI (bunx skills).
-# The CLI copies each skill into ~/.claude/skills, so unlike the repo's own
-# skills these can't be symlinked — install.sh replays these instead
+# External Claude Code and Codex skills, installed via the skills CLI (bunx skills).
+# The CLI keeps one universal copy and links it into both agents, so unlike the
+# repo's own skills these aren't repo symlinks — install.sh replays these instead
 # (re-adding overwrites in place, so the replay also picks up upstream updates).
 #
 # Format per line:  <github-owner/repo>  <skill> [<skill> ...]
@@ -8,3 +8,4 @@
 # Removal is manual: delete the entry here, then `bunx skills remove <skill> -g`.
 
 humanlayer/skills  show-me
+vercel-labs/agent-browser  agent-browser

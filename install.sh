@@ -157,6 +157,10 @@ zed_installed() {
   command_exists zed || command_exists zeditor
 }
 
+agent_browser_installed() {
+  command_exists agent-browser && agent-browser doctor --offline --quick >/dev/null 2>&1
+}
+
 GUI_APPS=(
   "Raycast|brew list --cask raycast|brew install --cask raycast||"
   "AltTab|brew list --cask alt-tab|brew install --cask alt-tab||"
@@ -165,6 +169,7 @@ GUI_APPS=(
   "Hunk|command -v hunk|brew tap modem-dev/tap 2>/dev/null; brew install hunk|npm i -g hunkdiff|npm i -g hunkdiff"
   "OpenCode|command -v opencode|brew install opencode||npm i -g opencode-ai"
   "Herdr|command -v herdr|brew install herdr|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\"|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\""
+  "agent-browser|agent_browser_installed|brew install agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install --with-deps"
 )
 
 # Ordered module registry: name:function[:os,os]. main() runs every entry
@@ -1364,8 +1369,8 @@ setup_claude_code_skills() {
 
   # External skills (claude-code/external-skills.txt) come from other people's
   # repos, so they install via the skills CLI instead of symlinks: the CLI
-  # copies them into ~/.claude/skills, and replaying the add is what keeps
-  # them current (re-adding overwrites, picking up upstream updates).
+  # keeps one universal copy linked into Claude Code and Codex. Replaying the
+  # add keeps that copy current by picking up upstream updates.
   local manifest="$DOTFILES_DIR/claude-code/external-skills.txt"
   if ! command_exists bunx; then
     warn "bunx not found — skipping external skills."
@@ -1383,7 +1388,7 @@ setup_claude_code_skills() {
       done
       (( ${#ext_skills[@]} )) || continue
       echo "  Installing external skills from $source: ${(j:, :)ext_skills}"
-      if track "skills add $source" bunx skills add "$source" --skill "${ext_skills[@]}" -g -y -a claude-code; then
+      if track "skills add $source" bunx skills add "$source" --skill "${ext_skills[@]}" -g -y -a claude-code codex </dev/null; then
         for skill in "${new_skills[@]}"; do changed "installed $skill"; done
         (( MODULE_UNCHANGED += ${#ext_skills[@]} - ${#new_skills[@]} ))
       fi
