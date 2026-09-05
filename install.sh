@@ -164,7 +164,6 @@ GUI_APPS=(
   "1Password CLI|command -v op|brew install --cask 1password-cli|yay -S --noconfirm 1password-cli|"
   "Hunk|command -v hunk|brew tap modem-dev/tap 2>/dev/null; brew install hunk|npm i -g hunkdiff|npm i -g hunkdiff"
   "OpenCode|command -v opencode|brew install opencode||npm i -g opencode-ai"
-  "Pi|command -v pi|brew install pi-coding-agent|npm i -g @earendil-works/pi-coding-agent|npm i -g @earendil-works/pi-coding-agent"
   "Herdr|command -v herdr|brew install herdr|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\"|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\""
 )
 
@@ -194,7 +193,7 @@ MODULES=(
   ghostty:setup_ghostty:macos,arch
   omarchy:setup_omarchy:arch
   opencode:setup_opencode
-  pi:setup_pi
+  retire-pi:retire_pi
   herdr:setup_herdr
   t3:setup_t3:arch,ubuntu
   claude-code:setup_claude_code
@@ -257,8 +256,8 @@ ensure_dir() {
 }
 
 # The non-blank, non-comment lines of a manifest file. Every manifest this
-# repo reads (pi/packages.txt, claude-code/external-skills.txt, plugins.txt)
-# shares this shape; splitting a line into tokens stays with the caller.
+# repo reads (claude-code/external-skills.txt, plugins.txt) shares this shape;
+# splitting a line into tokens stays with the caller.
 manifest_lines() {
   local line
   while IFS= read -r line; do
@@ -445,7 +444,7 @@ append_local_config_knobs() {
 
 # Skip whole install phases. Available modules:
 #   ${(j: :)${(@)MODULES%%:*}}
-#SKIP_MODULES=(omarchy pi)
+#SKIP_MODULES=(omarchy nvim)
 
 # Skip individual entries from COMMON_PACKAGES / the name column of GUI_APPS.
 #SKIP_PACKAGES=(lazygit)
@@ -1058,71 +1057,46 @@ setup_opencode() {
 }
 
 # ──────────────────────────────────────────────
-#  PHASE 6 — Pi coding agent
+#  PHASE 6 — Pi retirement (temporary)
 # ──────────────────────────────────────────────
 
-setup_pi() {
-  echo "==> Pi coding agent configuration..."
-  local pi_agent_dir="$HOME/.pi/agent"
+# The pi module was deleted from this repo; this removes what earlier runs put
+# on the machine. Delete this function, its MODULES entry, and the phase header
+# once every machine has run it (mac, sfx, srv).
+retire_pi() {
+  echo "==> Pi retirement..."
+  local pi_dir="$HOME/.pi"
+  local pi_installed=0
+  command_exists pi && pi_installed=1
 
-  # -- Themes ---------------------------------------------------------------
-  local -a desired=()
-  ensure_dir "$pi_agent_dir/themes"
-  # (N) = nullglob: an empty match skips the loop; zsh's default aborts the
-  # whole script on a glob with no matches.
-  for theme_file in "$DOTFILES_DIR/pi/themes/"*.json(N); do
-    [[ -f "$theme_file" ]] || continue
-    desired+=("$(basename "$theme_file")")
-    backup_and_link "$theme_file" "$pi_agent_dir/themes/$(basename "$theme_file")"
-  done
-  prune_stale_links "$pi_agent_dir/themes" "$DOTFILES_DIR/pi/themes" "${desired[@]}"
+  # Cheap gate: neither the config dir nor the CLI is here, so there is nothing
+  # to probe a package manager about.
+  if [[ ! -e "$pi_dir" ]] && (( ! pi_installed )); then
+    result "already gone"
+    return 0
+  fi
 
-  # -- Skills ---------------------------------------------------------------
-  desired=()
-  ensure_dir "$pi_agent_dir/skills"
-  for skill_dir in "$DOTFILES_DIR/pi/skills/"*/(N); do
-    [[ -d "$skill_dir" ]] || continue
-    desired+=("$(basename "$skill_dir")")
-    backup_and_link "${skill_dir%/}" "$pi_agent_dir/skills/$(basename "$skill_dir")"
-  done
-  prune_stale_links "$pi_agent_dir/skills" "$DOTFILES_DIR/pi/skills" "${desired[@]}"
+  if [[ -e "$pi_dir" ]]; then
+    rm -rf "$pi_dir"
+    changed "removed ~/.pi"
+  fi
 
-  # -- Extensions ------------------------------------------------------------
-  desired=()
-  ensure_dir "$pi_agent_dir/extensions"
-  for ext_file in "$DOTFILES_DIR/pi/extensions/"*.ts(N); do
-    [[ -f "$ext_file" ]] || continue
-    desired+=("$(basename "$ext_file")")
-    backup_and_link "$ext_file" "$pi_agent_dir/extensions/$(basename "$ext_file")"
-  done
-  prune_stale_links "$pi_agent_dir/extensions" "$DOTFILES_DIR/pi/extensions" "${desired[@]}"
-
-  # -- Global settings ------------------------------------------------------
-  # Lives at the global scope (~/.pi/agent/settings.json) so the theme and
-  # other preferences apply in every project, not just the dotfiles repo.
-  ensure_dir "$pi_agent_dir"
-  backup_and_link "$DOTFILES_DIR/pi/settings.json" "$pi_agent_dir/settings.json" \
-    && note "Pi theme is linked. Select it in pi via /settings or edit settings.json."
-
-  # -- Pi packages ----------------------------------------------------------
-  local pkg_source
-  if command_exists pi; then
-    local pkg_count=0
-    while IFS= read -r pkg_source; do
-      echo "  Installing pi package: $pkg_source"
-      # Show real errors (no 2>/dev/null) and record genuine failures rather
-      # than assuming every failure means "already installed."
-      track "pi package $pkg_source" pi install "$pkg_source" && (( pkg_count++ ))
-    done < <(manifest_lines "$DOTFILES_DIR/pi/packages.txt")
-    # pi install is idempotent and says nothing useful when the package is
-    # already there, so the honest report is the count it kept current.
-    (( MODULE_UNCHANGED += pkg_count ))
-  else
-    warn "pi CLI not found. Install pi first: https://pi.dev"
-    result "skipped — pi CLI not found"
-    while IFS= read -r pkg_source; do
-      note "Install by hand once pi is available: pi install $pkg_source"
-    done < <(manifest_lines "$DOTFILES_DIR/pi/packages.txt")
+  if (( pi_installed )); then
+    # pi arrived from whichever manager the machine uses, so each is asked only
+    # when it is present and actually knows about pi.
+    if command_exists mise && mise ls --installed pi 2>/dev/null | grep -q pi; then
+      track "mise unuse pi" mise unuse --global pi
+      track "mise uninstall pi" mise uninstall --all pi && changed "uninstalled pi (mise)"
+    fi
+    if command_exists brew && brew list pi-coding-agent &>/dev/null; then
+      track "brew uninstall pi-coding-agent" brew uninstall pi-coding-agent \
+        && changed "uninstalled pi (brew)"
+    fi
+    if command_exists npm && npm ls -g --depth=0 @earendil-works/pi-coding-agent &>/dev/null; then
+      track "npm rm -g pi" npm rm -g @earendil-works/pi-coding-agent \
+        && changed "uninstalled pi (npm)"
+    fi
+    command_exists pi && warn "pi is still on PATH at $(command -v pi) — remove it by hand."
   fi
 }
 

@@ -1,5 +1,0 @@
-# Pi packages to install
-# One source per line (npm:, git:, or local path)
-# Lines starting with # are ignored.
-
-npm:pi-agent-browser-native

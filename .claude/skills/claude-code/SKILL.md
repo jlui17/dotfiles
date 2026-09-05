@@ -3,7 +3,7 @@ name: claude-code
 description: Use when adding or editing a global skill, slash command, CLAUDE.md rule fragment, or the output style; when writing or reviewing any skill or CLAUDE.md (the writing guidance lives here); when adding or removing Claude Code plugins; when changing shared or per-machine settings.json; or when a plugin unexpectedly disappears after install.sh.
 ---
 
-Deployed by install.sh `setup_claude_code` (the comment there describes the module split). The shared rules ship to Claude Code only: the old `~/AGENTS.md` assembly was dropped when the module went Claude Code-specific, so other harnesses (pi, opencode) have no default voice. If one later needs the rules, add a harness-native sink over the same `rules.d/` fragments (and, for the voice, `output-styles/justin.md`) rather than a parallel rules source; the deleted AGENTS.md assembly in git history is the template.
+Deployed by install.sh `setup_claude_code` (the comment there describes the module split). The shared rules ship to Claude Code only: the old `~/AGENTS.md` assembly was dropped when the module went Claude Code-specific, so opencode has no default voice. If one later needs the rules, add a harness-native sink over the same `rules.d/` fragments (and, for the voice, `output-styles/justin.md`) rather than a parallel rules source; the deleted AGENTS.md assembly in git history is the template.
 
 ## Skills, commands, rules, output style
 
@@ -27,7 +27,7 @@ Skills named in this machine's `SKIP_SKILLS` (`.dotfiles-local`) are not linked,
 
 ## Writing a skill
 
-Distilled from Anthropic's skill-creator (https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md), keeping only what applies here. Holds for runtime skills (`claude-code/skills/`), module maintenance skills (`.claude/skills/`), and pi skills alike.
+Distilled from Anthropic's skill-creator (https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md), keeping only what applies here. Holds for runtime skills (`claude-code/skills/`) and module maintenance skills (`.claude/skills/`) alike.
 
 - **The description is the trigger, and the only part always in context.** Write it as a pure use-when: third person, naming the concrete situations and phrasings that should fire it, ~100 words max. Err pushy, since models undertrigger; the body, never the description, carries the how.
 - **Progressive disclosure.** The body loads only on trigger: keep it well under 500 lines, and move reference-grade material into `resources/` files the body points at (the style skill is the in-repo example). A script the skill keeps rewriting inline belongs in a bundled `scripts/` dir instead.

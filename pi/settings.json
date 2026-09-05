@@ -1,6 +1,0 @@
-{
-  "theme": "github-dark-default",
-  "packages": [
-    "npm:pi-agent-browser-native"
-  ]
-}
