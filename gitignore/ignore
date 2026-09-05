@@ -30,3 +30,5 @@ venv-*/
 
 # Task worktrees (wtnew convention; keeps repos untouched by the flow)
 .worktrees/
+
+**/.claude/settings.local.json
