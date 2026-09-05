@@ -1087,6 +1087,9 @@ retire_pi() {
     if command_exists mise && mise ls --installed pi 2>/dev/null | grep -q pi; then
       track "mise unuse pi" mise unuse --global pi
       track "mise uninstall pi" mise uninstall --all pi && changed "uninstalled pi (mise)"
+      # mise's uninstall drops the version dirs but leaves the tool dir behind
+      # as a nest of dangling symlinks.
+      rm -rf "${MISE_DATA_DIR:-$HOME/.local/share/mise}/installs/pi"
     fi
     if command_exists brew && brew list pi-coding-agent &>/dev/null; then
       track "brew uninstall pi-coding-agent" brew uninstall pi-coding-agent \
