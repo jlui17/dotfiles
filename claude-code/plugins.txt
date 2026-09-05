@@ -8,3 +8,4 @@
 # Lines starting with # are ignored.
 
 anthropics/claude-plugins-official  slack@claude-plugins-official mattpocock-skills@claude-plugins-official
+openai/codex-plugin-cc              codex@openai-codex
