@@ -32,8 +32,8 @@ IS_WORK_COMPUTER=false
 #   SKIP_APPS     — name column of GUI_APPS
 #   SKIP_RULES    — global-rules sections (claude-code/rules.d/ slugs) left
 #                   out of this machine's generated ~/CLAUDE.md
-#   SKIP_SKILLS   — global skills (claude-code/skills/ dirs) not linked into
-#                   this machine's ~/.claude
+#   SKIP_SKILLS   — global skills (agents/skills/ dirs) not linked into
+#                   this machine's ~/.agents and ~/.claude
 #   KEEP_PLUGINS  — machine-local Claude Code plugins (plugin@marketplace) the
 #                   manifest sync must not uninstall
 SKIP_MODULES=()
@@ -55,7 +55,7 @@ FAILURES=()
 # stderr at the log for the whole run and keeps the terminal on fd 3, so the
 # only route to the screen is the output API below (emit/result/warn/note/ask).
 # A module that ignores the API can't leak: its output lands in the log, which
-# costs a summary line and nothing else. See .agents/skills/installer.
+# costs a summary line and nothing else. See agents/skills/dotfiles/resources/installer.md.
 INSTALL_LOG="/tmp/dotfiles-install.log"
 
 # Terminal lines the module loop is composing. LABEL_PENDING holds the open
@@ -362,11 +362,11 @@ rule_section_slugs() {
   done
 }
 
-# Names of the global skills, one per line: claude-code/skills/<name>/ →
+# Names of the global skills, one per line: agents/skills/<name>/ →
 # <name>. These are what SKIP_SKILLS names.
 global_skill_names() {
   local d
-  for d in "$DOTFILES_DIR/claude-code/skills/"*/(N); do
+  for d in "$DOTFILES_DIR/agents/skills/"*/(N); do
     echo "${${d%/}:t}"
   done
 }
@@ -475,8 +475,8 @@ EOF
   if ! grep -q "SKIP_SKILLS" "$DOTFILES_LOCAL_CONFIG" 2>/dev/null; then
     cat >> "$DOTFILES_LOCAL_CONFIG" <<EOF
 
-# Global skills not linked into this machine's ~/.claude. Names come from
-# claude-code/skills/ directories. Available:
+# Global skills not linked into this machine's ~/.agents and ~/.claude. Names
+# come from agents/skills/ directories. Available:
 #   ${(j: :)${(f)"$(global_skill_names)"}}
 #SKIP_SKILLS=(gog)
 EOF
@@ -1037,8 +1037,8 @@ setup_omarchy() {
       backup_and_link "$theme" "$themes_dir/${theme:t}"
     done
 
-    # The only hook every shell launch passes through — see the omarchy-config
-    # skill for why an autostart hook isn't enough. Reading the link needs no
+    # The only hook every shell launch passes through; agents/skills/dotfiles/
+    # resources/omarchy.md says why an autostart hook isn't enough. Reading the link needs no
     # privileges, so sudo is only reached when the wrapper is actually missing
     # or stale, and a steady-state run never prompts.
     local wrapper="$DOTFILES_DIR/omarchy/bin/quickshell"
@@ -1243,11 +1243,9 @@ install_generated_file() {
   changed "generated $(basename "$dst")"
 }
 
-# The claude-code module: everything Claude Code reads, in two halves —
-# skills/commands/rules/output style (setup_claude_code_skills) and
-# settings/statusline/plugins (setup_claude_plugins). Other harnesses get
-# their own modules with harness-native config (see setup_pi, setup_opencode)
-# if and when needed.
+# Only what Claude Code alone reads. Global skills are shared with every
+# harness, so they live in the agents module (setup_agents); other harnesses
+# get their own modules (setup_codex, setup_opencode).
 setup_claude_code() {
   setup_claude_code_skills
   setup_claude_plugins
@@ -1265,26 +1263,19 @@ setup_codex() {
   local dst="$codex_dir/config.toml"
   local begin="# BEGIN dotfiles managed Codex config"
   local end="# END dotfiles managed Codex config"
-  local tmp next name skill_dir
-  local -a managed_servers desired_skills=()
+  local tmp next name
+  local -a managed_servers
   local needs_auth=0
 
   ensure_dir "$codex_dir"
-  ensure_dir "$codex_dir/skills"
   if [[ -L "$HOME/.local/bin/codex-playwright-mcp" &&
         "$(readlink "$HOME/.local/bin/codex-playwright-mcp")" == "$module_dir/bin/codex-playwright-mcp" ]]; then
     rm "$HOME/.local/bin/codex-playwright-mcp"
     changed "removed retired codex-playwright-mcp"
   fi
-  for skill_dir in "$DOTFILES_DIR/claude-code/skills/"*/(N); do
-    [[ -d "$skill_dir" ]] || continue
-    name="${skill_dir%/}"
-    name="${name:t}"
-    (( ${SKIP_SKILLS[(Ie)$name]} )) && continue
-    desired_skills+=("$name")
-    backup_and_link "${skill_dir%/}" "$codex_dir/skills/$name"
-  done
-  prune_stale_links "$codex_dir/skills" "$DOTFILES_DIR/claude-code/skills" "${desired_skills[@]}"
+  # Codex reads ~/.agents/skills natively; this only clears links earlier
+  # installs made here.
+  prune_stale_links "$codex_dir/skills" "$DOTFILES_DIR"
 
   tmp="$(mktemp)"
 
@@ -1338,13 +1329,8 @@ setup_codex() {
 }
 
 setup_claude_code_skills() {
-  echo "==> Claude Code skills & commands..."
+  echo "==> Claude Code commands & external skills..."
   local module_dir="$DOTFILES_DIR/claude-code"
-  local skipped
-
-  for skipped in "${SKIP_SKILLS[@]}"; do
-    echo "  $skipped skipped (SKIP_SKILLS)."
-  done
 
   local -a desired=()
   local commands_dir="$HOME/.claude/commands"
@@ -1356,17 +1342,7 @@ setup_claude_code_skills() {
   done
   prune_stale_links "$commands_dir" "$module_dir/commands" "${desired[@]}"
 
-  desired=()
   local skills_dir="$HOME/.claude/skills"
-  ensure_dir "$skills_dir"
-  for skill_dir in "$module_dir/skills/"*/(N); do
-    [[ -d "$skill_dir" ]] || continue
-    (( ${SKIP_SKILLS[(Ie)$(basename "$skill_dir")]} )) && continue
-    desired+=("$(basename "$skill_dir")")
-    backup_and_link "${skill_dir%/}" "$skills_dir/$(basename "$skill_dir")"
-  done
-  prune_stale_links "$skills_dir" "$module_dir/skills" "${desired[@]}"
-
   # External skills (claude-code/external-skills.txt) come from other people's
   # repos, so they install via the skills CLI instead of symlinks: the CLI
   # keeps one universal copy linked into Claude Code and Codex. Replaying the
@@ -1417,8 +1393,8 @@ setup_claude_code_skills() {
 #  PHASE 6d — Claude Code config
 # ──────────────────────────────────────────────
 
-# settings.json links like any other config. Plugins can't be linked — their
-# on-disk state carries machine-specific paths and pinned commit SHAs — so we
+# Plugins can't be linked — their on-disk state carries machine-specific paths
+# and pinned commit SHAs — so we
 # replay the marketplace+install commands from the manifest; both no-op cleanly
 # when the plugin is already present.
 setup_claude_plugins() {
@@ -1492,27 +1468,33 @@ setup_claude_plugins() {
   done < <(manifest_lines "$manifest")
 }
 
+# Global skills, linked once per harness directory. Codex reads ~/.agents/skills
+# natively; Claude Code discovers skills in ~/.claude/skills only, so each skill
+# is linked there too.
 setup_agents() {
-  echo "==> Agent skills (~/.agents/skills)..."
+  echo "==> Global skills (~/.agents/skills, ~/.claude/skills)..."
   local skills_dir="$HOME/.agents/skills"
   local claude_skills_dir="$HOME/.claude/skills"
   local -a desired=()
+  local skipped name
   ensure_dir "$skills_dir"
   ensure_dir "$claude_skills_dir"
+  for skipped in "${SKIP_SKILLS[@]}"; do
+    echo "  $skipped skipped (SKIP_SKILLS)."
+  done
   for skill_dir in "$DOTFILES_DIR/agents/skills/"*/(N); do
     [[ -d "$skill_dir" ]] || continue
-    desired+=("$(basename "$skill_dir")")
-    backup_and_link "${skill_dir%/}" "$skills_dir/$(basename "$skill_dir")"
-    # Claude Code discovers skills in ~/.claude/skills only, so each agent
-    # skill is linked there too. Safe alongside setup_claude_code's prune:
-    # that prunes only claude-code/skills-pointing links.
-    backup_and_link "${skill_dir%/}" "$claude_skills_dir/$(basename "$skill_dir")"
+    name="${skill_dir%/}"
+    name="${name:t}"
+    (( ${SKIP_SKILLS[(Ie)$name]} )) && continue
+    desired+=("$name")
+    backup_and_link "${skill_dir%/}" "$skills_dir/$name"
+    backup_and_link "${skill_dir%/}" "$claude_skills_dir/$name"
   done
-  # src_root is the repo root, not agents/skills, so links left behind by the
-  # removed agent-skills module get pruned too; non-repo links (omarchy's)
-  # are untouched.
+  # src_root is the repo root, not agents/skills, so links from any former
+  # skills location in the repo are pruned too.
   prune_stale_links "$skills_dir" "$DOTFILES_DIR" "${desired[@]}"
-  prune_stale_links "$claude_skills_dir" "$DOTFILES_DIR/agents/skills" "${desired[@]}"
+  prune_stale_links "$claude_skills_dir" "$DOTFILES_DIR" "${desired[@]}"
 }
 
 # ──────────────────────────────────────────────
