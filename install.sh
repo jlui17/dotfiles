@@ -169,6 +169,7 @@ GUI_APPS=(
   "1Password CLI|command -v op|brew install --cask 1password-cli|yay -S --noconfirm 1password-cli|"
   "Hunk|command -v hunk|brew tap modem-dev/tap 2>/dev/null; brew install hunk|npm i -g hunkdiff|npm i -g hunkdiff"
   "OpenCode|command -v opencode|brew install opencode||npm i -g opencode-ai"
+  "Codex|command -v codex|brew install codex|npm i -g @openai/codex|npm i -g @openai/codex"
   "Herdr|command -v herdr|brew install herdr|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\"|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\""
   "agent-browser|agent_browser_installed|brew install agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install --with-deps"
 )
