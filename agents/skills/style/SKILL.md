@@ -13,7 +13,7 @@ description: Use before drafting OR EDITING anything substantial a reader will s
 
 **Applying feedback.** Wording/style feedback goes into the artifact immediately; noting it for later without editing the doc is a miss. Design *decisions* are the opposite: discuss and confirm first, then apply.
 
-**Where this lives.** The compact core is the Justin output style (`claude-code/output-styles/justin.md` in the dotfiles repo; the `claude-code` module skill has the flow), canonical where it overlaps this skill. It loads in main sessions only, so for a subagent this skill is the whole voice, not a supplement. Either way this skill is the full reference: the complete rules plus per-artifact structure in `resources/`.
+**Where this lives.** The compact core is the Justin output style (`claude-code/output-styles/justin.md` in the dotfiles repo; the dotfiles skill's `resources/claude-code.md` has the flow), canonical where it overlaps this skill. It loads in main sessions only, so for a subagent this skill is the whole voice, not a supplement. Either way this skill is the full reference: the complete rules plus per-artifact structure in `resources/`.
 
 **Default: cut to the bone, stay smooth.** As concise as the meaning allows while still reading smoothly and carrying the context the reader needs; this governs a one-line chat reply as much as a doc. Cut filler, pleasantries, and hedging (state confidence + its assumption instead, #13), and any word that doesn't change meaning. But keep the small words that make a sentence flow (articles, connectives): this is lean, **not telegraphic**. A fragment is fine where it reads naturally, never as the house style. When in doubt, plainer and shorter.
 
