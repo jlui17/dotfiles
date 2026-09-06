@@ -39,8 +39,8 @@ Each subsystem owns a directory at the repo root. Single-file configs (`zshrc`, 
 
 | Directory | What it holds |
 | --- | --- |
-| `agents/skills/` | Global skills for Claude Code and Codex, one directory per skill. `dotfiles/` is the skill that teaches an agent how to maintain this repo. |
-| `claude-code/` | What only Claude Code reads: the `rules.d/` fragments that build `~/CLAUDE.md`, output styles, slash commands, settings, the statusline and session-hook scripts, the plugin and external-skill manifests. |
+| `agents/` | What Claude Code and Codex share: global skills in `skills/`, one directory per skill, the external-skill manifest, and the `rules.d/` fragments that build `~/CLAUDE.md` and Codex's `AGENTS.md`. |
+| `claude-code/` | What only Claude Code reads: Claude-only `rules.d/` fragments, output styles, slash commands, settings, the statusline and session-hook scripts, the plugin manifest. |
 | `codex/` | The managed block for Codex's config. |
 | `zshrc`, `zsh-functions/` | The shell. Functions in `zsh-functions/` are auto-sourced. |
 | `tmux.conf`, `ghostty/` | Terminal multiplexer and emulator, with the themes. |

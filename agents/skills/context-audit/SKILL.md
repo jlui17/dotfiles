@@ -45,7 +45,7 @@ Distilled from Anthropic's skill-creator (https://github.com/anthropics/skills/b
 
 ## Writing the global CLAUDE.md
 
-`~/CLAUDE.md` is a letter from Justin to Claude, not a rulebook. It is one fragment, `claude-code/rules.d/10-letter.md`, and it reads as Justin speaking: first person, casual, short sentences that flow. One topic per paragraph, ordered by importance, with no headings and no topic prefixes ("Scope first."). It explains why and trusts the model's judgment; it never gates, enumerates steps, or lists cases. Less is more: an addition is an edit to the paragraph it belongs to, rewritten so it still flows, never a sentence bolted onto the end. About ten paragraphs is the size; past that, something has to go.
+`~/CLAUDE.md` is a letter from Justin to Claude, not a rulebook. It is one fragment, `agents/rules.d/10-letter.md`, and it reads as Justin speaking: first person, casual, short sentences that flow. One topic per paragraph, ordered by importance, with no headings and no topic prefixes ("Scope first."). It explains why and trusts the model's judgment; it never gates, enumerates steps, or lists cases. Less is more: an addition is an edit to the paragraph it belongs to, rewritten so it still flows, never a sentence bolted onto the end. About ten paragraphs is the size; past that, something has to go.
 
 Ask what a line is for before writing it. A trap, a procedure, or reference material goes in the skill that fires when it's needed; the letter carries at most a pointer, and none at all when a skill description already triggers on the situation. herdr-specific text goes in `claude-code/herdr-session-hook.sh`, which fires only where herdr runs. `99-local.md` keeps the same voice, opened with "A few things that only apply on this machine."
 
@@ -61,7 +61,7 @@ From the Claude 5 context-engineering guidance (https://claude.com/blog/the-new-
 
 ## Where the global layer lives
 
-The global layer (`~/CLAUDE.md`, global skills, slash commands, the output style) is deployed from the dotfiles repo, and the dotfiles skill carries the mechanics. It is installed globally, so it is available in every session: load it before changing any of that. Two facts hold before it loads: never edit `~/CLAUDE.md` directly, since it is generated and the next install overwrites it; and machine-only rules go in the gitignored `99-local.md`.
+The global layer (`~/CLAUDE.md`, global skills, slash commands, the output style) is deployed from the dotfiles repo, and the dotfiles skill carries the mechanics. It is installed globally, so it is available in every session: load it before changing any of that. Two facts hold before it loads: never edit `~/CLAUDE.md` or `~/.codex/AGENTS.md` directly, since both are generated and the next install overwrites them; and machine-only rules go in the gitignored `agents/rules.d/99-local.md`.
 
 ## Sweeping for twins
 

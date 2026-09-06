@@ -1,6 +1,6 @@
 # Agents
 
-Owns the global skills in `agents/skills/<name>/`, linked by `setup_agents` into `~/.agents/skills` and `~/.claude/skills`.
+Owns the context every harness shares: the global skills in `agents/skills/<name>/`, the external-skill manifest `agents/external-skills.txt`, and the shared rule fragments in `agents/rules.d/`. `setup_agents` links the skills into `~/.agents/skills` and `~/.claude/skills`, replays the external skills, then assembles `~/CLAUDE.md` and Codex's `AGENTS.md`. Context only Claude Code reads is not here; see `resources/claude-code.md`.
 
 A skill has one home. Codex reads `~/.agents/skills` natively; Claude Code discovers only `~/.claude/skills`, so the same directory is linked into both. Neither harness gets its own copy, so an edit in the repo reaches both on the next run.
 
@@ -10,9 +10,26 @@ A skill has one home. Codex reads `~/.agents/skills` natively; Claude Code disco
 
 The writing bar for a skill (what earns a skill, what earns a line in it, the trigger description) lives in the context-audit skill. Read it before writing or editing one; this file does not restate it.
 
+## Global rules
+
+"Update my global CLAUDE.md, AGENTS.md, or rules" means editing a fragment, never the deployed file. Two fragment directories feed two generated files:
+
+- `agents/rules.d/` holds the shared fragments. They reach both `~/CLAUDE.md` and `${CODEX_HOME:-~/.codex}/AGENTS.md`.
+- `claude-code/rules.d/` holds Claude-only fragments. They reach `~/CLAUDE.md` only. `62-worker-cost.md` is the example: it ranks Codex models for Claude to delegate to, which means nothing to Codex.
+
+`assemble_global_rules` takes the destination and the fragment directories, merges their `NN-<slug>.md` files sorted by filename across directories, and writes the generated file with a header naming the source directories. The `NN-` prefix orders (so a shared `10-` fragment, a Claude-only `62-` fragment, and `99-local` interleave correctly); the slug is what `SKIP_RULES` names. Generated rather than symlinked because per-machine section exclusion needs a per-machine artifact; a symlink is all or nothing. Consequences:
+
+- An edit reaches the generated files only on the next `./install.sh`.
+- Both files are overwritten on every run (each file's header says so), so a direct edit is lost.
+- `99-local.md` in `agents/rules.d/` is gitignored and machine-only; it reaches both files.
+- `SKIP_RULES` in `.dotfiles-local` names slugs from either directory (`rule_section_slugs` reads both) and applies to both files. An unknown slug warns (`validate_skip_lists`).
+- `assemble_global_rules` warns when a generated file passes its line budget; the number lives there. Past it, distill a fragment or push detail into a skill.
+
+The shared rules are one fragment, `10-letter.md`: a letter in Justin's voice, with the writing bar in the context-audit skill. `62-worker-cost.md` stays its own fragment so a machine can skip it.
+
 ## External skills
 
-Skills from other people's repos are declared in `claude-code/external-skills.txt` (format in its header) and installed by `setup_claude_code_skills`, which replays `bunx skills add <repo> --skill <names> -g -y -a claude-code codex` per manifest line. They are not repo symlinks because the repo does not own the files: the skills CLI (vercel-labs/skills) keeps one universal copy as a real directory in `~/.agents/skills/<skill>` and links `~/.claude/skills/<skill>` to it. Re-running the add refreshes that copy from upstream, and the `update_pkgs` alias in zshrc also runs `bunx skills update -g`. `SKIP_SKILLS` filters external skills the same way it filters repo skills.
+Skills from other people's repos are declared in `agents/external-skills.txt` (format in its header) and installed by `setup_agents`, which replays `bunx skills add <repo> --skill <names> -g -y -a claude-code codex` per manifest line. They are not repo symlinks because the repo does not own the files: the skills CLI (vercel-labs/skills) keeps one universal copy as a real directory in `~/.agents/skills/<skill>` and links `~/.claude/skills/<skill>` to it. Re-running the add refreshes that copy from upstream, and the `update_pkgs` alias in zshrc also runs `bunx skills update -g`. `SKIP_SKILLS` filters external skills the same way it filters repo skills.
 
 Because the CLI's copy is a real directory, the prune never touches it, and removal is manual: delete the manifest line, then run
 

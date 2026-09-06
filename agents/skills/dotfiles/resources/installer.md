@@ -53,6 +53,10 @@ Order in `MODULES` is load-bearing: packages before mise and nvim, mise before a
 
 A CLI tool is a `COMMON_PACKAGES` entry, with an `UBUNTU_MISE_PACKAGES` row when apt lacks it or ships it too old. A GUI app or non-package tool is a row in `GUI_APPS`. Neither needs a module.
 
+## A moved path carries its migration
+
+install.sh runs on machines that installed every earlier layout. A change that moves a deployed path or retires a deployed file is not done when the new path works on a fresh machine. The module that owns the new path also converges the old one: move the machine-local file, prune the old links, remove the retired generated file. Record each with `changed` so the result line says it happened. The step lives in install.sh, not in a one-off command, because the machine that needs it may run months later; it leaves once every machine has run it. Examples: the retired `codex-playwright-mcp` link removed in `setup_codex`, `retire_pi`, and the `99-local.md` move and retired `~/AGENTS.md` removal in `setup_agents`.
+
 ## The log
 
 Overwritten each run, so it always describes the run you just did. Structure: a `════ run` header naming machine, invocation and resolved skip lists (`log_run_header`), then a `════ <module>` banner per module, `--- <label>: <cmd>` blocks written before each tracked command starts (so a hung or interrupted run still shows what it was doing), and `──> <result>` lines.
@@ -69,4 +73,4 @@ cp /tmp/dotfiles-install.log /tmp/dotfiles-install.before.log
 diff /tmp/dotfiles-install.before.log /tmp/dotfiles-install.log
 ```
 
-The paths this machine cannot reach (fresh-machine first run, the Arch and Ubuntu branches) are read, not run. Say so rather than implying coverage. A failure path is cheap to exercise deliberately (point a `track` call at a package name that does not exist) and worth doing whenever `track` or the summary changes.
+The paths this machine cannot reach (fresh-machine first run, the Arch and Ubuntu branches) are read, not run. Say so rather than implying coverage. An upgrade path is the exception. Verify it by running install.sh on a machine that still has the old layout and reading its result lines and log, not by reasoning about it. sfx over the tailnet is the usual one; the dev-machines skill has the access rules. A failure path is cheap to exercise deliberately (point a `track` call at a package name that does not exist) and worth doing whenever `track` or the summary changes.
