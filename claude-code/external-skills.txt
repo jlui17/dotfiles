@@ -9,3 +9,4 @@
 
 humanlayer/skills  show-me
 vercel-labs/agent-browser  agent-browser
+jlui17/mdnote  mdnote
