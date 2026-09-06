@@ -1283,7 +1283,7 @@ setup_codex() {
   local dst="$codex_dir/config.toml"
   local begin="# BEGIN dotfiles managed Codex config"
   local end="# END dotfiles managed Codex config"
-  local tmp next name
+  local tmp next tables name
   local -a managed_servers
   local needs_auth=0
 
@@ -1327,6 +1327,17 @@ setup_codex() {
     mv "$next" "$tmp"
   done
 
+  # TOML bare keys stay in the current table, so the managed top-level keys
+  # must land before the first machine-owned table.
+  tables="$(mktemp)"
+  next="$(mktemp)"
+  awk -v tables="$tables" '
+    !in_tables && /^\[/ { in_tables = 1 }
+    in_tables { print > tables; next }
+    { print }
+  ' "$tmp" > "$next"
+  mv "$next" "$tmp"
+
   # Avoid accumulating blank lines immediately before the managed block.
   next="$(mktemp)"
   awk '{ lines[NR] = $0; if ($0 !~ /^[[:space:]]*$/) last = NR }
@@ -1336,6 +1347,11 @@ setup_codex() {
   print -r -- "$begin" >> "$tmp"
   cat "$src" >> "$tmp"
   print -r -- "$end" >> "$tmp"
+  if [[ -s "$tables" ]]; then
+    print >> "$tmp"
+    cat "$tables" >> "$tmp"
+  fi
+  rm -f "$tables"
 
   if [[ -f "$dst" ]] && cmp -s "$tmp" "$dst"; then
     rm -f "$tmp"
