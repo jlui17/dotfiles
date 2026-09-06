@@ -11,6 +11,8 @@ Owns what only Claude Code reads: commands, `rules.d/`, output styles, external 
 - `99-local.md` is gitignored and rides along for machine-only rules.
 - `assemble_global_rules` warns when the generated file passes its line budget; the number lives there. Past it, distill a fragment or push detail into a skill.
 
+The shared rules are one fragment, `10-letter.md`: a letter in Justin's voice, with the writing bar in the context-audit skill. `62-worker-cost.md` stays its own fragment so a machine can skip it. herdr-specific instructions live in `herdr-session-hook.sh`, not in a fragment, so they load only where herdr runs.
+
 The shared rules ship to Claude Code only. Codex and OpenCode read none of them; a rule written here binds Claude Code sessions alone. A harness that later needs them gets its own sink over the same `rules.d/` fragments, never a second rules source.
 
 ## Output styles
