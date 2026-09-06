@@ -16,9 +16,10 @@ opencode/env
 # now, seeded by setup_mise (install.sh) straight into ~/.config/mise.
 mise/config.toml
 
-# Machine-only global-rules section, appended to the generated ~/CLAUDE.md /
-# ~/AGENTS.md by install.sh. Shared sections live in tracked rules.d/ files.
-claude-code/rules.d/99-local.md
+# Machine-only global-rules section, appended to the generated ~/CLAUDE.md and
+# ~/.codex/AGENTS.md by install.sh. Tracked sections live in agents/rules.d/
+# (shared) and claude-code/rules.d/ (Claude-only).
+agents/rules.d/99-local.md
 
 # Machine-local Claude Code settings, merged over the repo's settings.json into
 # ~/.claude/settings.json by install.sh (local wins). Shared keys stay in
