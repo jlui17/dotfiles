@@ -36,9 +36,9 @@ if [ -n "$HERDR_PANE_ID" ]; then
   else
     label_note=" Tab and space are already labeled; re-run herdr tab rename $HERDR_TAB_ID '<3-5 word task>' if the task materially changes."
   fi
-  ctx="This session runs inside herdr pane $HERDR_PANE_ID (tab $HERDR_TAB_ID, space $HERDR_WORKSPACE_ID, session ${HERDR_SESSION:-default}).$label_note New herdr sessions are the user's opt-in: start one only on an explicit ask, and use your own subagents for delegation within this task; the herdr-agents skill has the recipes."
+  ctx="This session runs inside herdr pane $HERDR_PANE_ID (tab $HERDR_TAB_ID, space $HERDR_WORKSPACE_ID, session ${HERDR_SESSION:-default}).$label_note New herdr sessions are the user's opt-in: start one only on an explicit ask (\"kickoff X\" or \"start a new session that…\" is that ask: a new herdr session Justin steers directly, never a subagent), and use your own subagents for delegation within this task. Name every session you start: the task number if one exists plus a 1-5 word summary, e.g. [colony-562] flow viewer. The herdr-agents skill has the recipes."
 elif command -v herdr >/dev/null 2>&1; then
-  ctx="This session is not inside a herdr pane. When the user explicitly asks for a new agent session in the terminal, run it through herdr (not tmux or ad-hoc background processes); otherwise delegate within this session via your own subagents. The herdr-agents skill has the recipes."
+  ctx="This session is not inside a herdr pane. When the user explicitly asks for a new agent session (\"kickoff X\" or \"start a new session that…\"), run it through herdr (not tmux or ad-hoc background processes) as a session they steer directly, never a subagent; otherwise delegate within this session via your own subagents. Name every session you start: the task number if one exists plus a 1-5 word summary, e.g. [colony-562] flow viewer. The herdr-agents skill has the recipes."
 else
   exit 0
 fi

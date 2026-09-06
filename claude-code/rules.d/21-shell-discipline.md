@@ -1,4 +1,0 @@
-## Shell discipline
-
-- Cleanup kills only what this task created, matched by recorded identity: capture the exact IDs at creation (or diff a before/after listing), and kill those. Never sweep by image, name pattern, or ancestor filter — the user's own look-alike resources (docker containers, tmux sessions, VMs) run on the same machine, and a sweep is how they die. This bounds delegated prompts too: a worker told to "clean up" inherits the same only-what-you-started rule, spelled out with the ID-capture step. Killing a wrapper isn't cleanup either (a killed tmux session or docker client can orphan the container underneath); verify the resource itself is gone.
-- `rg` recurses by default and `-r` is `--replace`, not recursive: `rg -rn <pat>` silently rewrites every match to the literal text `n`, which reads as plausible-but-wrong file content. If output looks mangled, re-check the flags before theorizing about the data.

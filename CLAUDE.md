@@ -14,7 +14,7 @@ Canonical config source. Single setup across macOS (Homebrew), Arch Linux (Pacma
 
 ## Colorblind-safe visuals
 
-Justin is red-green color impaired (deuteranopia/protanopia family). Any palette or visual shipped by this repo (themes, terminal palettes, status colors, prompt colors) never uses a red-vs-green distinction to carry meaning: put opposed meanings on the blue-yellow or blue-orange axis instead, keep a luminance gap between them, and back color with a second channel (shape, label, position) where the medium allows. The verification recipe for terminal palettes (Vienot simulation, ΔE76 and contrast thresholds) lives in the terminal skill.
+The global CLAUDE.md carries the rule. The verification recipe for terminal palettes (Vienot simulation, ΔE76 and contrast thresholds) lives in the terminal skill.
 
 ## Design
 
