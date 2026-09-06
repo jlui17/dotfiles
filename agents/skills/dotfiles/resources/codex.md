@@ -1,0 +1,24 @@
+# Codex
+
+Owns `codex/config.toml`, the portable fragment `setup_codex` merges into a marked block in `~/.codex/config.toml` (`CODEX_HOME` honored).
+
+The destination stays a machine-owned real file. Codex and the ChatGPT desktop app write machine-local MCP bridges and runtime settings into the same file, so a symlink would either clobber them or turn repo state into mutable app state. Only the block between the `# BEGIN dotfiles managed Codex config` and `# END ...` markers is the repo's. Outside it, everything survives each run except a table whose name the fragment manages. `setup_codex` removes each such `[mcp_servers.<name>]` table and its child tables before rewriting the block, so a hand-created server entry migrates into the managed block instead of duplicating the TOML table.
+
+Put only portable, non-secret configuration in the fragment. Codex stores OAuth credentials outside it, and authentication happens per machine:
+
+```
+codex mcp login <name>
+```
+
+install.sh notes this when a run adds a server the file did not have before.
+
+Never set `required = true` on an MCP server unless every machine can initialize it unattended; an optional integration must not stop Codex from starting.
+
+After an edit, run `./install.sh`, then check the realized configuration:
+
+```
+codex mcp list
+codex mcp get <name>
+```
+
+Skills are not this module's job. Codex reads `~/.agents/skills`, which the agents module fills (`resources/agents.md`); `setup_codex` only prunes repo-pointing links from `~/.codex/skills` that earlier versions of the module created.
