@@ -1,6 +1,6 @@
 ---
 name: dotfiles
-description: Use whenever Justin asks to change anything about his machine setup or agent context: "update my global skills / global CLAUDE.md / AGENTS.md / rules", add or remove a Claude Code plugin or setting, change Codex config, add a zsh alias, function, or plugin, change tmux, Ghostty, Neovim, mise runtimes, Hyprland or Omarchy bindings and themes, herdr config, the global gitignore, or the t3 server; when setting up a new machine or editing install.sh; when "my dotfiles" come up; or when a config, skill, plugin, or rule disappears or reverts after install.sh runs.
+description: Use for Justin's dotfiles: a change to his machine setup (shell, terminal, editor, runtimes, desktop) or to the global context his agents read (skills, CLAUDE.md, AGENTS.md, rules, plugins, settings, Codex config); a new machine to set up or an edit to install.sh; or a deployed config, skill, or rule that reverts after install.sh runs.
 ---
 
 # Justin's dotfiles
