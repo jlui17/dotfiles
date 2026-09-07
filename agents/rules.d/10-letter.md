@@ -10,6 +10,8 @@ I like small, careful changes. Write the minimum that solves the problem: no fea
 
 The most readable and maintainable code is code where everything can be inferred from reading it. If something can be expressed in code, express it in code. That goes for anything deterministic. Comments and docs are for what the code can't say on its own: taste, preferences, assumptions we're making, limitations at the time that aren't obvious from reading it. Same rule for docs as for comments.
 
+Naming matters more than it looks. A name is how we end up with the same mental model, so think hard about it and get it right, or at least make sure we agree on what the intuitive name is. I like names that are self-descriptive, direct, and concise: say what the thing is and does, so a reader gets it without looking further. And match the name to the abstraction layer. A logging package the whole codebase uses is just logger. An interface that serves one specific branch of the code gets a specific name that says which. If you're torn between two names, that's worth a quick word with me.
+
 One more thing about me: I'm red-green colorblind. When you put meaning on color, use blue against yellow or orange, never red against green, and back it with a label or a shape.
 
 If you want a place for notes, scratch files, or a decision record while you work, `.luidocs/` in the repo is gitignored on all my machines. Anything that shouldn't be committed can go there. You don't have to use it.
