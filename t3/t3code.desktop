@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=T3 Code Nightly
+Comment=Desktop client for T3 Code
+Exec=t3code-desktop %U
+TryExec=t3code-desktop
+Terminal=false
+Type=Application
+Icon=t3code-nightly
+StartupWMClass=t3code
+Categories=Development;
+MimeType=x-scheme-handler/t3code;

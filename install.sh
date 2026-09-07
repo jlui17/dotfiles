@@ -174,6 +174,7 @@ GUI_APPS=(
   "OpenCode|command -v opencode|brew install opencode||npm i -g opencode-ai"
   "Codex|command -v codex|brew install codex|npm i -g @openai/codex|npm i -g @openai/codex"
   "Herdr|command -v herdr|brew install herdr|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\"|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\""
+  "T3 Code Nightly|command -v t3code-nightly||yay -S --noconfirm t3code-nightly-bin|"
   "agent-browser|agent_browser_installed|brew install agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install --with-deps"
 )
 
@@ -1165,6 +1166,13 @@ setup_t3() {
   backup_and_link "$module_dir/t3code-update.service" "$units_dir/t3code-update.service"
   backup_and_link "$module_dir/t3code-update.timer" "$units_dir/t3code-update.timer" \
     && note "Daily T3 Code nightly update is on (8am Pacific). Run update_t3 to update now."
+
+  if [[ "$OS" == "arch" ]]; then
+    local applications_dir="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+    ensure_dir "$applications_dir"
+    backup_and_link "$module_dir/t3code-desktop" "$HOME/.local/bin/t3code-desktop"
+    backup_and_link "$module_dir/t3code.desktop" "$applications_dir/t3code.desktop"
+  fi
 
   [[ "$OS" == "ubuntu" ]] && write_t3_bind_dropin "$units_dir"
 

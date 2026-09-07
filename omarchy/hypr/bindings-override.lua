@@ -21,12 +21,11 @@ o.bind("SUPER + CTRL + P", "Pseudo window", hl.dsp.window.pseudo())
 hl.unbind("SUPER + K")
 o.bind("SUPER + SHIFT + K", "Keybindings", "omarchy-menu-keybindings")
 
--- Swap herdr and the plain terminal: herdr takes SUPER RETURN, terminal moves
--- to SUPER CTRL RETURN
+-- T3 Code takes SUPER RETURN; herdr in the default terminal moves to SUPER CTRL RETURN.
 hl.unbind("SUPER + RETURN")
 hl.unbind("SUPER + CTRL + RETURN")
-o.bind("SUPER + RETURN", "Herdr", { omarchy = "terminal-herdr" })
-o.bind("SUPER + CTRL + RETURN", "Terminal", { omarchy = "terminal" })
+o.bind("SUPER + RETURN", "T3 Code Nightly", { launch = "t3code-desktop" })
+o.bind("SUPER + CTRL + RETURN", "Herdr", { omarchy = "terminal-herdr" })
 
 -- Speech-to-text. hyprwhspr setup writes this to ~/.config/hypr/bindings.conf,
 -- which Omarchy's Lua config no longer reads.
