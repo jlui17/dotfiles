@@ -18,7 +18,3 @@ Watching for the next feedback round (both the PR and the Slack thread, never ju
 ## Resolve the thread once the comment is addressed
 
 A reply alone leaves the thread open, and open threads block the merge. Once a comment is fixed and pushed, or answered with evidence that no change is needed, reply and then resolve the thread. Leave it open only when the disposition needs the reviewer's judgment (a pushback they have not accepted, a scope call). On GitHub, `scripts/gh-resolve-review-thread.sh` lists a PR's unresolved threads and resolves one by ID; `gh` has no subcommand for it.
-
-## Close the loop in Slack
-
-Claude monitors Slack, not the PR, so a disposition posted only on the PR is never seen. After pushing fixes, reply in the requester's review-request thread with a short note pointing at the PR; the details stay on the PR (the depth-pairing rule in the style skill's `resources/slack.md`).
