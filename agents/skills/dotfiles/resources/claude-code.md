@@ -8,7 +8,7 @@ Owns what only Claude Code reads: commands, Claude-only rule fragments in `rules
 
 ## Output styles
 
-`output-styles/*.md` are plain symlinks, frontmatter and all; `justin.md` is selected by `outputStyle` in `claude-code/settings.json`. An output style loads for the main session only, never for subagents. That is why the voice and session-reply rules live in the style: they govern how Claude talks to Justin in the terminal. A rule subagents also need is a rules fragment (`resources/agents.md`), not a style section.
+`output-styles/*.md` are plain symlinks, frontmatter and all; `justin.md` is selected by `outputStyle` in `claude-code/settings.json`. An output style loads for the main session only, never for subagents, so it carries how Claude talks to Justin in the terminal and nothing else. A rule subagents also need is a rules fragment (`resources/agents.md`); the voice for artifacts is the style skill.
 
 ## Commands
 
