@@ -159,7 +159,10 @@ zed_installed() {
 }
 
 agent_browser_installed() {
-  command_exists agent-browser && agent-browser doctor --offline --quick >/dev/null 2>&1
+  # Checked on disk: `agent-browser doctor` executes the Chrome it manages,
+  # which some machines forbid.
+  local -a browsers=("$HOME/.agent-browser/browsers/"*(N))
+  command_exists agent-browser && (( ${#browsers} ))
 }
 
 GUI_APPS=(
@@ -1625,6 +1628,11 @@ EOF
 
 setup_apps() {
   echo "==> GUI apps..."
+  # Interactive shells see npm's global bin and ~/.local/bin (where the curl
+  # installers land); this script does not, and a check that misses them
+  # reinstalls the app on every run.
+  path=("$HOME/.local/bin" $path)
+  command_exists npm && path=("$(npm prefix -g 2>/dev/null)/bin" $path)
   # Declared once, outside the loop: zsh's `local` on an already-local name
   # prints its value, so re-declaring per iteration spams the output.
   local row name check macos_cmd arch_cmd ubuntu_cmd cmd
