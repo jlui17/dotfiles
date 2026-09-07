@@ -33,8 +33,8 @@ IS_WORK_COMPUTER=false
 #   SKIP_RULES    — global-rules sections (agents/rules.d/ and
 #                   claude-code/rules.d/ slugs) left out of this machine's
 #                   generated ~/CLAUDE.md and ~/.codex/AGENTS.md
-#   SKIP_SKILLS   — global skills (agents/skills/ dirs) not linked into
-#                   this machine's ~/.agents and ~/.claude
+#   SKIP_SKILLS   — global skills (agents/skills/ dirs and the external
+#                   manifest) not linked into this machine's ~/.agents and ~/.claude
 #   KEEP_PLUGINS  — machine-local Claude Code plugins (plugin@marketplace) the
 #                   manifest sync must not uninstall
 SKIP_MODULES=()
@@ -369,10 +369,13 @@ rule_section_slugs() {
 # Names of the global skills, one per line: agents/skills/<name>/ →
 # <name>. These are what SKIP_SKILLS names.
 global_skill_names() {
-  local d
+  local d line
   for d in "$DOTFILES_DIR/agents/skills/"*/(N); do
     echo "${${d%/}:t}"
   done
+  while IFS= read -r line; do
+    print -l -- ${=line#${line%%[[:space:]]*}}
+  done < <(manifest_lines "$DOTFILES_DIR/agents/external-skills.txt")
 }
 
 # Column the result lines align to. "macos-defaults" is the longest module name.
@@ -481,7 +484,7 @@ EOF
     cat >> "$DOTFILES_LOCAL_CONFIG" <<EOF
 
 # Global skills not linked into this machine's ~/.agents and ~/.claude. Names
-# come from agents/skills/ directories. Available:
+# come from agents/skills/ directories and agents/external-skills.txt. Available:
 #   ${(j: :)${(f)"$(global_skill_names)"}}
 #SKIP_SKILLS=(gog)
 EOF
