@@ -1628,6 +1628,22 @@ EOF
     echo "  config-personal already set up."
     (( MODULE_UNCHANGED++ ))
   fi
+
+  # GitHub over HTTPS everywhere, authenticated by gh's credential helper, so
+  # git never needs an SSH agent. The rewrite catches a clone typed with the
+  # SSH URL; gh's protocol setting keeps new clones explicit.
+  local before="$(<"$git_config")"
+  git config --file "$git_config" url."https://github.com/".insteadOf "git@github.com:"
+  if command_exists gh; then
+    track "gh auth setup-git" gh auth setup-git
+    track "gh git_protocol" gh config set git_protocol https
+  fi
+  if [[ "$(<"$git_config")" != "$before" ]]; then
+    changed "github over https"
+  else
+    echo "  GitHub already over HTTPS."
+    (( MODULE_UNCHANGED++ ))
+  fi
 }
 
 # ──────────────────────────────────────────────
