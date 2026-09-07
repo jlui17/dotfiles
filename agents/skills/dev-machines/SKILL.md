@@ -15,7 +15,7 @@ Always on: idle only locks the screen, it never suspends. Games, side projects, 
 
 It is an interactive desktop Justin may be sitting at: fine to build, test, and read anything, but don't restart the display stack or user services, and don't start GPU-heavy work without asking — a game may be running.
 
-## scorecard-mac — Mac mini (macOS)
+## scorecard-mac — Mac (macOS)
 
 ```
 ssh scm                      # alias in ~/.ssh/config: justinlui@scorecard-mac with a per-machine key
