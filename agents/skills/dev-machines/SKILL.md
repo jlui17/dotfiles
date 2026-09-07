@@ -21,7 +21,7 @@ It is an interactive desktop Justin may be sitting at: fine to build, test, and 
 ssh scm                      # alias in ~/.ssh/config: justinlui@scorecard-mac with a per-machine key
 ```
 
-Unlike the Linux boxes, this host uses ordinary public-key auth: each machine that reaches it has its own key in the mini's `authorized_keys` (the laptop's is `~/.ssh/ssh-to-scm`, sfx uses its `id_ed25519`). Two things a headless session can't do there: reach GitHub, because git signs with the 1Password agent and that agent only answers an unlocked desktop session (fast-forward from sfx instead: `git pull --ff-only jlui17@sfx:src/personal/dotfiles main`), and find Homebrew, because a non-login shell lacks `/opt/homebrew/bin` (run install.sh under `zsh -lc`).
+Unlike the Linux boxes, this host uses ordinary public-key auth: each machine that reaches it has its own key in the mini's `authorized_keys` (the laptop's is `~/.ssh/ssh-to-scm`, sfx uses its `id_ed25519`). Two things a headless session can't do there: use an SSH git remote, because the SSH key lives in the 1Password agent and that agent only answers an unlocked desktop session (git remotes there are HTTPS, authenticated through `gh auth git-credential`; switch any `git@github.com:` remote with `git remote set-url`), and find Homebrew, because a non-login shell lacks `/opt/homebrew/bin` (run install.sh under `zsh -lc`).
 
 ## srv — Hostinger VPS (Ubuntu, production)
 

@@ -1,16 +1,15 @@
-## Picking the right models for workflows and subagents
+## Picking the model for a Codex worker
 
-Rankings, higher = better. Cost is what Justin actually pays, not list price. Intelligence is how hard a problem the model can be handed unsupervised. Taste covers UI/UX, code quality, API design, and copy.
+Codex does the execution. One ladder, cheapest rung first; cost is what Justin actually pays, relative to luna.
 
-| model        | cost | intelligence | taste |
-|--------------|------|--------------|-------|
-| gpt-5.6-sol  | 7    | 9            | 8     |
-| gpt-5.6-luna | 9    | 6            | 5     |
+| rung | model        | effort      | cost | use                                                                                                                                                                             |
+|------|--------------|-------------|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1    | gpt-5.6-luna | any         | 1x   | Bulk mechanical passes (step-by-step implementation, migrations, renames, grep-and-report) and open-ended exploration and evidence gathering. Strong there, and cheap enough to run long, so it is the reconnaissance before real work moves up. |
+| 2    | gpt-5.6-sol  | low, medium | ?x   | The default for real work.                                                                                                                                                      |
+| 3    | gpt-6-astra  | low → xhigh | ?x   | When sol at medium misses the bar. Astra low is the next rung after sol medium, and astra's effort climbs from there.                                                             |
 
-Codex does the execution: `gpt-5.6-sol` by default, `gpt-5.6-luna` for bulk mechanical passes (step-by-step implementation, migrations, bulk renames, grep-and-report) and for open-ended exploration and evidence gathering, where it is strong and its cost lets it run long. No Claude model does worker-tier thinking; the Agent/Workflow `model` parameter takes only Claude models, so a delegating agent's own model is not a tier decision.
+Start at the lowest rung the task could plausibly clear and climb when the output misses the bar. Climbing costs less than shipping mediocre work, so it needs no permission. Taste (UI/UX, code quality, API design, copy) tracks the ladder, with astra at the top.
 
-These are defaults, not limits, and overriding them needs no permission: when output doesn't meet the bar, rerun or redo it with more reasoning without asking. Escalating costs less than shipping mediocre work. Reach for `--effort` (up to `xhigh`) before reaching for another model, and use luna as reconnaissance — gather information and try things cheap, then move the real work up. The adversarial review is the second, challenging pass, not a second model. When computer use would help do or verify the work, hand it to Codex; the browser plugin is wired up there.
+Spawn the `codex:codex-rescue` subagent; it forwards one request and returns Codex's output verbatim. Name the rung in every request, since an unset model is a silent tier change: `--model`, `--effort`, and `--background` ride in the request text. Rescue writes by default, so a request that should only look must say read-only. Label the delegating agent with the worker, e.g. `{label: 'gpt-5.6-sol:review-auth'}`, because the UI shows only the wrapper's Claude model.
 
-Mechanics: delegation goes through the codex-plugin-cc plugin, not hand-rolled `codex` CLI strings — spawn the `codex:codex-rescue` subagent, which forwards one request and returns Codex's output verbatim. Always pass `--model`, since an unset model is a silent tier change; `--effort` and `--background` ride in the same request text. Rescue is **write-capable by default**, so a request that should only look must say read-only.
-
-Codex has the CLIs, the credentials in the shell, and the same skills as Claude, so anything with a command-line path is fair game. It cannot reach the claude.ai connectors (Slack, Notion, Drive, Linear, Sentry), the t3-code preview, Hunk, or herdr; work that needs those stays Claude-side. Label every delegating agent with the real worker's prefix, e.g. `{label: 'gpt-5.6-sol:review-auth'}`, since the UI shows only the wrapper's Claude model.
+Codex has the CLIs, the credentials in the shell, the browser plugin, and the same skills as Claude, so anything with a command-line or browser path is fair game. It cannot reach the claude.ai connectors (Slack, Notion, Drive, Linear, Sentry), the t3-code preview, Hunk, or herdr; that work stays Claude-side.
