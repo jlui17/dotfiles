@@ -21,7 +21,15 @@ It is an interactive desktop Justin may be sitting at: fine to build, test, and 
 ssh scm                      # alias in ~/.ssh/config: justinlui@scorecard-mac with a per-machine key
 ```
 
-Unlike the Linux boxes, this host uses ordinary public-key auth: each machine that reaches it has its own key in the mini's `authorized_keys` (the laptop's is `~/.ssh/ssh-to-scm`, sfx uses its `id_ed25519`). Two things a headless session can't do there: reach a private GitHub repo, because both the SSH key (1Password agent) and the gh token (macOS keychain) only answer an unlocked desktop session; public repos fetch fine over HTTPS, and Justin's own sessions at the desk are unaffected. It also can't find Homebrew, because a non-login shell lacks `/opt/homebrew/bin` (run install.sh under `zsh -lc`).
+Unlike the Linux boxes, this host uses ordinary public-key auth: each machine that reaches it has its own key in the mini's `authorized_keys` (the laptop's is `~/.ssh/ssh-to-scm`, sfx uses its `id_ed25519`). Two things an SSH shell can't do there. It can't reach a private GitHub repo, because an SSH login is its own macOS security session and the login keychain (where gh keeps its token) is locked in it; public repos fetch fine. The way around is to run the command in a herdr pane: the herdr server is a LaunchAgent in the desktop session, so a pane it spawns has the keychain unlocked (verified: `security find-generic-password` and a private `git ls-remote` both succeed there).
+
+```
+herdr --session default tab create --workspace <ws> --cwd <dir> --label <task> --no-focus   # → pane_id, tab_id
+herdr --session default pane run <pane_id> "<command> > <outfile> 2>&1"
+herdr --session default tab close <tab_id>                                                 # when done
+```
+
+Read results from the outfile; `pane read` came back empty for a short-lived command. The herdr-agents skill has the rest of the CLI. And an SSH shell can't find Homebrew, because a non-login shell lacks `/opt/homebrew/bin` (run install.sh under `zsh -lc`).
 
 ## srv — Hostinger VPS (Ubuntu, production)
 
