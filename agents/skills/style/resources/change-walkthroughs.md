@@ -1,6 +1,6 @@
 # Explaining a code change
 
-Two shapes. The **walkthrough** is the default, for "explain this change / this PR / this subsystem". The **signature profile** is for "what changed" asks about scope or shape — switch when the reader says "scope", "shape", or "what changed where".
+Two shapes. The **walkthrough** is the default, for "explain this change / this PR / this subsystem". The **signature profile** is for "what changed" asks about scope or shape: switch when the reader says "scope", "shape", or "what changed where".
 
 ## The walkthrough
 

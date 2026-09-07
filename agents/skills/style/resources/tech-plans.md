@@ -18,19 +18,19 @@ One unlabeled line saying what the section covers and why it's here, when not ob
 
 ## Current behavior: only what the design leans on
 
-Each current-behavior bullet earns its place by a design section depending on it. The test for a candidate bullet: if cutting it changes nothing about how the reader evaluates the design, cut it. That one test covers both failure modes — the obvious (a fact the reader derives themselves, like "fetched content stays in context") and the out-of-scope (accurate background no decision touches).
+Each current-behavior bullet earns its place by a design section depending on it. The test for a candidate bullet: if cutting it changes nothing about how the reader evaluates the design, cut it. That one test covers both failure modes: the obvious (a fact the reader derives themselves, like "fetched content stays in context") and the out-of-scope (accurate background no decision touches).
 
 ## Design: contract first, then flow, at behavior altitude
 
-The Design section opens with the central contract — the API or tool definitions, verbatim in a code block — and its rationale as the first subsection; the flow follows as a subsection, numbered in the order a request runs. Then Key Changes re-lists by component: the redundancy is deliberate, narrative builds the model, the per-file list makes it actionable. In Key Changes, one bullet per file with its changes as sub-bullets.
+The Design section opens with the central contract (the API or tool definitions, verbatim in a code block) and its rationale as the first subsection; the flow follows as a subsection, numbered in the order a request runs. Then Key Changes re-lists by component: the redundancy is deliberate, narrative builds the model, the per-file list makes it actionable. In Key Changes, one bullet per file with its changes as sub-bullets.
 
 Write flow steps at the altitude of architecture, behavior, and process: what the system, model, or user does. Include an implementation detail only when it *is* the design (an API interface, a parallelism/concurrency choice, data ownership); function names, encodings, and caching mechanics live in Key Changes or in code. Ground a step with a `file:line` when the claim is load-bearing, not per step.
 
 ## Decisions: chosen with its reasons, then "Alternatives considered:"
 
-Each decision opens with the chosen option and its reason in one or two direct sentences (#20): "**Chosen: download the PDF in the browser and extract its text, mostly for simplicity.**" When "why not X" is really what explains the chosen design's boundary (why frontend, not backend), it belongs in this prose, framed as the chosen design's reason.
+Each decision opens with the chosen option and its reason in one or two direct sentences: "**Chosen: download the PDF in the browser and extract its text, mostly for simplicity.**" When "why not X" is really what explains the chosen design's boundary (why frontend, not backend), it belongs in this prose, framed as the chosen design's reason.
 
-**Only key decisions get an entry.** A choice with no real competing option ("one agent, not two"; "prose in the system prompt, structured schema later") is obvious to the reader and gets no decision paragraph — stating it reads as padding ("i want to save decisions for key decisions. this one is very straight forward"). When every decision is straightforward, drop the Decisions section entirely and keep just an **Alternatives** section: the one or two live alternatives, each with why it wasn't chosen.
+**Only key decisions get an entry.** A choice with no real competing option ("one agent, not two"; "prose in the system prompt, structured schema later") is obvious to the reader and gets no decision paragraph: stating it reads as padding ("i want to save decisions for key decisions. this one is very straight forward"). When every decision is straightforward, drop the Decisions section entirely and keep just an **Alternatives** section: the one or two live alternatives, each with why it wasn't chosen.
 
 Then a literal **Alternatives considered:** label over the bullets, each **Approach** / **Why rejected** (or **Why deferred**: keep the distinction; *deferred* = viable later, *rejected* = no), one or two sentences each. Only live options qualify: an extension nobody proposed for now is future direction, not an alternative. This is the live-decision form; a settled doc compresses it per "Final design only" above.
 
@@ -44,7 +44,7 @@ Shortness is won by density, not by dropping definitions: naming a field is not 
 
 ## Inherited constants get provenance
 
-When the design changes an inherited value (a cap, timeout, budget), find where it came from — the introducing PR, its code, its review threads — and state the finding in the doc, absence included: "The existing 3 has no recorded rationale; PR #654 introduced it as a loop backstop." Reviewers then weigh the new value fresh instead of deferring to a number that was never reasoned.
+When the design changes an inherited value (a cap, timeout, budget), find where it came from (the introducing PR, its code, its review threads) and state the finding in the doc, absence included: "The existing 3 has no recorded rationale; PR #654 introduced it as a loop backstop." Reviewers then weigh the new value fresh instead of deferring to a number that was never reasoned.
 
 ## Test plans: flat declarative bullets
 

@@ -15,7 +15,7 @@ The beats a good description covers when they apply. **Guidelines, not a require
 3. **Fix / Changes**: the new desired behavior, the conceptual fix that produces it, and why it's sound. Give the architecture's shape if the solution has one, name a rejected alternative in a line when one was live, and point at the code that proves the behavior holds.
 4. **Verification**: what you ran and what each run proves, paired with the concern it answers (see below).
 5. **Deploy plan**, when rollout isn't trivial: order, flags, what to check after.
-6. **Limits / Out of scope**: what the approach costs, what it deliberately doesn't cover, and what's safe to leave alone and why ("normal-sized sessions still get the full transcript, so this only touches the ones already failing"). Bold the load-bearing limit (voice #6).
+6. **Limits / Out of scope**: what the approach costs, what it deliberately doesn't cover, and what's safe to leave alone and why ("normal-sized sessions still get the full transcript, so this only touches the ones already failing"). Bold the load-bearing limit.
 7. **Follow-ups**: the next problem, named so it stays visible without scope-creeping this PR. Deferred concerns get filed as backlog tasks stating the problem, not a prescribed solution.
 
 The weight is on 1-3; 6 and 7 stay short. Don't pad a small change to hit every beat.
@@ -45,7 +45,7 @@ Assume the reviewer hasn't read the ticket and doesn't know this corner of the s
 
 - **A cited file or symbol gets a one-clause definition and why it's relevant, never a bare name.** "Same pattern in `vm_warm.py` and `vm_snapshot.py`" tells a stranger nothing; "both build layers that push images (`vm_warm` = warm base, `vm_snapshot` = data restored in), so the fix lands in both" does. Name for findability, but earn the name.
 - **Stand-alone holds per section, not just per document.** Reviewers jump straight to Verification or Limits, so each section re-grounds its own load-bearing nouns instead of borrowing a term ("the crash", "the predicate") only the root-cause prose defined. A section that only parses if you've memorized an earlier one isn't standalone.
-- **The reviewer knows the codebase and the product, never the session's history.** Everything reader-facing on a PR (body, review replies, comments) is written as if the working sessions never happened: no references to closed or superseded PRs, commits in them, earlier scope decisions, or "this was green before the split" — the claim stands on what's verifiable from this PR alone. A reviewer has that history only when the user explicitly says so ("Yash knows about X").
+- **The reviewer knows the codebase and the product, never the session's history.** Everything reader-facing on a PR (body, review replies, comments) is written as if the working sessions never happened: no references to closed or superseded PRs, commits in them, earlier scope decisions, or "this was green before the split": the claim stands on what's verifiable from this PR alone. A reviewer has that history only when the user explicitly says so ("Yash knows about X").
 
 ## Verification and non-goals
 
@@ -71,8 +71,8 @@ After drafting, cut restatement and anything the diff already shows, keeping eve
 
 The body stays accurate for the life of the PR. Strong defaults, sized to the PR:
 
-- **Later commits that change the story get an "Update" section** prepended with the head SHA, and the superseded body text marked as superseded, so the body never claims something the diff no longer does. A rebase or a sibling PR merging triggers the same audit, per the always-on sweep rule ("needs X merged first" after X merged).
-- **Updates don't stack past two.** One or two Update sections during active review are fine; when a round rewrites the story (rename, removed feature, redesigned API), rewrite the whole body to describe the final state — a third supersession is the signal the body has become a changelog of the author's process instead of an answer to "what is this change".
+- **Later commits that change the story get an "Update" section** prepended with the head SHA, and the superseded body text marked as superseded, so the body never claims something the diff no longer does. A rebase or a sibling PR merging triggers the same audit (the moving-world rule in SKILL.md).
+- **Updates don't stack past two.** One or two Update sections during active review are fine; when a round rewrites the story (rename, removed feature, redesigned API), rewrite the whole body to describe the final state: a third supersession is the signal the body has become a changelog of the author's process instead of an answer to "what is this change".
 - **Fold review and chat answers back into the body**: a question one reviewer asked is a gap the next reviewer will hit.
 - **Post-merge verification lands as a PR comment with numbers** ("Post-merge prod verification: PASS across the board"), not silence.
 - **Review responses are numbered dispositions**, each mapping the comment to its fix commit SHA. Declining is fine when the reason is stated: "**Minor: `bash -e` without `pipefail`: leaving it.** A behavior change worth its own scoped pass, not a rider here."

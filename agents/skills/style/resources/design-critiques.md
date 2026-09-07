@@ -36,4 +36,4 @@ Say what to look at and what's wrong, never "here's a screenshot."
 
 ## Position your vantage point up front
 
-One line of what you do/don't know calibrates the reader: "I know the concepts behind agent simulation, but I've never done it hands-on, so these notes are about where I couldn't tell what something did or why." Subjective qualifiers on feel-claims (voice #10) carry weight here: "read as" / "looked" / "felt like" mark a personal-experience report, exactly what a critique is.
+One line of what you do/don't know calibrates the reader: "I know the concepts behind agent simulation, but I've never done it hands-on, so these notes are about where I couldn't tell what something did or why." Personal-experience markers on feel-claims carry weight here: "read as" / "looked" / "felt like" mark a personal-experience report, exactly what a critique is.

@@ -1,12 +1,12 @@
 # Slack / peer messages
 
-Casual and conversational: closer to how you'd actually type to a teammate than to a PR description. Same voice (actor-as-subject, behavior-first, append-reason, no hype; a parenthetical, colon, comma, or fresh sentence over an em-dash), but it *flows*. Don't telegraph.
+Casual and conversational: closer to how you'd actually type to a teammate than to a PR description. The voice holds, but it *flows*: lean, not telegraphic.
 
 - **A light greeting is fine.** "Hey," to open is normal chat, not throat-clearing.
-- **Full conversational sentences, clauses joined naturally** with `since` / `but` / `as long as` / `then`. One-idea-per-sentence (voice #8) is for dense technical prose; in chat, write the way you'd say it out loud. One-claim-per-line bullets read as a robot.
+- **Full conversational sentences, clauses joined naturally** with `since` / `but` / `as long as` / `then`. One idea per sentence is for dense technical prose; in chat, write the way you'd say it out loud. One-claim-per-line bullets read as a robot.
 - **Link the one artifact the reader will open** (the PR URL, inline) and name only the 1-2 identifiers central to your point. Don't enumerate test files, pass counts, or "runs in CI": that reads as AI over-justification. Trust them to click through.
 - **Say how the work was actually done**, plainly. "I got Claude to mock it locally by ..." beats "I forced it." No inflation.
-- **State your confidence and the assumption it rests on** (voice #13), inviting correction rather than declaring victory.
+- **State your confidence and the assumption it rests on**, inviting correction rather than declaring victory.
 - **Scope to this reader's decision.** Cut tangents that don't bear on what they need now (infra/CI flakiness belongs on the PR, not in the ping).
 - **Pair the channel with the depth.** Full reasoning lands on the PR as a comment first; then the Slack ping is the quick version pointing at it.
 

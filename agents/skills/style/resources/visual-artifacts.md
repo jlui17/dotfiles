@@ -2,7 +2,7 @@
 
 Anything the reader looks at before they read. Voice holds where words appear, but here the medium carries the meaning. Strong defaults, not hard rules: judge what this artifact needs to communicate.
 
-## Too much text is the first failure mode
+## The picture carries the meaning
 
 A visual drowning in prose has failed before layout is judged ("not what i was thinking. there's too much text"). Encode with position, size, color, and arrows; words are a last resort, only for what can't be shown. If a paragraph is explaining the picture, the picture isn't doing its job.
 
@@ -28,7 +28,7 @@ Precise, domain-standard names, with a definitional tooltip or caption where the
 
 When a physical whiteboard or a teammate's sketch becomes the team's mental model, the diagram adopts its layout and its names. Two competing pictures of the same system split the discussion; converging on one keeps every comment landing on the same boxes.
 
-## No misleading simplifications
+## Draw only what you would assert
 
 A diagram asserts everything it draws. An uncertain claim is deleted, not softened ("the bottleneck of step 4 is kind of unknown" → remove the bottleneck): an absent element reads as unknown, a drawn one reads as fact.
 
