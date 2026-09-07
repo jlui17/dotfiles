@@ -1,0 +1,1 @@
+throwaway file to verify gh-resolve-review-thread.sh; the PR is closed and the branch deleted afterwards
