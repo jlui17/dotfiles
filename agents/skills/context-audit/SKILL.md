@@ -1,6 +1,6 @@
 ---
 name: context-audit
-description: Use whenever standing context is created, changed, questioned, or audited. Fires when Justin says to remember something or corrects the same thing twice; when a lesson from the current task looks worth keeping; when deciding whether and where something should persist; before writing, editing, or reviewing a rules.d fragment, a global or repo skill, a slash command, an output style, or a CLAUDE.md in any repo; when existing context looks stale, wrong, or duplicated; and on any ask to audit the rules, consolidate context, or find overlapping instructions or twins.
+description: Use when standing context is saved, edited, or audited: Justin says to remember something or corrects the same thing twice; a rules.d fragment, skill, slash command, output style, or CLAUDE.md is about to be written or edited in any repo; or existing context looks stale, duplicated, or in need of consolidation.
 ---
 
 # Maintaining standing context
@@ -33,11 +33,18 @@ Stale or wrong context gets removed with the same energy new lessons get added. 
 
 The writing bar for both layers, what earns a line in a CLAUDE.md and what earns a skill, is the next three sections; read them before writing either layer.
 
+## Writing for an agent, any layer
+
+The general craft (context pointers, the information hierarchy, completion criteria, leading words, pruning) is the `writing-for-agents` skill in the mattpocock-skills plugin; where it is installed, read it alongside this one. Two of its rules hold here for every layer, and this skill is written to them:
+
+- **State the target behavior.** A prohibition drags the banned behavior into context and half-reads as an instruction to do it. Write what to do; keep a prohibition only as a guardrail that has no positive phrasing, and pair it with the positive target.
+- **One trigger per branch.** A skill description and a pointer line in a CLAUDE.md are the same object: they name material and the distinct cases that should reach it. Give each distinct case one trigger, front-loaded with the word that does the work; synonyms that rename one case are one branch written twice.
+
 ## Writing a skill
 
 Distilled from Anthropic's skill-creator (https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md), keeping only what applies here. Holds for global and repo skills alike.
 
-- **The description is the trigger, and the only part always in context.** Write it as a pure use-when: third person, naming the concrete situations and phrasings that should fire it. Keep it to about 100 words. Err pushy, since models undertrigger; the body, never the description, carries the how.
+- **The description is the trigger, and the only part always in context.** Write it as a pure use-when: third person, one trigger per distinct case, about 100 words. The body carries the how.
 - **Progressive disclosure.** The body loads only on trigger: keep it well under 500 lines, and move reference-grade material into `resources/` files the body points at (the style skill is the example). A script the skill keeps rewriting inline belongs in a bundled `scripts/` dir instead.
 - **Explain why, not just what.** A principle plus its reason beats a rigid prescription; the model generalizes from the why. Keep the skill general: when feedback prompts an edit, encode the generalized lesson, not the one triggering example.
 - **Only the non-derivable.** A skill carries workflow, gotchas, and contracts the model can't deduce from the repo or from generic best practice; everything else is context spent twice.
@@ -45,7 +52,7 @@ Distilled from Anthropic's skill-creator (https://github.com/anthropics/skills/b
 
 ## Writing the global CLAUDE.md
 
-`~/CLAUDE.md` is a letter from Justin to Claude, not a rulebook. It is one fragment, `agents/rules.d/10-letter.md`, and it reads as Justin speaking: first person, casual, short sentences that flow. One topic per paragraph, ordered by importance, with no headings and no topic prefixes ("Scope first."). It explains why and trusts the model's judgment; it never gates, enumerates steps, or lists cases. Less is more: an addition is an edit to the paragraph it belongs to, rewritten so it still flows, never a sentence bolted onto the end. About ten paragraphs is the size; past that, something has to go.
+`~/CLAUDE.md` is a letter from Justin to Claude. It is one fragment, `agents/rules.d/10-letter.md`, and it reads as Justin speaking: first person, casual, short sentences that flow. One topic per paragraph, ordered by importance, with no headings and no topic prefixes ("Scope first."). It explains why and trusts the model's judgment; gates, steps, and case lists belong in skills. Less is more: an addition is an edit to the paragraph it belongs to, rewritten so it still flows. About ten paragraphs is the size; past that, something has to go.
 
 Ask what a line is for before writing it. A trap, a procedure, or reference material goes in the skill that fires when it's needed; the letter carries at most a pointer, and none at all when a skill description already triggers on the situation. herdr-specific text goes in `claude-code/herdr-session-hook.sh`, which fires only where herdr runs. `99-local.md` keeps the same voice, opened with "A few things that only apply on this machine."
 
@@ -55,7 +62,7 @@ The voice, by example. Not: "Comments default to none. Write one only when it sa
 
 From the Claude 5 context-engineering guidance (https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models). A repo's CLAUDE.md is documentation for any agent, so it keeps the ordinary shape rather than the letter's voice.
 
-- **Lightweight: gotchas over description.** Briefly say what the repo is for, then spend the tokens on non-obvious insights: unique architectural decisions, invariants, traps. Never spend them on what the model can deduce by reading the tree or the code.
+- **Lightweight: gotchas over description.** Briefly say what the repo is for, then spend the tokens on non-obvious insights: unique architectural decisions, invariants, traps. What the model can read from the tree or the code stays there.
 - **Judgment over constraint.** State the principle and trust the model's reasoning ("write code that reads like the surrounding code") instead of enumerating rigid per-case rules.
 - **Progressive disclosure.** Specialized guidance goes in a skill; CLAUDE.md carries the pointer and the trigger, not the content.
 
