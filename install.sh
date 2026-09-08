@@ -174,7 +174,7 @@ GUI_APPS=(
   "OpenCode|command -v opencode|brew install opencode||npm i -g opencode-ai"
   "Codex|command -v codex|brew install codex|npm i -g @openai/codex|npm i -g @openai/codex"
   "Herdr|command -v herdr|brew install herdr|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\"|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\""
-  "T3 Code Nightly|command -v t3code-nightly||yay -S --noconfirm t3code-nightly-bin|"
+  "T3 Code Nightly|brew list --cask t3-code@nightly|brew install --cask t3-code@nightly|yay -S --noconfirm t3code-nightly-bin|"
   "agent-browser|agent_browser_installed|brew install agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install --with-deps"
 )
 
