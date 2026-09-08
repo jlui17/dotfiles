@@ -40,5 +40,5 @@ ssh root@srv1445290          # only when root is genuinely needed (docker, syste
 
 This box runs production services, so treat restarts, deploys, and config changes as approval-gated; reading state is always fine.
 
-- **openclaw gateway** — runs as its own `openclaw` user (`/home/openclaw`, gateway on port 18789). That user is also the one the dotfiles are installed under on this box (`ssh openclaw@srv1445290`), so its `~/CLAUDE.md` and `~/.codex/AGENTS.md` are the generated global rules, not hand-written notes. The same user runs a t3code server as a systemd user service (`t3code.service`), bound to the Tailscale address.
+- **openclaw gateway** — runs as its own `openclaw` user (`/home/openclaw`, gateway on port 18789). That user is also the one the dotfiles are installed under on this box (`ssh openclaw@srv1445290`), so its `~/CLAUDE.md` and `~/.codex/AGENTS.md` are the generated global rules, not hand-written notes. The same user runs a t3code server as a systemd user service (`t3code.service`), bound to the Tailscale address, and a herdr server (`herdr.service`).
 - **puzzlewithme** — docker compose stack (`puzzlewithme-web`, `puzzlewithme-server`, `puzzlewithme-cloudflared`), exposed via the Cloudflare tunnel, nothing on host ports. Docker is root-owned: `docker ps` needs root.

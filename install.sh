@@ -1146,6 +1146,17 @@ setup_herdr() {
   ensure_dir "$herdr_dir"
 
   backup_and_link "$DOTFILES_DIR/herdr/config.toml" "$herdr_dir/config.toml"
+
+  # macOS runs the server as brew's LaunchAgent; on Linux nothing supervises
+  # it (a client spawns one on demand and it dies with the machine), so a user
+  # unit keeps it up for headless use and remote herdr clients.
+  if [[ "$OS" != "macos" ]]; then
+    local units_dir="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
+    ensure_dir "$units_dir"
+    backup_and_link "$DOTFILES_DIR/herdr/herdr.service" "$units_dir/herdr.service"
+    systemctl --user daemon-reload
+    track "herdr.service" systemctl --user enable --now herdr.service
+  fi
 }
 
 # ──────────────────────────────────────────────

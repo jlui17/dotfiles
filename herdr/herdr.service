@@ -1,0 +1,14 @@
+[Unit]
+Description=Herdr server
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=%h
+ExecStart=%h/.local/bin/herdr server
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

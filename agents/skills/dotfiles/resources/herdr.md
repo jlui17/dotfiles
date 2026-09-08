@@ -1,6 +1,6 @@
 # Herdr
 
-Owns `herdr/config.toml` (keybindings, theme, sidebar); linked by `setup_herdr`. The app itself installs through the `Herdr` row of `GUI_APPS`, so `SKIP_MODULES` and `SKIP_APPS` skip the config and the app independently. This resource covers the config only; driving herdr programmatically (sessions, panes, agents) is the sibling global skill `herdr-agents`.
+Owns `herdr/config.toml` (keybindings, theme, sidebar) and `herdr/herdr.service`, the systemd user unit that keeps the server up on Linux; both linked by `setup_herdr`. The app itself installs through the `Herdr` row of `GUI_APPS`, so `SKIP_MODULES` and `SKIP_APPS` skip the config and the app independently. On macOS the server is brew's LaunchAgent (`brew services`), so the unit is Linux-only; check it with `systemctl --user status herdr`. This resource covers the config only; driving herdr programmatically (sessions, panes, agents) is the sibling global skill `herdr-agents`.
 
 ## Split keys mirror tmux
 
