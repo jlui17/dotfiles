@@ -165,6 +165,14 @@ agent_browser_installed() {
   command_exists agent-browser && (( ${#browsers} ))
 }
 
+t3code_nightly_installed() {
+  case "$OS" in
+    macos) brew list --cask t3-code@nightly &>/dev/null ;;
+    arch) pacman -Q t3code-nightly-bin &>/dev/null ;;
+    *) return 1 ;;
+  esac
+}
+
 GUI_APPS=(
   "Raycast|brew list --cask raycast|brew install --cask raycast||"
   "AltTab|brew list --cask alt-tab|brew install --cask alt-tab||"
@@ -174,7 +182,7 @@ GUI_APPS=(
   "OpenCode|command -v opencode|brew install opencode||npm i -g opencode-ai"
   "Codex|command -v codex|brew install codex|npm i -g @openai/codex|npm i -g @openai/codex"
   "Herdr|command -v herdr|brew install herdr|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\"|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\""
-  "T3 Code Nightly|brew list --cask t3-code@nightly|brew install --cask t3-code@nightly|yay -S --noconfirm t3code-nightly-bin|"
+  "T3 Code Nightly|t3code_nightly_installed|brew install --cask t3-code@nightly|yay -S --noconfirm t3code-nightly-bin|"
   "agent-browser|agent_browser_installed|brew install agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install --with-deps"
 )
 
@@ -207,7 +215,7 @@ MODULES=(
   retire-pi:retire_pi
   herdr:setup_herdr
   dev-machines:setup_dev_machines
-  t3:setup_t3:ubuntu
+  t3:setup_t3
   codex:setup_codex
   claude-code:setup_claude_code
   agents:setup_agents
@@ -1188,17 +1196,18 @@ setup_dev_machines() {
 #  PHASE 6d — T3 Code
 # ──────────────────────────────────────────────
 
-# The T3 Code server tracks the `nightly` dist-tag, updated daily at 8am
-# Pacific by a systemd timer and on demand by the same `update_t3` script, so
-# the scheduled path and the manual one can't drift.
+# Desktop machines update the app on demand. The Ubuntu server tracks the
+# `nightly` dist-tag on demand and daily at 8am Pacific.
 setup_t3() {
   echo "==> T3 Code updates..."
   local module_dir="$DOTFILES_DIR/t3"
-  local units_dir="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
   ensure_dir "$HOME/.local/bin"
-  ensure_dir "$units_dir"
-
   backup_and_link "$module_dir/update_t3" "$HOME/.local/bin/update_t3"
+
+  [[ "$OS" != "ubuntu" ]] && return
+
+  local units_dir="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
+  ensure_dir "$units_dir"
   backup_and_link "$module_dir/t3code-update.service" "$units_dir/t3code-update.service"
   backup_and_link "$module_dir/t3code-update.timer" "$units_dir/t3code-update.timer" \
     && note "Daily T3 Code nightly update is on (8am Pacific). Run update_t3 to update now."
