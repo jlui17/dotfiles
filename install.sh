@@ -1147,10 +1147,22 @@ setup_herdr() {
 
   backup_and_link "$DOTFILES_DIR/herdr/config.toml" "$herdr_dir/config.toml"
 
-  # macOS runs the server as brew's LaunchAgent; on Linux nothing supervises
-  # it (a client spawns one on demand and it dies with the machine), so a user
-  # unit keeps it up for headless use and remote herdr clients.
-  if [[ "$OS" != "macos" ]]; then
+  # Nothing supervises the server out of the box: a client spawns one on
+  # demand and it dies with the machine. A user unit (Linux) or LaunchAgent
+  # (macOS) keeps it up for headless use and for other machines' herdr clients.
+  # Both start it as its own session leader, which saved-machine federation
+  # requires; brew's own service does not, so it is replaced.
+  if [[ "$OS" == "macos" ]]; then
+    local agents_dir="$HOME/Library/LaunchAgents"
+    ensure_dir "$agents_dir"
+    if launchctl print "gui/$UID/sh.brew.herdr" &>/dev/null; then
+      track "stop brew's herdr service" brew services stop herdr
+    fi
+    backup_and_link "$DOTFILES_DIR/herdr/herdr.plist" "$agents_dir/herdr.plist"
+    if ! launchctl print "gui/$UID/herdr" &>/dev/null; then
+      track "load herdr LaunchAgent" launchctl bootstrap "gui/$UID" "$agents_dir/herdr.plist"
+    fi
+  else
     local units_dir="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
     ensure_dir "$units_dir"
     backup_and_link "$DOTFILES_DIR/herdr/herdr.service" "$units_dir/herdr.service"

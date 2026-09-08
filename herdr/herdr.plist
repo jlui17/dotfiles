@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>herdr</string>
+	<!-- herdr only federates a server that is its own session leader
+	     (getsid == getpid). launchd does not start jobs that way, so the
+	     server is exec'd through setsid; perl ships with macOS, setsid does not. -->
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/bin/perl</string>
+		<string>-MPOSIX</string>
+		<string>-e</string>
+		<string>POSIX::setsid(); exec @ARGV or die "exec: $!"</string>
+		<string>--</string>
+		<string>/opt/homebrew/bin/herdr</string>
+		<string>server</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>/opt/homebrew/var/log/herdr.log</string>
+	<key>StandardErrorPath</key>
+	<string>/opt/homebrew/var/log/herdr.log</string>
+</dict>
+</plist>
