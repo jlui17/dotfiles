@@ -29,7 +29,7 @@ herdr --session default pane run <pane_id> "<command> > <outfile> 2>&1"
 herdr --session default tab close <tab_id>                                                 # when done
 ```
 
-Read results from the outfile; `pane read` came back empty for a short-lived command. The herdr-agents skill has the rest of the CLI. And an SSH shell can't find Homebrew, because a non-login shell lacks `/opt/homebrew/bin` (run install.sh under `zsh -lc`).
+Read results from the outfile; `pane read` came back empty for a short-lived command. The herdr-agents skill has the rest of the CLI. A machine-local `~/.zshenv` puts `/opt/homebrew/bin` on PATH for non-interactive shells (ssh commands, `herdr machine add`), which zsh's login files alone don't.
 
 ## srv — Hostinger VPS (Ubuntu, production)
 
