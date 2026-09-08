@@ -21,7 +21,7 @@ It is an interactive desktop Justin may be sitting at: fine to build, test, and 
 ssh scm                      # alias in ~/.ssh/config: justinlui@scorecard-mac with a per-machine key
 ```
 
-Unlike the Linux boxes, this host uses ordinary public-key auth: each machine that reaches it has its own key in the mini's `authorized_keys` (the laptop's is `~/.ssh/ssh-to-scm`, sfx uses its `id_ed25519`). Two things an SSH shell can't do there. It can't reach a private GitHub repo, because an SSH login is its own macOS security session and the login keychain (where gh keeps its token) is locked in it; public repos fetch fine. The way around is to run the command in a herdr pane: the herdr server is a LaunchAgent in the desktop session, so a pane it spawns has the keychain unlocked (verified: `security find-generic-password` and a private `git ls-remote` both succeed there).
+Unlike the Linux boxes, this host uses ordinary public-key auth: each machine that reaches it has its own key in the mini's `authorized_keys` (the laptop's is `~/.ssh/ssh-to-scm`, sfx uses its `id_ed25519`). One thing an SSH shell can't do there: reach a private GitHub repo, because an SSH login is its own macOS security session and the login keychain (where gh keeps its token) is locked in it; public repos fetch fine. The way around is to run the command in a herdr pane: the herdr server is a LaunchAgent in the desktop session, so a pane it spawns has the keychain unlocked (verified: `security find-generic-password` and a private `git ls-remote` both succeed there).
 
 ```
 herdr --session default tab create --workspace <ws> --cwd <dir> --label <task> --no-focus   # → pane_id, tab_id
