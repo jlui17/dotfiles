@@ -8,7 +8,7 @@ A skill has one home. Codex reads `~/.agents/skills` natively; Claude Code disco
 
 `SKIP_SKILLS` in `.dotfiles-local` hides a skill on one machine; the run prunes an already-linked skill once it is listed. An unknown name warns at the top of the run (`validate_skip_lists`) instead of failing silently.
 
-The writing bar for a skill (what earns a skill, what earns a line in it, the trigger description) lives in the context-audit skill. Read it before writing or editing one; this file does not restate it.
+The writing bar for a skill (what earns a skill, what earns a line in it, the trigger description) lives in the managing-context skill. Read it before writing or editing one; this file does not restate it.
 
 ## Global rules
 
@@ -25,7 +25,7 @@ The writing bar for a skill (what earns a skill, what earns a line in it, the tr
 - `SKIP_RULES` in `.dotfiles-local` names slugs from either directory (`rule_section_slugs` reads both) and applies to both files. An unknown slug warns (`validate_skip_lists`).
 - `assemble_global_rules` warns when a generated file passes its line budget; the number lives there. Past it, distill a fragment or push detail into a skill.
 
-The shared rules are one fragment, `10-letter.md`: a letter in Justin's voice, with the writing bar in the context-audit skill. `62-worker-cost.md` stays its own fragment so a machine can skip it.
+The shared rules are one fragment, `10-letter.md`: a letter in Justin's voice, with the writing bar in the managing-context skill. `62-worker-cost.md` stays its own fragment so a machine can skip it.
 
 ## External skills
 

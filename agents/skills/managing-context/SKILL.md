@@ -1,5 +1,5 @@
 ---
-name: context-audit
+name: managing-context
 description: Use when standing context is saved, edited, or audited: Justin says to remember something or corrects the same thing twice; a rules.d fragment, skill, slash command, output style, or CLAUDE.md is about to be written or edited in any repo; or existing context looks stale, duplicated, or in need of consolidation.
 ---
 
