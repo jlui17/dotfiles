@@ -1158,6 +1158,8 @@ setup_herdr() {
     if launchctl print "gui/$UID/sh.brew.herdr" &>/dev/null; then
       track "stop brew's herdr service" brew services stop herdr
     fi
+    ensure_dir "$HOME/.local/bin"
+    backup_and_link "$DOTFILES_DIR/herdr/herdr-server-daemon" "$HOME/.local/bin/herdr-server-daemon"
     backup_and_link "$DOTFILES_DIR/herdr/herdr.plist" "$agents_dir/herdr.plist"
     if ! launchctl print "gui/$UID/herdr" &>/dev/null; then
       track "load herdr LaunchAgent" launchctl bootstrap "gui/$UID" "$agents_dir/herdr.plist"

@@ -1,0 +1,25 @@
+#!/usr/bin/perl
+# Runs `herdr server` as its own session leader under launchd.
+#
+# herdr federates a server to other machines' clients only when the server
+# process is a session leader (getsid == getpid). launchd starts jobs as
+# process-group leaders, and setsid(2) refuses those, so the server is started
+# from a forked child that can call setsid. This parent stays alive for
+# launchd's KeepAlive, forwards termination to the server, and exits with its
+# status. perl because it ships with macOS and setsid(1) does not.
+use strict;
+use warnings;
+use POSIX ();
+
+my @server = @ARGV or die "usage: herdr-server-daemon <herdr> server\n";
+
+my $pid = fork();
+die "fork: $!\n" unless defined $pid;
+if ($pid == 0) {
+    POSIX::setsid() // die "setsid: $!\n";
+    exec @server or die "exec @server: $!\n";
+}
+
+$SIG{TERM} = $SIG{INT} = $SIG{HUP} = sub { kill 'TERM', $pid };
+waitpid($pid, 0);
+exit($? >> 8);
