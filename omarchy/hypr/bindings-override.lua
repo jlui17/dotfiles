@@ -24,7 +24,7 @@ o.bind("SUPER + SHIFT + K", "Keybindings", "omarchy-menu-keybindings")
 -- T3 Code takes SUPER RETURN; herdr in the default terminal moves to SUPER CTRL RETURN.
 hl.unbind("SUPER + RETURN")
 hl.unbind("SUPER + CTRL + RETURN")
-o.bind("SUPER + RETURN", "T3 Code Nightly", { launch = "t3code-desktop" })
+o.bind("SUPER + RETURN", "T3 Code Nightly", { launch = "t3code-nightly" })
 o.bind("SUPER + CTRL + RETURN", "Herdr", { omarchy = "terminal-herdr" })
 
 -- Speech-to-text. hyprwhspr setup writes this to ~/.config/hypr/bindings.conf,

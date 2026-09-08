@@ -207,7 +207,7 @@ MODULES=(
   retire-pi:retire_pi
   herdr:setup_herdr
   dev-machines:setup_dev_machines
-  t3:setup_t3:arch,ubuntu
+  t3:setup_t3:ubuntu
   codex:setup_codex
   claude-code:setup_claude_code
   agents:setup_agents
@@ -1199,14 +1199,7 @@ setup_t3() {
   backup_and_link "$module_dir/t3code-update.timer" "$units_dir/t3code-update.timer" \
     && note "Daily T3 Code nightly update is on (8am Pacific). Run update_t3 to update now."
 
-  if [[ "$OS" == "arch" ]]; then
-    local applications_dir="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
-    ensure_dir "$applications_dir"
-    backup_and_link "$module_dir/t3code-desktop" "$HOME/.local/bin/t3code-desktop"
-    backup_and_link "$module_dir/t3code.desktop" "$applications_dir/t3code.desktop"
-  fi
-
-  [[ "$OS" == "ubuntu" ]] && write_t3_bind_dropin "$units_dir"
+  write_t3_bind_dropin "$units_dir"
 
   systemctl --user daemon-reload
   track "t3code-update.timer" systemctl --user enable --now t3code-update.timer
