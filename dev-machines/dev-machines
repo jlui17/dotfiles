@@ -1,0 +1,168 @@
+#!/bin/zsh
+# dev-machines — Justin's dev machine registry and the fleet commands that run
+# against it. `dev-machines list` is the readable view of the registry.
+
+# name|tailnet host|ssh target|os|role
+# scorecard-mac's ssh target is the alias `scm`, not user@host: that Mac uses
+# per-machine SSH keys, and every machine that reaches it carries a `Host scm`
+# entry in its ~/.ssh/config with the right user and key. The other two use
+# Tailscale SSH, so user@host is enough.
+MACHINES=(
+  "sfx|sfx|jlui17@sfx|arch|home desktop (Omarchy), always on"
+  "srv|srv1445290|openclaw@srv1445290|ubuntu|Hostinger VPS, production"
+  "scorecard-mac|scorecard-mac|scm|macos|Mac at Scorecard"
+)
+
+DOTFILES_REPO="$HOME/src/personal/dotfiles"
+TAILSCALE="${commands[tailscale]:-/Applications/Tailscale.app/Contents/MacOS/Tailscale}"
+HERDR="${commands[herdr]:-$HOME/.local/bin/herdr}"
+
+die() {
+  print -r -- "dev-machines: $*" >&2
+  exit 1
+}
+
+usage() {
+  cat <<'EOF'
+usage: dev-machines <command>
+
+  whoami          which registered machine this is, and its herdr server state
+  list            every registered machine, online or offline per tailscale
+  sync [name...]  pull and ./install.sh on every other machine, or the named ones
+  herdr-add       save every other machine in this machine's herdr
+EOF
+}
+
+machine_names() {
+  print -r -- "${(@)MACHINES%%|*}"
+}
+
+join_names() {
+  print -r -- "${(j:, :)@}"
+}
+
+machine_row() {
+  local row
+  for row in "${MACHINES[@]}"; do
+    [[ "${row%%|*}" == "$1" ]] && { print -r -- "$row"; return 0; }
+  done
+  return 1
+}
+
+row_field() {
+  print -r -- "${${(s:|:)1}[$2]}"
+}
+
+local_tailnet_host() {
+  "$TAILSCALE" status --self --peers=false | awk '{print $2}'
+}
+
+current_machine() {
+  local host row
+  host=$(local_tailnet_host)
+  for row in "${MACHINES[@]}"; do
+    [[ "$(row_field "$row" 2)" == "$host" ]] && { print -r -- "${row%%|*}"; return 0; }
+  done
+  return 1
+}
+
+other_machines() {
+  local self
+  self=$(current_machine)
+  print -r -- "${(@)${(@)MACHINES%%|*}:#$self}"
+}
+
+herdr_server_state() {
+  [[ -x "$HERDR" ]] || { print "herdr: not installed"; return; }
+  local server_status version detached="not detached"
+  server_status=$("$HERDR" status server --json 2>/dev/null)
+  [[ "$server_status" == *'"running":true'* ]] || { print "herdr server: stopped"; return; }
+  [[ "$server_status" =~ '"version":"([^"]*)"' ]] && version="$match[1]"
+  [[ "$server_status" == *'"detached_server_daemon":true'* ]] && detached="detached"
+  print "herdr server: running $version, $detached"
+}
+
+online_state() {
+  local host="$1" tailscale_status="$2" line
+  line=$(print -r -- "$tailscale_status" | awk -v host="$host" '$2 == host')
+  if [[ -n "$line" && "$line" != *offline* ]]; then print online; else print offline; fi
+}
+
+cmd_whoami() {
+  local self row
+  self=$(current_machine) || {
+    print -r -- "not a dev machine (tailnet host $(local_tailnet_host)). Dev machines: $(join_names $(machine_names))."
+    return 0
+  }
+  row=$(machine_row "$self")
+  print -r -- "$self: $(row_field "$row" 5)"
+  print -r -- "os: $(row_field "$row" 4)"
+  print -r -- "ssh target: $(row_field "$row" 3)"
+  herdr_server_state
+  print -r -- "Other dev machines: $(join_names $(other_machines))"
+}
+
+cmd_list() {
+  local tailscale_status row name host target os role
+  tailscale_status=$("$TAILSCALE" status 2>/dev/null)
+  for row in "${MACHINES[@]}"; do
+    IFS='|' read -r name host target os role <<< "$row"
+    printf '%-14s %-14s %-20s %-7s %-8s %s\n' \
+      "$name" "$host" "$target" "$os" "$(online_state "$host" "$tailscale_status")" "$role"
+  done
+}
+
+cmd_sync() {
+  local unpushed name row rc output failed=0
+  local -a targets
+  git -C "$DOTFILES_REPO" fetch -q origin || die "git fetch failed in $DOTFILES_REPO"
+  unpushed=$(git -C "$DOTFILES_REPO" rev-list --count origin/main..main)
+  (( unpushed == 0 )) || die "$unpushed local commit(s) not on origin/main. Push first; the machines pull from origin."
+
+  targets=("$@")
+  (( $# )) || targets=($(other_machines))
+  for name in "${targets[@]}"; do
+    machine_row "$name" >/dev/null || die "unknown machine: $name. Dev machines: $(join_names $(machine_names))."
+  done
+
+  output=$(mktemp)
+  for name in "${targets[@]}"; do
+    row=$(machine_row "$name")
+    ssh -o BatchMode=yes -o ConnectTimeout=10 "$(row_field "$row" 3)" \
+      'cd ~/src/personal/dotfiles && GIT_TERMINAL_PROMPT=0 git pull --ff-only -q && zsh -lc ./install.sh && git log --oneline -1' \
+      >"$output" 2>&1
+    rc=$?
+    case $rc in
+      0) print -r -- "$name: $(tail -n 1 "$output")" ;;
+      255) print -r -- "$name: unreachable"; failed=1 ;;
+      *) print -r -- "$name: FAILED (exit $rc)"; sed 's/^/    /' < <(tail -n 15 "$output"); failed=1 ;;
+    esac
+  done
+  rm -f "$output"
+  return $failed
+}
+
+cmd_herdr_add() {
+  local saved name row target out
+  saved=$("$HERDR" machine list)
+  for name in $(other_machines); do
+    row=$(machine_row "$name")
+    target=$(row_field "$row" 3)
+    if [[ -n "$(print -r -- "$saved" | awk -F'\t' -v target="$target" '$3 == target')" ]]; then
+      print -r -- "$name: already saved"
+    elif out=$("$HERDR" machine add "$target" --label "$name" 2>&1); then
+      print -r -- "$name: added"
+    else
+      print -r -- "$name: FAILED: ${out##*$'\n'}"
+    fi
+  done
+}
+
+case "${1:-}" in
+  whoami) cmd_whoami ;;
+  list) cmd_list ;;
+  sync) shift; cmd_sync "$@" ;;
+  herdr-add) cmd_herdr_add ;;
+  -h|--help) usage ;;
+  *) usage >&2; exit 1 ;;
+esac

@@ -206,6 +206,7 @@ MODULES=(
   opencode:setup_opencode
   retire-pi:retire_pi
   herdr:setup_herdr
+  dev-machines:setup_dev_machines
   t3:setup_t3:arch,ubuntu
   codex:setup_codex
   claude-code:setup_claude_code
@@ -1171,6 +1172,12 @@ setup_herdr() {
     systemctl --user daemon-reload
     track "herdr.service" systemctl --user enable --now herdr.service
   fi
+}
+
+setup_dev_machines() {
+  echo "==> dev-machines..."
+  ensure_dir "$HOME/.local/bin"
+  backup_and_link "$DOTFILES_DIR/dev-machines/dev-machines" "$HOME/.local/bin/dev-machines"
 }
 
 # ──────────────────────────────────────────────
