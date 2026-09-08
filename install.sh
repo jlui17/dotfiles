@@ -572,6 +572,10 @@ validate_skip_lists() {
   for entry in "${SKIP_SKILLS[@]}"; do
     (( ${skill_names[(Ie)$entry]} )) || warn "SKIP_SKILLS: unknown skill '$entry' (ignored)."
   done
+  # The worker-cost rule sends Claude's workers to Codex, so it needs the CLI.
+  if (( ! ${SKIP_RULES[(Ie)worker-cost]} && ${SKIP_APPS[(Ie)Codex]} )); then
+    warn "SKIP_APPS skips Codex but SKIP_RULES keeps worker-cost; ~/CLAUDE.md will tell Claude to delegate to a Codex it can't run."
+  fi
 }
 
 # Symlink src → dst, backing up whatever was there first. The single backup

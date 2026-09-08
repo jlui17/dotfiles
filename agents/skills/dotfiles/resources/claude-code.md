@@ -4,7 +4,7 @@ Owns what only Claude Code reads: commands, Claude-only rule fragments in `rules
 
 ## Global rules
 
-`rules.d/` here holds the fragments that mean nothing to Codex (`62-worker-cost.md`), so they reach `~/CLAUDE.md` only. The shared fragments, the assembly, the generated files, `99-local.md`, `SKIP_RULES`, and the line budget are in `resources/agents.md`.
+`rules.d/` here holds the fragments that mean nothing to Codex (`62-worker-cost.md`, which sends Claude's workers to Codex), so they reach `~/CLAUDE.md` only. The shared fragments, the assembly, the generated files, `99-local.md`, `SKIP_RULES`, and the line budget are in `resources/agents.md`.
 
 ## Output styles
 

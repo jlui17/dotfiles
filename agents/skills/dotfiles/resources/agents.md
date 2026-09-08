@@ -15,7 +15,7 @@ The writing bar for a skill (what earns a skill, what earns a line in it, the tr
 "Update my global CLAUDE.md, AGENTS.md, or rules" means editing a fragment, never the deployed file. Two fragment directories feed two generated files:
 
 - `agents/rules.d/` holds the shared fragments. They reach both `~/CLAUDE.md` and `${CODEX_HOME:-~/.codex}/AGENTS.md`.
-- `claude-code/rules.d/` holds Claude-only fragments. They reach `~/CLAUDE.md` only. `62-worker-cost.md` is the example: it ranks Codex models for Claude to delegate to, which means nothing to Codex.
+- `claude-code/rules.d/` holds Claude-only fragments. They reach `~/CLAUDE.md` only. `62-worker-cost.md` is the example: it routes Claude's workers, the skill-internal ones included, to Codex and ranks the Codex models, which means nothing to Codex itself.
 
 `assemble_global_rules` takes the destination and the fragment directories, merges their `NN-<slug>.md` files sorted by filename across directories, and writes the generated file with a header naming the source directories. The `NN-` prefix orders (so a shared `10-` fragment, a Claude-only `62-` fragment, and `99-local` interleave correctly); the slug is what `SKIP_RULES` names. Generated rather than symlinked because per-machine section exclusion needs a per-machine artifact; a symlink is all or nothing. Consequences:
 
