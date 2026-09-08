@@ -15,7 +15,7 @@ The Linux boxes use Tailscale SSH: identity comes from the tailnet, no keys or p
 
 ## sfx
 
-An interactive desktop Justin may be sitting at, possibly with a game running. Always on (idle locks the screen, never suspends). Build, test, and read freely; leave the display stack and user services running, and ask before starting GPU-heavy work. Runs t3code (`t3code.service`) and herdr (`herdr.service`) as systemd user services.
+An interactive desktop Justin may be sitting at, possibly with a game running. Always on (idle locks the screen, never suspends). Build, test, and read freely; leave the display stack and user services running, and ask before starting GPU-heavy work. The T3 Code desktop app owns its local server while it is open. Herdr runs as a systemd user service (`herdr.service`).
 
 ## srv
 
