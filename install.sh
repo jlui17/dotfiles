@@ -184,6 +184,7 @@ GUI_APPS=(
   "Herdr|command -v herdr|brew install herdr|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\"|sh -c \"\$(curl -fsSL https://herdr.dev/install.sh)\""
   "T3 Code Nightly|t3code_nightly_installed|brew install --cask t3-code@nightly|yay -S --noconfirm t3code-nightly-bin|"
   "agent-browser|agent_browser_installed|brew install agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install --with-deps"
+  "Sentry CLI|command -v sentry|brew install getsentry/tools/sentry|npm i -g sentry|npm i -g sentry"
 )
 
 # Ordered module registry: name:function[:os,os]. main() runs every entry
