@@ -10,6 +10,7 @@ Casual and conversational: closer to how you'd actually type to a teammate than 
 - **Scope to this reader's decision.** Cut tangents that don't bear on what they need now (infra/CI flakiness belongs on the PR, not in the ping).
 - **Pair the channel with the depth.** Full reasoning lands on the PR as a comment first; then the Slack ping is the quick version pointing at it.
 - **A review request to a teammate (Yash, Reinaldo) is one or two lines.** The shape is fixed: `Hey, <non-urgent|urgent> pr to <what it does, one line>: <link>`. The PR body carries the context, so the ping carries none. A second ask goes on its own line after a blank line, stated as an opinion in plain verbs: "I think we should commit them", not "I'd like to land them so that…".
+- **A stack of PRs is the same line followed by a numbered list**, one PR per line as `<what it does, a few words>: <link>`, in merge order. The numbering carries the order, so a clause like "merges bottom up" is dropped; a PR the reader can skip (still a draft) gets one line after a blank line.
 
 ## Worked example
 
@@ -28,3 +29,14 @@ Every bullet above shows up: greeting then straight to the point, flowing clause
 > Also, the replay mode + grading harness from #960 aren't on main. Do you still have them? I think we should commit them so rule edits like this one have a check.
 
 The first draft of this was three paragraphs explaining the motivating PR, the design reasoning, and an offer to do the work. All of it was already on the PR. What survived is the ask, the link, and the one follow-up question.
+
+## Worked example: review request for a stack
+
+> Hey, non-urgent stack of 3 prs to move Clippy transcripts into Postgres so sessions survive deploys:
+> 1. table: https://github.com/scorecard-ai/scorecard/pull/994
+> 2. store adapter: https://github.com/scorecard-ai/scorecard/pull/987
+> 3. wiring it into Clippy: https://github.com/scorecard-ai/scorecard/pull/988
+>
+> The backfill script (#989) is still a draft, no need to look at it yet.
+
+The draft had a "Merges bottom up:" clause and bullets; the numbers already say the order, and each item is a noun phrase, not a sentence.
