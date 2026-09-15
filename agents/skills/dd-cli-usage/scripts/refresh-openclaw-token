@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+vault_id=hm7t33dlzcdmlcbhtunh6pi2ye
+item_id=f4qyltwywmxlpk7rcgppg7qxnq
+
+for command in dd-cli jq op; do
+  command -v "$command" >/dev/null || {
+    printf 'refresh-openclaw-token: missing command: %s\n' "$command" >&2
+    exit 1
+  }
+done
+
+token=$(dd-cli export-token)
+[ -n "$token" ] || {
+  printf '%s\n' 'refresh-openclaw-token: DoorDash returned an empty token' >&2
+  exit 1
+}
+
+printf '%s\n' "$token" |
+  jq -Rn --slurpfile item <(op item get "$item_id" --vault "$vault_id" --format=json) '
+    input as $token
+    | $item[0]
+    | (.fields[] | select(.id == "credential").value) = $token
+  ' |
+  op item edit "$item_id" --vault "$vault_id" --format=json |
+  jq -r '"Updated \(.title) (\(.id)) in Openclaw."'
+
+printf '%s\n' 'Use --refresh-secret on the first authenticated dd-cli command from the main OpenClaw agent.'

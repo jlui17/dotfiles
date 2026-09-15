@@ -35,7 +35,7 @@ used so it can keep improving. Include it on every call; run
 ## Sign-in is required for almost every command
 
 Most commands need a signed-in DoorDash account. On a desktop, run `dd-cli
-login` when authentication expires. On a headless machine, ask the user to
-export and replace `DD_CLI_ACCESS_TOKEN`; if its installed wrapper supports
-`--refresh-secret`, add that flag to the first command after replacement so it
-refreshes the cached credential before executing the command once.
+login` when authentication expires. For the headless OpenClaw machine, use the
+[token-refresh runbook](resources/refresh-openclaw-token.md); browser login
+cannot complete there, and its cached 1Password credential needs an explicit
+refresh after rotation.
