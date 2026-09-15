@@ -1265,19 +1265,20 @@ setup_t3() {
   backup_and_link "$module_dir/t3code-update.timer" "$units_dir/t3code-update.timer" \
     && note "Daily T3 Code nightly update is on (8am Pacific). Run update_t3 to update now."
 
-  write_t3_bind_dropin "$units_dir"
+  write_t3_service_dropin "$units_dir"
+
+  if [[ ! -f "$units_dir/t3code.service" ]]; then
+    track "install T3 Code service" "$HOME/.local/bin/update_t3"
+  fi
 
   systemctl --user daemon-reload
   track "t3code-update.timer" systemctl --user enable --now t3code-update.timer
 }
 
-# The VPS binds its T3 Code server to the Tailscale address instead of the
-# loopback default. `t3 service update` re-renders t3code.service from a fixed
-# template that carries only T3CODE_HOME, so an Environment= line written into
-# the unit would be erased by the first scheduled update; a drop-in is the only
-# place the bind survives. The tailscaled ordering the template also drops
-# rides along, because binding that address before tailscaled is up fails.
-write_t3_bind_dropin() {
+# T3 owns and may regenerate t3code.service, so the VPS's Tailscale bind and
+# provider CLI path live in a drop-in. The tailscaled ordering rides along
+# because binding that address before tailscaled is up fails.
+write_t3_service_dropin() {
   local dropin_dir="$1/t3code.service.d"
   local tailnet_ip tmp
   tailnet_ip="$(tailscale ip -4 2>/dev/null)"
@@ -1295,6 +1296,7 @@ Wants=network-online.target
 
 [Service]
 Environment=T3CODE_HOST=$tailnet_ip
+Environment=PATH=$HOME/.local/bin:$HOME/.npm-global/bin:$HOME/.bun/bin:$HOME/.local/share/pnpm:$HOME/.opencode/bin:$HOME/bin:$HOME/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
 EOF
   install_generated_file "$tmp" "$dropin_dir/override.conf"
 }
