@@ -219,7 +219,7 @@ install_dd_cli() (
 
 GUI_APPS=(
   "AltTab|brew list --cask alt-tab|brew install --cask alt-tab||"
-  "Rectangle|brew list --cask rectangle|brew install --cask rectangle||"
+  "Tinycast|brew list --cask tinycast|brew install --cask abue-ammar/tinycast/tinycast||"
   "Zed|zed_installed|brew install --cask zed|sudo pacman -S --noconfirm zed|"
   "1Password CLI|command -v op|brew install --cask 1password-cli|yay -S --noconfirm 1password-cli|"
   "Hunk|command -v hunk|brew tap modem-dev/tap 2>/dev/null; brew install hunk|npm i -g hunkdiff|npm i -g hunkdiff"
@@ -253,6 +253,7 @@ MODULES=(
   op-secret-cache:setup_op_secret_cache:arch,ubuntu
   apps:setup_apps
   retire-raycast:retire_raycast:macos
+  retire-rectangle:retire_rectangle:macos
   tpm:setup_tpm
   zshrc:setup_zshrc
   tmux:setup_tmux
@@ -1801,6 +1802,18 @@ retire_raycast() {
   fi
   track "brew uninstall Raycast" brew uninstall --cask raycast \
     && changed "uninstalled Raycast"
+}
+
+# Rectangle was removed from GUI_APPS; remove the cask installed by earlier runs.
+# Delete this function and its MODULES entry once every Mac has run it.
+retire_rectangle() {
+  echo "==> Rectangle retirement..."
+  if ! brew list --cask rectangle &>/dev/null; then
+    result "already gone"
+    return 0
+  fi
+  track "brew uninstall Rectangle" brew uninstall --cask rectangle \
+    && changed "uninstalled Rectangle"
 }
 
 # ──────────────────────────────────────────────
