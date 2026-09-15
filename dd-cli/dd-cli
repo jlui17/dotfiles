@@ -1,0 +1,40 @@
+#!/bin/sh
+# Cache the short-lived DoorDash access token in the user's runtime directory
+# so repeated agent calls do not consume 1Password service-account reads.
+set -eu
+
+version=0.2.4
+binary="$HOME/.local/share/dd-cli/dd-cli-v$version-linux-amd64"
+[ -x "$binary" ] || {
+  printf 'dd-cli: binary is missing: %s\n' "$binary" >&2
+  exit 1
+}
+
+refresh_secret=false
+if [ "${1:-}" = "--refresh-secret" ]; then
+  refresh_secret=true
+  shift
+fi
+
+# Help and version output do not contact DoorDash or need authentication.
+case " ${*:-} " in
+  *' --help '*|*' -h '*|*' --version '*) exec "$binary" "$@" ;;
+esac
+
+if [ -z "${DD_CLI_ACCESS_TOKEN:-}" ]; then
+  cache="$HOME/.local/bin/op-secret-cache"
+  [ -x "$cache" ] || {
+    printf 'dd-cli: secret cache is missing: %s\n' "$cache" >&2
+    exit 1
+  }
+  if [ "$refresh_secret" = true ]; then
+    DD_CLI_ACCESS_TOKEN=$($cache --refresh DD_CLI_ACCESS_TOKEN \
+      'op://hm7t33dlzcdmlcbhtunh6pi2ye/f4qyltwywmxlpk7rcgppg7qxnq/credential')
+  else
+    DD_CLI_ACCESS_TOKEN=$($cache DD_CLI_ACCESS_TOKEN \
+      'op://hm7t33dlzcdmlcbhtunh6pi2ye/f4qyltwywmxlpk7rcgppg7qxnq/credential')
+  fi
+  export DD_CLI_ACCESS_TOKEN
+fi
+
+exec "$binary" "$@"

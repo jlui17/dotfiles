@@ -176,9 +176,11 @@ t3code_nightly_installed() {
 DD_CLI_VERSION="0.2.4"
 
 dd_cli_installed() {
-  command_exists dd-cli \
-    && [[ "$(dd-cli --version 2>/dev/null)" == *"version $DD_CLI_VERSION"* ]] \
-    && [[ -d "$HOME/.local/share/dd-cli/_internal" ]]
+  local binary="$HOME/.local/share/dd-cli/dd-cli-v$DD_CLI_VERSION-linux-amd64"
+  [[ -x "$binary" ]] \
+    && [[ "$($binary --version 2>/dev/null)" == *"version $DD_CLI_VERSION"* ]] \
+    && [[ -d "$HOME/.local/share/dd-cli/_internal" ]] \
+    && { [[ "$OS" != "ubuntu" ]] || [[ "$(readlink "$HOME/.local/bin/dd-cli" 2>/dev/null)" == "$DOTFILES_DIR/dd-cli/dd-cli" ]]; }
 }
 
 install_dd_cli() (
@@ -208,7 +210,11 @@ install_dd_cli() (
   mkdir -p "$HOME/.local/share" "$HOME/.local/bin" || return
   rm -rf "$install_dir"
   mv "$extracted" "$install_dir" || return
-  ln -sfn "$install_dir/dd-cli-v$DD_CLI_VERSION-$platform" "$HOME/.local/bin/dd-cli"
+  if [[ "$OS" == "ubuntu" ]]; then
+    ln -sfn "$DOTFILES_DIR/dd-cli/dd-cli" "$HOME/.local/bin/dd-cli"
+  else
+    ln -sfn "$install_dir/dd-cli-v$DD_CLI_VERSION-$platform" "$HOME/.local/bin/dd-cli"
+  fi
 )
 
 GUI_APPS=(
@@ -244,6 +250,7 @@ GUI_APPS=(
 MODULES=(
   packages:install_packages
   mise:setup_mise
+  op-secret-cache:setup_op_secret_cache:arch,ubuntu
   apps:setup_apps
   tpm:setup_tpm
   zshrc:setup_zshrc
@@ -949,6 +956,11 @@ TOML
   # mise install and uv both no-op silently when everything is present, so
   # there's nothing to count — say what this machine is configured for instead.
   result "runtimes current; Python $MISE_PYTHON_VERSION via $python_provider"
+}
+
+setup_op_secret_cache() {
+  ensure_dir "$HOME/.local/bin"
+  backup_and_link "$DOTFILES_DIR/op-secret-cache/op-secret-cache" "$HOME/.local/bin/op-secret-cache"
 }
 
 # ──────────────────────────────────────────────
