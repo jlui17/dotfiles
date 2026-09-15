@@ -218,8 +218,8 @@ install_dd_cli() (
 )
 
 GUI_APPS=(
-  "Raycast|brew list --cask raycast|brew install --cask raycast||"
   "AltTab|brew list --cask alt-tab|brew install --cask alt-tab||"
+  "Rectangle|brew list --cask rectangle|brew install --cask rectangle||"
   "Zed|zed_installed|brew install --cask zed|sudo pacman -S --noconfirm zed|"
   "1Password CLI|command -v op|brew install --cask 1password-cli|yay -S --noconfirm 1password-cli|"
   "Hunk|command -v hunk|brew tap modem-dev/tap 2>/dev/null; brew install hunk|npm i -g hunkdiff|npm i -g hunkdiff"
@@ -252,6 +252,7 @@ MODULES=(
   mise:setup_mise
   op-secret-cache:setup_op_secret_cache:arch,ubuntu
   apps:setup_apps
+  retire-raycast:retire_raycast:macos
   tpm:setup_tpm
   zshrc:setup_zshrc
   tmux:setup_tmux
@@ -521,7 +522,7 @@ append_local_config_knobs() {
 
 # Skip individual entries from COMMON_PACKAGES / the name column of GUI_APPS.
 #SKIP_PACKAGES=(lazygit)
-#SKIP_APPS=(AltTab Raycast)
+#SKIP_APPS=(AltTab)
 
 # Claude Code plugins installed only on this machine. The manifest sync
 # uninstalls plugins missing from claude-code/plugins.txt unless listed here.
@@ -1786,6 +1787,18 @@ setup_apps() {
   (( ${#skipped[@]} ))   && bits+=("${#skipped[@]} skipped")
   (( current ))          && bits+=("$current up to date")
   result "${(j:, :)bits}"
+}
+
+# Raycast was removed from GUI_APPS; remove the cask installed by earlier runs.
+# Delete this function and its MODULES entry once every Mac has run it.
+retire_raycast() {
+  echo "==> Raycast retirement..."
+  if ! brew list --cask raycast &>/dev/null; then
+    result "already gone"
+    return 0
+  fi
+  track "brew uninstall Raycast" brew uninstall --cask raycast \
+    && changed "uninstalled Raycast"
 }
 
 # ──────────────────────────────────────────────
