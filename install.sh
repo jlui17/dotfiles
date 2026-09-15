@@ -173,6 +173,44 @@ t3code_nightly_installed() {
   esac
 }
 
+DD_CLI_VERSION="0.2.4"
+
+dd_cli_installed() {
+  command_exists dd-cli \
+    && [[ "$(dd-cli --version 2>/dev/null)" == *"version $DD_CLI_VERSION"* ]] \
+    && [[ -d "$HOME/.local/share/dd-cli/_internal" ]]
+}
+
+install_dd_cli() (
+  local platform checksum
+  case "$(uname -s)-$(uname -m)" in
+    Linux-x86_64)
+      platform="linux-amd64"
+      checksum="37eec0c72bcb663aaf9759ea098d49d9c02266bb895cbbfbadeae41866608dd4"
+      ;;
+    *)
+      echo "DoorDash CLI does not publish a build for $(uname -s)-$(uname -m)."
+      return 1
+      ;;
+  esac
+
+  local archive="dd-cli-v$DD_CLI_VERSION-$platform.tar.gz"
+  local release_url="https://github.com/doordash-oss/doordash-cli/releases/download/v$DD_CLI_VERSION/$archive"
+  local tmp_dir="$(mktemp -d)"
+  trap 'rm -rf "$tmp_dir"' EXIT
+
+  curl -fsSL "$release_url" -o "$tmp_dir/$archive" || return
+  print -r -- "$checksum  $tmp_dir/$archive" | sha256sum -c - || return
+  tar -xzf "$tmp_dir/$archive" -C "$tmp_dir" || return
+
+  local extracted="$tmp_dir/dd-cli-v$DD_CLI_VERSION-$platform"
+  local install_dir="$HOME/.local/share/dd-cli"
+  mkdir -p "$HOME/.local/share" "$HOME/.local/bin" || return
+  rm -rf "$install_dir"
+  mv "$extracted" "$install_dir" || return
+  ln -sfn "$install_dir/dd-cli-v$DD_CLI_VERSION-$platform" "$HOME/.local/bin/dd-cli"
+)
+
 GUI_APPS=(
   "Raycast|brew list --cask raycast|brew install --cask raycast||"
   "AltTab|brew list --cask alt-tab|brew install --cask alt-tab||"
@@ -185,6 +223,7 @@ GUI_APPS=(
   "T3 Code Nightly|t3code_nightly_installed|brew install --cask t3-code@nightly|yay -S --noconfirm t3code-nightly-bin|"
   "agent-browser|agent_browser_installed|brew install agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install|npm i -g agent-browser && agent-browser install --with-deps"
   "Sentry CLI|command -v sentry|brew install getsentry/tools/sentry|npm i -g sentry|npm i -g sentry"
+  "DoorDash CLI|dd_cli_installed||install_dd_cli|install_dd_cli"
 )
 
 # Ordered module registry: name:function[:os,os]. main() runs every entry
