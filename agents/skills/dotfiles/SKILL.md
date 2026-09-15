@@ -42,6 +42,7 @@ Run install.sh from the main checkout only; `resources/installer.md` says why a 
 | tmux, Ghostty, terminal theme | `tmux.conf`, `ghostty/` | `resources/terminal.md` |
 | Neovim plugin, LSP, formatter | `nvim/` | `resources/nvim.md` |
 | Language runtime, Python version | machine-local mise config, `setup_mise` | `resources/mise.md` |
+| Cached 1Password service-account secrets | `op-secret-cache/` | `resources/op-secret-cache.md` |
 | Hyprland binding, Omarchy theme, shell rendering on NVIDIA | `omarchy/` | `resources/omarchy.md` |
 | herdr keybinding, theme, sidebar | `herdr/` | `resources/herdr.md` |
 | OpenCode MCP server, credentials | `opencode/` | `resources/opencode.md` |
