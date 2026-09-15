@@ -16,10 +16,13 @@ if [ "${1:-}" = "--refresh-secret" ]; then
   shift
 fi
 
-# Help and version output do not contact DoorDash or need authentication.
-case " ${*:-} " in
-  *' --help '*|*' -h '*|*' --version '*) exec "$binary" "$@" ;;
-esac
+# Root help and version output do not contact DoorDash or need authentication.
+# Nested help is gated by the CLI before it dispatches to the subcommand.
+if [ "$#" -eq 1 ]; then
+  case "$1" in
+    --help|-h|--version) exec "$binary" "$@" ;;
+  esac
+fi
 
 if [ -z "${DD_CLI_ACCESS_TOKEN:-}" ]; then
   cache="$HOME/.local/bin/op-secret-cache"
