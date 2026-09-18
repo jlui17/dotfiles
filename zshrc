@@ -83,6 +83,10 @@ _cached_eval() {
   [[ -s "$cache" ]] && source "$cache"
 }
 
+if [[ -r /usr/share/omarchy/default/bash/env-bootstrap ]]; then
+  source /usr/share/omarchy/default/bash/env-bootstrap
+fi
+
 # Homebrew shellenv (macOS)
 if [[ -f "/opt/homebrew/bin/brew" ]] then
   _cached_eval /opt/homebrew/bin/brew shellenv
