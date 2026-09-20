@@ -25,4 +25,22 @@ if [[ ! -f "$unit" ]]; then
   exec npx -y "t3@$version" service install
 fi
 
-exec npx -y "t3@$version" update "$version" --yes
+npx -y "t3@$version" update "$version" --yes
+
+# Keep the committed runtime, its immediate predecessor for rollback, and the
+# runtime referenced by systemd's service launcher. Older nightly runtimes are
+# reproducible and otherwise accumulate hundreds of MB per daily update.
+state="$HOME/.t3/runtime/service-state.json"
+if [[ -f "$state" ]]; then
+  active="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["activeVersion"])' "$state")"
+  previous="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["update"]["fromVersion"])' "$state")"
+  launcher="$(systemctl --user show t3code.service -p ExecStart --value | sed -n 's#.*runtime/versions/\([^/ ;]*\)/t3.*#\1#p')"
+  for runtime in "$HOME"/.t3/runtime/versions/*; do
+    [[ -d "$runtime" ]] || continue
+    runtime_version="${runtime##*/}"
+    [[ "$runtime_version" == "$active" ||
+       "$runtime_version" == "$previous" ||
+       "$runtime_version" == "$launcher" ]] && continue
+    rm -rf -- "$runtime"
+  done
+fi
