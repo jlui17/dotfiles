@@ -1,0 +1,28 @@
+#!/bin/bash
+# Update a standalone T3 Code server to the current nightly.
+set -euo pipefail
+
+if [[ "$(uname -s)" != "Linux" ]]; then
+  echo "Standalone T3 Code updates are only configured on Linux." >&2
+  exit 1
+fi
+
+source /etc/os-release
+if [[ "$ID" != "ubuntu" && "$ID" != "arch" && " ${ID_LIKE:-} " != *" arch "* ]]; then
+  echo "Unsupported Linux distribution: $ID" >&2
+  exit 1
+fi
+
+# systemd gives the timer a minimal environment. The mise shims expose its
+# Node runtime without relying on an interactive shell.
+PATH="$HOME/.local/share/mise/shims:$PATH"
+
+version="$(npm view t3@nightly version)"
+echo "nightly is t3@$version"
+
+unit="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/t3code.service"
+if [[ ! -f "$unit" ]]; then
+  exec npx -y "t3@$version" service install
+fi
+
+exec npx -y "t3@$version" update "$version" --yes

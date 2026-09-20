@@ -47,6 +47,7 @@ Run install.sh from the main checkout only; `resources/installer.md` says why a 
 | herdr keybinding, theme, sidebar | `herdr/` | `resources/herdr.md` |
 | OpenCode MCP server, credentials | `opencode/` | `resources/opencode.md` |
 | t3 server update or supervision on sfx or the VPS | `t3/` | `resources/t3.md` |
+| Curated unattended updates and their schedule | `auto-updates/` | `resources/auto-updates.md` |
 | Machine registry, which machine am I, fleet rollout (`dev-machines`) | `dev-machines/` | `resources/dev-machines.md` |
 | install.sh itself, a new module, installer output | `install.sh` | `resources/installer.md` |
 | Global gitignore pattern | `gitignore/ignore` | live on edit (symlinked to `~/.config/git/ignore`); `git check-ignore -v <path>` shows which rule matched, and a set `core.excludesfile` overrides the XDG path |

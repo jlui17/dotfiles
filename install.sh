@@ -265,6 +265,7 @@ MODULES=(
   herdr:setup_herdr
   dev-machines:setup_dev_machines
   t3:setup_t3
+  auto-updates:setup_auto_updates:arch,ubuntu
   codex:setup_codex
   claude-code:setup_claude_code
   agents:setup_agents
@@ -1250,13 +1251,14 @@ setup_dev_machines() {
 #  PHASE 6d — T3 Code
 # ──────────────────────────────────────────────
 
-# Desktop machines update the app on demand. The Ubuntu server tracks the
-# `nightly` dist-tag on demand and daily at 8am Pacific.
+# Desktop machines update the app on demand. Standalone Linux servers track
+# the `nightly` dist-tag on demand; setup_auto_updates owns their schedule.
 setup_t3() {
   echo "==> T3 Code updates..."
   local module_dir="$DOTFILES_DIR/t3"
   ensure_dir "$HOME/.local/bin"
   backup_and_link "$module_dir/update_t3" "$HOME/.local/bin/update_t3"
+  backup_and_link "$module_dir/update_t3_server" "$HOME/.local/bin/update_t3_server"
 
   local units_dir="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
   if [[ "$OS" == "arch" && -f "$units_dir/t3code.service" ]]; then
@@ -1267,18 +1269,13 @@ setup_t3() {
   [[ "$OS" != "ubuntu" ]] && return
 
   ensure_dir "$units_dir"
-  backup_and_link "$module_dir/t3code-update.service" "$units_dir/t3code-update.service"
-  backup_and_link "$module_dir/t3code-update.timer" "$units_dir/t3code-update.timer" \
-    && note "Daily T3 Code nightly update is on (8am Pacific). Run update_t3 to update now."
-
   write_t3_service_dropin "$units_dir"
 
   if [[ ! -f "$units_dir/t3code.service" ]]; then
-    track "install T3 Code service" "$HOME/.local/bin/update_t3"
+    track "install T3 Code service" "$HOME/.local/bin/update_t3_server"
   fi
 
   systemctl --user daemon-reload
-  track "t3code-update.timer" systemctl --user enable --now t3code-update.timer
 }
 
 # T3 owns and may regenerate t3code.service, so the bind address and provider
@@ -1312,6 +1309,49 @@ Environment=T3CODE_HOST=$bind_host
 Environment=PATH=$HOME/.local/bin:$HOME/.npm-global/bin:$HOME/.bun/bin:$HOME/.local/share/pnpm:$HOME/.opencode/bin:$HOME/bin:$HOME/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
 EOF
   install_generated_file "$tmp" "$dropin_dir/override.conf"
+}
+
+# ──────────────────────────────────────────────
+#  PHASE 6e — Automatic updates
+# ──────────────────────────────────────────────
+
+setup_auto_updates() {
+  echo "==> Automatic updates..."
+  local module_dir="$DOTFILES_DIR/auto-updates"
+  local units_dir="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
+  local legacy_name legacy_path
+
+  if [[ "$OS" == "arch" && ! -f "$units_dir/t3code.service" ]]; then
+    result "skipped — no standalone T3 server"
+    return
+  fi
+
+  ensure_dir "$units_dir"
+
+  # The T3 module used to own its own daily timer. Retire only the exact
+  # repo-owned units so the new curated schedule cannot run alongside it.
+  legacy_path="$units_dir/t3code-update.timer"
+  if [[ -L "$legacy_path" && "$(readlink "$legacy_path")" == "$DOTFILES_DIR/t3/t3code-update.timer" ]]; then
+    if systemctl --user is-enabled --quiet t3code-update.timer \
+      || systemctl --user is-active --quiet t3code-update.timer; then
+      track "disable t3code-update.timer" systemctl --user disable --now t3code-update.timer \
+        && changed "disabled old t3code-update.timer"
+    fi
+    for legacy_name in t3code-update.service t3code-update.timer; do
+      legacy_path="$units_dir/$legacy_name"
+      if [[ -L "$legacy_path" && "$(readlink "$legacy_path")" == "$DOTFILES_DIR/t3/$legacy_name" ]]; then
+        rm "$legacy_path"
+        changed "removed old $legacy_name"
+      fi
+    done
+  fi
+
+  backup_and_link "$module_dir/auto-updates.service" "$units_dir/auto-updates.service"
+  backup_and_link "$module_dir/auto-updates.timer" "$units_dir/auto-updates.timer" \
+    && note "Curated automatic updates are on (6am Pacific)."
+
+  systemctl --user daemon-reload
+  track "auto-updates.timer" systemctl --user enable --now auto-updates.timer
 }
 
 # ──────────────────────────────────────────────

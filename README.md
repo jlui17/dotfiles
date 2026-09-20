@@ -47,6 +47,7 @@ Each subsystem owns a directory at the repo root. Single-file configs (`zshrc`, 
 | `nvim/` | Neovim, based on kickstart. |
 | `omarchy/` | Hyprland binding overrides, desktop themes, and the software-rendered shell shim for the Arch machine. |
 | `herdr/`, `opencode/`, `t3/`, `gitignore/` | One tool each. |
+| `auto-updates/` | The explicit unattended-update list and its daily schedule. |
 | `install.sh` | The installer: OS detection, packages, then every module in order. |
 
 ## Making changes

@@ -1,0 +1,6 @@
+[Unit]
+Description=Run curated automatic updates
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/update_t3_server
