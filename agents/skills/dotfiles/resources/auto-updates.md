@@ -4,7 +4,7 @@ The `auto-updates` module schedules a small, explicit set of updates that are sa
 
 The timer runs at 6:00 AM Pacific, when the machines are least likely to be in use. It does not catch up after a missed run, so starting a machine later in the day cannot trigger an update during work.
 
-The module runs on sfx and srv. It updates only their standalone T3 servers; the T3 desktop package on sfx stays an on-demand update.
+The module runs `update_t3 --server-only` on sfx and srv. The T3 desktop package on sfx stays an on-demand update.
 
 ```sh
 systemctl --user list-timers auto-updates.timer # next scheduled run

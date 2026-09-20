@@ -1256,9 +1256,14 @@ setup_dev_machines() {
 setup_t3() {
   echo "==> T3 Code updates..."
   local module_dir="$DOTFILES_DIR/t3"
+  local retired_server_updater="$HOME/.local/bin/update_t3_server"
   ensure_dir "$HOME/.local/bin"
   backup_and_link "$module_dir/update_t3" "$HOME/.local/bin/update_t3"
-  backup_and_link "$module_dir/update_t3_server" "$HOME/.local/bin/update_t3_server"
+  if [[ -L "$retired_server_updater" \
+    && "$(readlink "$retired_server_updater")" == "$module_dir/update_t3_server" ]]; then
+    rm "$retired_server_updater"
+    changed "removed update_t3_server"
+  fi
 
   local units_dir="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
   if [[ "$OS" == "arch" && -f "$units_dir/t3code.service" ]]; then
@@ -1272,7 +1277,7 @@ setup_t3() {
   write_t3_service_dropin "$units_dir"
 
   if [[ ! -f "$units_dir/t3code.service" ]]; then
-    track "install T3 Code service" "$HOME/.local/bin/update_t3_server"
+    track "install T3 Code service" "$HOME/.local/bin/update_t3" --server-only
   fi
 
   systemctl --user daemon-reload

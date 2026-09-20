@@ -2,22 +2,39 @@
 # Update this machine's T3 Code app and standalone server to the current nightly.
 set -euo pipefail
 
-script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+server_only=false
+if [[ "${1:-}" == "--server-only" ]]; then
+  server_only=true
+  shift
+fi
+if (( $# )); then
+  echo "usage: update_t3 [--server-only]" >&2
+  exit 2
+fi
 
-case "$(uname -s)" in
+platform="$(uname -s)"
+server_definition=
+update_server=false
+
+case "$platform" in
   Darwin)
-    brew upgrade --cask t3-code@nightly
+    if [[ "$server_only" == false ]]; then
+      brew upgrade --cask t3-code@nightly
+    fi
+    server_definition="$HOME/Library/LaunchAgents/com.t3tools.t3code.service.plist"
+    [[ -f "$server_definition" ]] && update_server=true
     ;;
   Linux)
     source /etc/os-release
     if [[ "$ID" == "arch" || " ${ID_LIKE:-} " == *" arch "* ]]; then
-      yay -S --needed --noconfirm t3code-nightly-bin
-      unit="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/t3code.service"
-      if [[ -f "$unit" ]]; then
-        "$script_dir/update_t3_server"
+      if [[ "$server_only" == false ]]; then
+        yay -S --needed --noconfirm t3code-nightly-bin
       fi
+      server_definition="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/t3code.service"
+      [[ -f "$server_definition" ]] && update_server=true
     elif [[ "$ID" == "ubuntu" ]]; then
-      "$script_dir/update_t3_server"
+      server_definition="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/t3code.service"
+      update_server=true
     else
       echo "Unsupported Linux distribution: $ID" >&2
       exit 1
@@ -28,3 +45,46 @@ case "$(uname -s)" in
     exit 1
     ;;
 esac
+
+if [[ "$update_server" == false ]]; then
+  if [[ "$server_only" == true ]]; then
+    echo "No standalone T3 Code server is installed." >&2
+    exit 1
+  fi
+  exit 0
+fi
+
+# systemd gives the timer a minimal environment. The mise shims expose its
+# Node runtime without relying on an interactive shell.
+PATH="$HOME/.local/share/mise/shims:$PATH"
+
+version="$(npm view t3@nightly version)"
+echo "nightly is t3@$version"
+
+if [[ ! -f "$server_definition" ]]; then
+  exec npx -y "t3@$version" service install
+fi
+
+npx -y "t3@$version" update "$version" --yes
+
+# Keep the committed runtime, its immediate predecessor for rollback, and the
+# runtime referenced by the service manager. Older nightly runtimes are
+# reproducible and otherwise accumulate hundreds of MB per daily update.
+state="$HOME/.t3/runtime/service-state.json"
+if [[ -f "$state" ]]; then
+  read -r active previous < <(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["activeVersion"], (d.get("update") or {}).get("fromVersion", ""))' "$state")
+  if [[ "$platform" == "Darwin" ]]; then
+    launcher_path="$(plutil -extract ProgramArguments.0 raw -o - "$server_definition" 2>/dev/null || true)"
+  else
+    launcher_path="$(systemctl --user show t3code.service -p ExecStart --value)"
+  fi
+  launcher="$(sed -n 's#.*runtime/versions/\([^/ ;]*\)/t3.*#\1#p' <<< "$launcher_path")"
+  for runtime in "$HOME"/.t3/runtime/versions/*; do
+    [[ -d "$runtime" ]] || continue
+    runtime_version="${runtime##*/}"
+    [[ "$runtime_version" == "$active" ||
+       "$runtime_version" == "$previous" ||
+       "$runtime_version" == "$launcher" ]] && continue
+    rm -rf -- "$runtime"
+  done
+fi
