@@ -26,7 +26,10 @@ Plugins cannot be symlinked: their state in `~/.claude/plugins/` carries machine
 
 The sync uninstalls any installed plugin missing from the manifest, unless it is listed in `KEEP_PLUGINS` in `.dotfiles-local`. That list is the home for machine-only plugins the shared manifest should not know about.
 
+`SKIP_PLUGINS` in `.dotfiles-local` is the opposite knob: a manifest plugin one machine does not want. A skipped plugin never enters the wanted set, which is also what removes it — the uninstall pass drops anything installed that nothing wants. A manifest line whose plugins are all skipped does not register its marketplace either.
+
 - Remove a plugin everywhere: delete its manifest line, re-run `./install.sh`.
 - Keep a plugin on one machine: install it by hand, add it to `KEEP_PLUGINS`.
+- Drop a plugin on one machine: add it to `SKIP_PLUGINS`; every other machine keeps it.
 
 Installed state is read from Claude Code's own JSON (`installed_plugin_ids`, `marketplace_known`) rather than the CLI, because the `claude plugin` commands block indefinitely when install.sh runs inside a Claude Code session. An actual install or uninstall still calls the CLI, so run install.sh from a plain shell when the manifest changed.

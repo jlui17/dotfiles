@@ -35,6 +35,8 @@ IS_WORK_COMPUTER=false
 #                   generated ~/CLAUDE.md and ~/.codex/AGENTS.md
 #   SKIP_SKILLS   — global skills (agents/skills/ dirs and the external
 #                   manifest) not linked into this machine's ~/.agents and ~/.claude
+#   SKIP_PLUGINS  — Claude Code plugins (plugin@marketplace) from
+#                   claude-code/plugins.txt this machine does not want
 #   KEEP_PLUGINS  — machine-local Claude Code plugins (plugin@marketplace) the
 #                   manifest sync must not uninstall
 SKIP_MODULES=()
@@ -42,6 +44,7 @@ SKIP_PACKAGES=()
 SKIP_APPS=()
 SKIP_RULES=()
 SKIP_SKILLS=()
+SKIP_PLUGINS=()
 KEEP_PLUGINS=()
 
 # Collects human-readable labels of steps that failed. A bootstrap script
@@ -311,7 +314,8 @@ log_run_header() {
   print -r -- "  work:    $IS_WORK_COMPUTER"
   print -r -- "  python:  ${PYTHON_PROVIDER:-uv}"
   print -r -- "  skips:   modules=(${(j: :)SKIP_MODULES}) packages=(${(j: :)SKIP_PACKAGES}) apps=(${(j: :)SKIP_APPS})"
-  print -r -- "           rules=(${(j: :)SKIP_RULES}) skills=(${(j: :)SKIP_SKILLS}) keep-plugins=(${(j: :)KEEP_PLUGINS})"
+  print -r -- "           rules=(${(j: :)SKIP_RULES}) skills=(${(j: :)SKIP_SKILLS})"
+  print -r -- "           plugins=(${(j: :)SKIP_PLUGINS}) keep-plugins=(${(j: :)KEEP_PLUGINS})"
 }
 
 # Run a command only when the current OS matches one of the
@@ -532,6 +536,16 @@ append_local_config_knobs() {
 EOF
     note "Added the skip-list template to ${DOTFILES_LOCAL_CONFIG:t} — edit it to skip modules, packages, or apps."
   fi
+  if ! grep -q "SKIP_PLUGINS" "$DOTFILES_LOCAL_CONFIG" 2>/dev/null; then
+    cat >> "$DOTFILES_LOCAL_CONFIG" <<EOF
+
+# Claude Code plugins from claude-code/plugins.txt this machine does not want.
+# A listed plugin is uninstalled here and left alone everywhere else. Available:
+#   ${(j: :)${(f)"$(manifest_plugin_ids)"}}
+#SKIP_PLUGINS=(some-plugin@some-marketplace)
+EOF
+    note "Added the SKIP_PLUGINS knob to ${DOTFILES_LOCAL_CONFIG:t} — edit it to exclude Claude Code plugins."
+  fi
   if ! grep -q "SKIP_RULES" "$DOTFILES_LOCAL_CONFIG" 2>/dev/null; then
     cat >> "$DOTFILES_LOCAL_CONFIG" <<EOF
 
@@ -563,10 +577,12 @@ EOF
 refresh_local_config_knob_lists() {
   [[ -f "$DOTFILES_LOCAL_CONFIG" ]] || return 0
   local -a rule_slugs=($(rule_section_slugs)) skill_names=($(global_skill_names))
+  local -a plugin_ids=($(manifest_plugin_ids))
   local -A fresh_list=(
     SKIP_MODULES "${(j: :)${(@)MODULES%%:*}}"
     SKIP_RULES   "${(j: :)rule_slugs}"
     SKIP_SKILLS  "${(j: :)skill_names}"
+    SKIP_PLUGINS "${(j: :)plugin_ids}"
   )
   local knob tmp refreshed=0
   for knob in ${(k)fresh_list}; do
@@ -629,6 +645,10 @@ validate_skip_lists() {
   local skill_names=($(global_skill_names))
   for entry in "${SKIP_SKILLS[@]}"; do
     (( ${skill_names[(Ie)$entry]} )) || warn "SKIP_SKILLS: unknown skill '$entry' (ignored)."
+  done
+  local plugin_ids=($(manifest_plugin_ids))
+  for entry in "${SKIP_PLUGINS[@]}"; do
+    (( ${plugin_ids[(Ie)$entry]} )) || warn "SKIP_PLUGINS: unknown plugin '$entry' (ignored)."
   done
   # The worker-cost rule sends Claude's workers to Codex, so it needs the CLI.
   if (( ! ${SKIP_RULES[(Ie)worker-cost]} && ${SKIP_APPS[(Ie)Codex]} )); then
@@ -697,6 +717,18 @@ installed_plugin_ids() {
   local state="$HOME/.claude/plugins/installed_plugins.json"
   [[ -f "$state" ]] || return 0
   jq -r '.plugins // {} | keys[]' "$state" 2>/dev/null
+}
+
+# Every plugin@marketplace the shared manifest declares — the value set for
+# SKIP_PLUGINS, and what the knob's "Available:" snapshot lists.
+manifest_plugin_ids() {
+  local line repo plugin
+  while IFS= read -r line; do
+    repo="${line%%[[:space:]]*}"
+    for plugin in ${=line#$repo}; do
+      print -r -- "$plugin"
+    done
+  done < <(manifest_lines "$DOTFILES_DIR/claude-code/plugins.txt")
 }
 
 marketplace_known() {
@@ -1596,12 +1628,15 @@ setup_claude_plugins() {
     return
   fi
 
-  # Collect wanted plugins from manifest.
+  # Collect wanted plugins from manifest. A plugin in SKIP_PLUGINS never
+  # reaches this list, which is also what removes it: the uninstall loop below
+  # drops anything installed that nothing wants.
   local -a wanted_plugins=()
   local line repo plugin
   while IFS= read -r line; do
     repo="${line%%[[:space:]]*}"
     for plugin in ${=line#$repo}; do
+      (( ${SKIP_PLUGINS[(Ie)$plugin]} )) && continue
       wanted_plugins+=("$plugin")
     done
   done < <(manifest_lines "$manifest")
@@ -1623,15 +1658,22 @@ setup_claude_plugins() {
 
   # Install/no-op wanted plugins.
   local -a installed=("${(@f)$(installed_plugin_ids)}")
+  local -a line_plugins
   while IFS= read -r line; do
     repo="${line%%[[:space:]]*}"          # first token: the marketplace repo
+    line_plugins=()                       # remaining tokens: plugin@marketplace
+    for plugin in ${=line#$repo}; do
+      (( ${SKIP_PLUGINS[(Ie)$plugin]} )) || line_plugins+=("$plugin")
+    done
+    # Nothing wanted from this repo, so it has no marketplace to register.
+    (( ${#line_plugins[@]} )) || continue
     if marketplace_known "$repo"; then
       (( MODULE_UNCHANGED++ ))
     else
       echo "  Adding marketplace: $repo"
       track "claude marketplace $repo" claude plugin marketplace add "$repo"
     fi
-    for plugin in ${=line#$repo}; do      # remaining tokens: plugin@marketplace
+    for plugin in "${line_plugins[@]}"; do
       if (( ${installed[(Ie)$plugin]} )); then
         (( MODULE_UNCHANGED++ ))
       else
@@ -1721,9 +1763,13 @@ setup_agents() {
   fi
 
   assemble_global_rules "$HOME/CLAUDE.md" "$DOTFILES_DIR/agents/rules.d" "$DOTFILES_DIR/claude-code/rules.d"
-  local codex_dir="${CODEX_HOME:-$HOME/.codex}"
-  ensure_dir "$codex_dir"
-  assemble_global_rules "$codex_dir/AGENTS.md" "$DOTFILES_DIR/agents/rules.d"
+  # AGENTS.md is Codex's copy of the shared rules. A machine that skips the
+  # codex module has no Codex to read it, so it isn't written there.
+  if (( ! ${SKIP_MODULES[(Ie)codex]} )); then
+    local codex_dir="${CODEX_HOME:-$HOME/.codex}"
+    ensure_dir "$codex_dir"
+    assemble_global_rules "$codex_dir/AGENTS.md" "$DOTFILES_DIR/agents/rules.d"
+  fi
 }
 
 # ──────────────────────────────────────────────
