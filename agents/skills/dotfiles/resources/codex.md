@@ -22,6 +22,8 @@ The allowlist is the trust boundary. A repository cannot opt itself in, and each
 
 Codex reviews the user hook itself once through `/hooks`. Later repository-script changes do not change that hook hash, which is why the allowlist stays in dotfiles rather than in a project.
 
+Some Codex versions discover both definitions in a linked worktree. In `/hooks`, keep the user-level dispatcher enabled and disable the duplicate project hook so `SessionStart` runs once. Codex requires trusting a new hook before it can be toggled off; review it, trust it, then disable it in the same session.
+
 After an edit, run `./install.sh`, then check the realized configuration:
 
 ```

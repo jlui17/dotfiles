@@ -1455,7 +1455,7 @@ setup_codex() {
   ensure_dir "$codex_dir"
   ensure_dir "$HOME/.local/bin"
   backup_and_link "$module_dir/hooks.json" "$codex_dir/hooks.json" \
-    && note "Open Codex and run /hooks once to review the dotfiles hook."
+    && note "Open Codex, run /hooks, trust the dotfiles hook, and disable a duplicate project hook if Codex discovers one."
   backup_and_link "$module_dir/session-start-hook-allowlist" "$codex_dir/session-start-hook-allowlist"
   backup_and_link "$module_dir/bin/codex-worktree-session-hook" "$HOME/.local/bin/codex-worktree-session-hook"
   if [[ -L "$HOME/.local/bin/codex-playwright-mcp" &&
