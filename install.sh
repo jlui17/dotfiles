@@ -710,9 +710,12 @@ prune_stale_links() {
 # when dst is absent; refuses to touch an existing dst if jq is missing rather
 # than clobber it.
 # Claude Code's plugin state, read from its own JSON rather than `claude
-# plugin ...`: the CLI blocks indefinitely when install.sh runs inside a Claude
-# Code session, so a run that only needs to confirm state would never finish.
-# Both files are what the CLI reports from anyway.
+# plugin ...`. Both files are what the CLI prints from, so a steady-state run
+# makes no CLI calls at all and a real install still reports as a change
+# instead of being assumed idempotent. This began as a workaround for
+# `claude plugins list` hanging inside a Claude Code session; that stopped
+# reproducing by CLI 2.1.278 (checked 2026-09-21). The JSON reads stay because
+# they are faster and more precise, not because the CLI is unsafe.
 installed_plugin_ids() {
   local state="$HOME/.claude/plugins/installed_plugins.json"
   [[ -f "$state" ]] || return 0

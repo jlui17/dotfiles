@@ -32,4 +32,6 @@ The sync uninstalls any installed plugin missing from the manifest, unless it is
 - Keep a plugin on one machine: install it by hand, add it to `KEEP_PLUGINS`.
 - Drop a plugin on one machine: add it to `SKIP_PLUGINS`; every other machine keeps it.
 
-Installed state is read from Claude Code's own JSON (`installed_plugin_ids`, `marketplace_known`) rather than the CLI, because the `claude plugin` commands block indefinitely when install.sh runs inside a Claude Code session. An actual install or uninstall still calls the CLI, so run install.sh from a plain shell when the manifest changed.
+Installed state is read from Claude Code's own JSON (`installed_plugin_ids`, `marketplace_known`) rather than the CLI. A steady-state run then makes no CLI calls at all, and a real install is reported as a change instead of assumed idempotent. Installs and uninstalls still go through the CLI.
+
+That started as a workaround for `claude plugins list` hanging when install.sh ran inside a Claude Code session (`de0859f`). It stopped reproducing by CLI 2.1.278, checked 2026-09-21: `plugin list`, `plugin marketplace list`, `plugin uninstall`, and `plugin marketplace remove` all returned in about a second from inside a session. Running install.sh from inside a session is fine; the JSON reads are kept for speed and accuracy.
