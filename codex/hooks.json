@@ -1,0 +1,16 @@
+{
+  "description": "Dispatch SessionStart hooks from allowlisted Git worktrees.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.local/bin/codex-worktree-session-hook",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

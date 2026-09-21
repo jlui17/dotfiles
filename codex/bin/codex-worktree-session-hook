@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+set -u
+
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+[[ -f "$repo_root/.git" ]] || exit 0
+
+origin="$(git remote get-url origin 2>/dev/null)" || exit 0
+case "$origin" in
+  git@*:*)
+    host="${origin%%:*}"
+    host="${host#git@}"
+    path="${origin#*:}"
+    ;;
+  ssh://*/* | http://*/* | https://*/*)
+    remote="${origin#*://}"
+    host="${remote%%/*}"
+    host="${host#*@}"
+    path="${remote#*/}"
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+
+repo_identity="$host/${path%.git}"
+allowlist="${CODEX_HOME:-$HOME/.codex}/session-start-hook-allowlist"
+[[ -f "$allowlist" ]] || exit 0
+
+while IFS=$'\t' read -r allowed_repo hook_path extra; do
+  [[ -n "$allowed_repo" && "$allowed_repo" != \#* ]] || continue
+  [[ -z "${extra:-}" ]] || continue
+  [[ "$repo_identity" == "$allowed_repo" ]] || continue
+  hook="$repo_root/$hook_path"
+  [[ -f "$hook" ]] || exit 0
+  exec bash "$hook"
+done < "$allowlist"

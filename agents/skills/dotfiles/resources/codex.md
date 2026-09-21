@@ -1,6 +1,6 @@
 # Codex
 
-Owns `codex/config.toml`, the portable fragment `setup_codex` merges into a marked block in `~/.codex/config.toml` (`CODEX_HOME` honored).
+Owns `codex/config.toml`, the portable fragment `setup_codex` merges into a marked block in `~/.codex/config.toml` (`CODEX_HOME` honored). It also links the user-level `hooks.json`, worktree hook dispatcher, and repository allowlist.
 
 The destination stays a machine-owned real file. Codex and the ChatGPT desktop app write machine-local MCP bridges and runtime settings into the same file, so a symlink would either clobber them or turn repo state into mutable app state. Only the block between the `# BEGIN dotfiles managed Codex config` and `# END ...` markers is the repo's. Outside it, everything survives each run except a table whose name the fragment manages. `setup_codex` removes each such `[mcp_servers.<name>]` table and its child tables before rewriting the block, so a hand-created server entry migrates into the managed block instead of duplicating the TOML table.
 
@@ -13,6 +13,14 @@ codex mcp login <name>
 install.sh notes this when a run adds a server the file did not have before.
 
 Never set `required = true` on an MCP server unless every machine can initialize it unattended; an optional integration must not stop Codex from starting.
+
+## Worktree hooks
+
+Codex does not reliably discover project-level hooks in linked Git worktrees. The user-level `codex/hooks.json` works around that for `SessionStart`: `codex-worktree-session-hook` identifies the repository from `origin`, then runs the repository-relative entrypoint in `codex/session-start-hook-allowlist`. It only dispatches from linked worktrees, so a normal checkout continues to use its project hook without running twice.
+
+The allowlist is the trust boundary. A repository cannot opt itself in, and each row names both the canonical repository identity and the script it may run. Adding a row trusts that script from every linked worktree and branch of that repository; review that scope before adding one. The repository owns the implementation so other harnesses can call the same script.
+
+Codex reviews the user hook itself once through `/hooks`. Later repository-script changes do not change that hook hash, which is why the allowlist stays in dotfiles rather than in a project.
 
 After an edit, run `./install.sh`, then check the realized configuration:
 

@@ -1,0 +1,2 @@
+# Git repository identity<TAB>repository-relative hook path
+github.com/scorecard-ai/scorecard	scripts/worktree-session-hook.sh
