@@ -1859,8 +1859,11 @@ setup_apps() {
   echo "==> GUI apps..."
   # Interactive shells see npm's global bin and ~/.local/bin (where the curl
   # installers land); this script does not, and a check that misses them
-  # reinstalls the app on every run.
-  path=("$HOME/.local/bin" $path)
+  # reinstalls the app on every run. ~/.local/bin goes last: Omarchy's
+  # wrappers there (omarchy-mise-install) exec `mise x <tool> -- <tool>`, which
+  # resolves <tool> through PATH again, so a wrapper ahead of mise's install
+  # dir calls itself forever and every later `gh` or `claude` call hangs.
+  path=($path "$HOME/.local/bin")
   command_exists npm && path=("$(npm prefix -g 2>/dev/null)/bin" $path)
   # Declared once, outside the loop: zsh's `local` on an already-local name
   # prints its value, so re-declaring per iteration spams the output.
