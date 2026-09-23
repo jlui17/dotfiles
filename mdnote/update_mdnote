@@ -1,0 +1,49 @@
+#!/bin/bash
+# Install mdnote from GitHub, or move an existing install to the newest commit.
+set -euo pipefail
+
+bun_global="${BUN_INSTALL:-$HOME/.bun}/install/global"
+
+# The commit bun's global lockfile pins, read from its entry
+# "mdnote@github:jlui17/mdnote#37a68f5". Prints nothing when mdnote is not
+# installed from GitHub (no install, or a bun link).
+installed_commit() {
+  sed -n 's|.*"mdnote@github:jlui17/mdnote#\([0-9a-f]*\)".*|\1|p' "$bun_global/bun.lock" 2>/dev/null || true
+}
+
+if [[ "${1:-}" == "--installed-commit" ]]; then
+  installed_commit
+  exit
+fi
+if (( $# )); then
+  echo "usage: update_mdnote [--installed-commit]" >&2
+  exit 2
+fi
+
+# A bun link is a dev checkout; the install would replace it.
+if [[ -L "$bun_global/node_modules/mdnote" ]]; then
+  echo "mdnote: linked to $(readlink "$bun_global/node_modules/mdnote"), skipped"
+  exit
+fi
+
+# Nothing below runs when the pinned commit is already the remote head, so a
+# run with nothing new leaves a running server alone.
+old="$(installed_commit)"
+remote="$(git ls-remote https://github.com/jlui17/mdnote HEAD)"
+# By prefix: the lockfile holds a short sha, ls-remote prints the full one.
+if [[ -n "$old" && "$remote" == "$old"* ]]; then
+  echo "mdnote: already at $old, skipped"
+  exit
+fi
+
+# systemd gives the timer a minimal environment. The mise shims expose bun, and
+# bun's global bin holds the mdnote that stop runs.
+PATH="$HOME/.local/share/mise/shims:${BUN_INSTALL:-$HOME/.bun}/bin:$PATH"
+
+# add covers a machine without mdnote, update moves an existing install: bun's
+# global lockfile pins the commit, so a repeated add never re-resolves. stop,
+# because a running server keeps the frontend it bundled at startup.
+bun add -g github:jlui17/mdnote
+bun update -g mdnote
+mdnote stop
+echo "mdnote: ${old:-none} → $(installed_commit)"

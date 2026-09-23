@@ -4,3 +4,4 @@ Description=Run curated automatic updates
 [Service]
 Type=oneshot
 ExecStart=%h/.local/bin/update_t3 --server-only
+ExecStart=%h/.local/bin/update_mdnote

@@ -252,6 +252,7 @@ MODULES=(
   herdr:setup_herdr
   dev-machines:setup_dev_machines
   t3:setup_t3
+  mdnote:setup_mdnote
   auto-updates:setup_auto_updates:arch,ubuntu
   codex:setup_codex
   claude-code:setup_claude_code
@@ -1179,6 +1180,13 @@ Environment=T3CODE_HOST=$bind_host
 Environment=PATH=$HOME/.local/bin:$HOME/.npm-global/bin:$HOME/.bun/bin:$HOME/.local/share/pnpm:$HOME/.opencode/bin:$HOME/bin:$HOME/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
 EOF
   install_generated_file "$tmp" "$dropin_dir/override.conf"
+}
+
+# update_pkgs runs it on demand; setup_auto_updates owns its schedule.
+setup_mdnote() {
+  echo "==> mdnote updates..."
+  ensure_dir "$HOME/.local/bin"
+  backup_and_link "$DOTFILES_DIR/mdnote/update_mdnote" "$HOME/.local/bin/update_mdnote"
 }
 
 # ──────────────────────────────────────────────

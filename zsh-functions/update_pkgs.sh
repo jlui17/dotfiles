@@ -102,9 +102,9 @@ _update_pkgs_skills() {
 }
 
 _update_pkgs_mdnote() {
-  local old="$(mdnote_installed_commit)"
+  local old="$(update_mdnote --installed-commit)"
   _update_pkgs_try "update mdnote" update_mdnote || return
-  local new="$(mdnote_installed_commit)"
+  local new="$(update_mdnote --installed-commit)"
   # The same test update_mdnote skips on.
   if [[ -L "${BUN_INSTALL:-$HOME/.bun}/install/global/node_modules/mdnote" ]]; then
     result "skipped (linked checkout)"
