@@ -23,7 +23,7 @@ Every interactive shell appends one line to `~/.cache/zsh-startup-log.tsv`: rc, 
 
 ## Shell integrations
 
-Every `eval "$(tool init ...)"` goes through `_cached_eval`, defined in zshrc. It sources a cached copy and regenerates in a scrubbed env when the tool binary's mtime moves; the tradeoffs are in the comment at the definition. `update_pkgs` deletes the cache dir because mise shims and Homebrew bottles keep mtimes that do not track upgrades. A newly cached tool that ignores its env config (zoxide's `_ZO_*` vars) is the scrub working as designed.
+Every `eval "$(tool init ...)"` goes through `_cached_eval`, defined in zshrc. It sources a cached copy and regenerates in a scrubbed env when the tool binary's mtime moves; the tradeoffs are in the comment at the definition. `update_pkgs` (`zsh-functions/update_pkgs.sh`) deletes the cache dir because mise shims and Homebrew bottles keep mtimes that do not track upgrades. A newly cached tool that ignores its env config (zoxide's `_ZO_*` vars) is the scrub working as designed.
 
 Cross-module: `UBUNTU_MISE_PACKAGES` in install.sh routes fzf and zoxide through mise because the flags zshrc passes (`fzf --zsh`, `zoxide init --cmd cd`) need versions newer than LTS apt ships. Changing those init lines means re-checking that table.
 

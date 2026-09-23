@@ -29,7 +29,7 @@ The shared rules are one fragment, `10-letter.md`: a letter in Justin's voice, w
 
 ## External skills
 
-Skills from other people's repos are declared in `agents/external-skills.txt` (format in its header) and installed by `setup_agents`, which replays `bunx skills add <repo> --skill <names> -g -y -a claude-code codex` per manifest line. They are not repo symlinks because the repo does not own the files: the skills CLI (vercel-labs/skills) keeps one universal copy as a real directory in `~/.agents/skills/<skill>` and links `~/.claude/skills/<skill>` to it. Re-running the add refreshes that copy from upstream, and the `update_pkgs` alias in zshrc also runs `bunx skills update -g`. `SKIP_SKILLS` filters external skills the same way it filters repo skills.
+Skills from other people's repos are declared in `agents/external-skills.txt` (format in its header) and installed by `setup_agents`, which replays `bunx skills add <repo> --skill <names> -g -y -a claude-code codex` per manifest line. They are not repo symlinks because the repo does not own the files: the skills CLI (vercel-labs/skills) keeps one universal copy as a real directory in `~/.agents/skills/<skill>` and links `~/.claude/skills/<skill>` to it. Re-running the add refreshes that copy from upstream, and `update_pkgs` also runs `bunx skills update -g`. `SKIP_SKILLS` filters external skills the same way it filters repo skills.
 
 Because the CLI's copy is a real directory, the prune never touches it, and removal is manual: delete the manifest line, then run
 

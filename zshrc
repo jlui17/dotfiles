@@ -240,23 +240,12 @@ gauth() {
 # drained after startup, so re-running compinit in this shell would lose them.
 alias update_zcomp='rm -f "${ZDOTDIR:-$HOME}/.zcompdump" "${ZDOTDIR:-$HOME}/.zcompdump.zwc" && exec zsh'
 
-# update_pkgs also evicts the zsh-eval cache: _cached_eval's mtime check can't
-# see upgrades of mise-shimmed tools (the shim never changes) and can miss
-# Homebrew bottles whose build predates the cache.
 if command -v brew &>/dev/null; then
-  alias update_pkgs='brew update && brew upgrade && mise up && bunx skills update -g && update_mdnote && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval" && update_t3'
   alias update_cc='brew update && brew upgrade claude-code@latest'
 elif command -v pacman &>/dev/null; then
-  # omarchy update wraps pacman, AUR and mise up, and adds the snapshot and the
-  # migrations that ship with new packages. -y skips only its opening
-  # confirmation; the reboot question at the end still gets asked.
-  alias update_pkgs='omarchy update -y && bunx skills update -g && update_mdnote && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval" && update_t3'
   # mise withholds releases younger than its cooldown, so a plain up leaves
   # claude days behind.
   alias update_cc='MISE_MINIMUM_RELEASE_AGE=0 mise up claude'
-elif command -v apt-get &>/dev/null; then
-  # Codex is npm-global on srv rather than mise-managed, so update it explicitly.
-  alias update_pkgs='sudo apt-get update && sudo apt-get upgrade && mise up && npm install -g @openai/codex && bunx skills update -g && update_mdnote && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval" && update_t3'
 fi
 
 # Mise (before shell integrations that depend on mise-managed tools)

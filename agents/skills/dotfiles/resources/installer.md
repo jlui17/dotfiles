@@ -10,6 +10,8 @@
 
 `open_log` parks the terminal on fd 3 and gives stdout and stderr to the log for the whole run. Reaching the screen takes a deliberate call; everything else lands in `/tmp/dotfiles-install.log`.
 
+`open_log`, the calls below, `run_module` and `closing_summary` live in `lib/output.zsh`, not in install.sh, because `update_pkgs` (`zsh-functions/update_pkgs.sh`) reports through them too. The lib writes to whatever path the caller put in `OUTPUT_LOG`. A change there is verified against both callers.
+
 This is structural on purpose. A convention ("redirect noisy commands") rots one module at a time, and the failure mode is noise. Here, forgetting the API costs a summary line and nothing else: a bare `echo` in a module is not a bug, it is the log's per-item detail.
 
 The only routes to the terminal:
