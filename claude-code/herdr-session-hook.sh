@@ -32,9 +32,9 @@ if [ -n "$HERDR_PANE_ID" ]; then
   elif [ -n "$tab_unnamed" ]; then
     label_note=" Once you know what this session is working on, label the tab: herdr tab rename $HERDR_TAB_ID '<3-5 word task>'; re-run it if the task materially changes."
   elif [ -n "$space_unnamed" ]; then
-    label_note=" The tab is already labeled, but the space label is still the herdr default; name it after the task: herdr workspace rename $HERDR_WORKSPACE_ID '[<task-id>] <summary>' (a space without a task ID gets a short plain name instead, never the repo or directory name)."
+    label_note=" The tab label is '$tab_label'. A label carries over from the tab's last task, or is the first words of the kickoff prompt, so judge it: unless it already names this session's task in 3-5 words, rename it now with herdr tab rename $HERDR_TAB_ID '<3-5 word task>', and re-run that if the task materially changes. The space label is still the herdr default; name it after the task: herdr workspace rename $HERDR_WORKSPACE_ID '[<task-id>] <summary>' (a space without a task ID gets a short plain name instead, never the repo or directory name)."
   else
-    label_note=" Tab and space are already labeled; re-run herdr tab rename $HERDR_TAB_ID '<3-5 word task>' if the task materially changes."
+    label_note=" The tab label is '$tab_label'. A label carries over from the tab's last task, or is the first words of the kickoff prompt, so judge it: unless it already names this session's task in 3-5 words, rename it now with herdr tab rename $HERDR_TAB_ID '<3-5 word task>', and re-run that if the task materially changes. The space label is '$space_label' and spans tasks; leave it."
   fi
   ctx="This session runs inside herdr pane $HERDR_PANE_ID (tab $HERDR_TAB_ID, space $HERDR_WORKSPACE_ID, session ${HERDR_SESSION:-default}).$label_note New herdr sessions are the user's opt-in: start one only on an explicit ask (\"kickoff X\" or \"start a new session that…\" is that ask: a new herdr session Justin steers directly, never a subagent), and use your own subagents for delegation within this task. Name every session you start: the task number if one exists plus a 1-5 word summary, e.g. [colony-562] flow viewer. The herdr-agents skill has the recipes, and herdr --skill prints herdr's own."
 elif command -v herdr >/dev/null 2>&1; then
