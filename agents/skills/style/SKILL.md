@@ -1,6 +1,6 @@
 ---
 name: style
-description: Use before writing or editing anything that ships in Justin's voice or under his name: a PR description or commit message, a tech plan or design doc, a design critique or UX walkthrough, a report or docs page, a diagram or HTML artifact, a Slack message, a code review or inline comment, or an explanation of a code change.
+description: Use before writing or editing anything that ships in Justin's voice or under his name: a PR description or commit message, a tech plan or design doc, a design critique or UX walkthrough, a report or docs page, a diagram or HTML artifact, a Slack message, a code review or inline comment, an explanation of a code change, or a LinkedIn post or other personal story he tells about himself.
 ---
 
 # Justin's voice
@@ -77,4 +77,5 @@ Same voice, different density; read the matching resource before drafting. Every
 | **Report / standalone doc** | Numbers and findings first, a few sentences each. Stands alone; no session narrative. | `resources/reports.md` |
 | **Visual artifact (diagram / HTML report / deck)** | Visual encoding first, words last resort. Self-explanatory to a zero-context reader. | `resources/visual-artifacts.md` |
 | **Slack / peer message** (chat ping, DM, thread) | Casual, conversational, flows like speech. Light greeting OK. Link the one artifact; name only the central identifiers; confidence and its assumption. | `resources/slack.md` |
+| **Personal narrative** (LinkedIn or blog post, a story about himself) | Spoken, first person, long flowing sentences. His raw dictation is the voice sample. The engineering rules above (behavior first, actor as subject, one idea per sentence) give way here. | `resources/personal-narrative.md` |
 | **Code comment / inline review** | Most compressed. One claim per line, point at the artifact, drop scaffolding. Behavior first when describing a change. | (this row is the guidance) |
