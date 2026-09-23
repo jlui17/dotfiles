@@ -31,7 +31,7 @@ Cross-module: `UBUNTU_MISE_PACKAGES` in install.sh routes fzf and zoxide through
 
 Decide alias vs. function first. A static command or `&&` chain with no arguments, branching, or variables is an alias in zshrc's Aliases section. A `zsh-functions/*.sh` file is for logic that needs parameters or conditionals.
 
-`zsh-functions/` files are sourced by path resolved from zshrc's real location (`DOTFILES_DIR` in zshrc), so they need no symlink and no install.sh entry. Only top-level `*.sh` files are sourced; `zsh-functions/worktree-setups/` holds per-repo setup hooks read by `wtnew`, owned by the `worktrees` skill.
+`zsh-functions/` files are sourced by path resolved from zshrc's real location (`DOTFILES_DIR` in zshrc), so they need no symlink and no install.sh entry. Only top-level `*.sh` files are sourced.
 
 A function file registers its completion with `compdef` inline. That works before compinit only because zshrc defines a `compdef` stub that queues the call into zinit's replay list. The stub must stay between the turbo block and the sourcing loop; do not reorder them.
 

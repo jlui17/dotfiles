@@ -1,6 +1,6 @@
 ---
 name: herdr-agents
-description: Use when driving herdr programmatically — starting a new session, space, or tab; launching a coding agent (Claude Code, codex, etc.) in a pane; sending it a prompt; checking or waiting on its output; or tearing any of that down — including when Justin says "teardown" at the end of a task (that word covers the session's own herdr tab).
+description: Use when driving herdr programmatically — starting a new session, space, or tab; giving a coding task its own git worktree; launching a coding agent (Claude Code, codex, etc.) in a pane; sending it a prompt; checking or waiting on its output; or tearing any of that down — including when Justin says "teardown" at the end of a task (that word covers the session's own herdr tab).
 ---
 
 # Driving herdr
@@ -32,11 +32,23 @@ A fresh session has zero spaces, and every other call fails with `workspace_not_
 
 ## Spaces and tabs
 
-**A space is a task or a themed cluster of related small tasks; a tab is one agent session's work** (canonical here; the `worktrees` skill points at this). Label a task space `[<task-id>] <summary>` when a task ID exists; a task-less or cluster space gets a short plain name ("review", "agent upgrades"). More sessions for the same task or cluster means more tabs in that space, not another space. A coding-task space on a repo should be worktree-backed via the `worktrees` skill's flow (`wtnew`); read that skill before creating one.
+**A space is a task or a themed cluster of related small tasks; a tab is one agent session's work**. Label a task space `[<task-id>] <summary>` when a task ID exists; a task-less or cluster space gets a short plain name ("review", "agent upgrades"). More sessions for the same task or cluster means more tabs in that space, not another space. A coding-task space on a repo is worktree-backed (next section).
 
 `workspace create` and `tab create` both take `--cwd`, `--label`, `--env KEY=VALUE`, and `--focus`/`--no-focus`, and both return their root pane's ID in the JSON. Scope listings with `herdr tab list --workspace <id>`. Default to `--no-focus` so you don't yank the user's view; `--focus` only when they asked to be taken there.
 
-For parallel agents on one repo, give each *task* a worktree-backed space via the `worktrees` skill's flow, so the repo's setup registry runs; raw `herdr worktree create --branch <name>` skips the registry and produces an un-set-up checkout. Parallel sessions on the *same* task still share one space as tabs.
+## Worktree-backed spaces
+
+A coding task on a repo gets its own worktree at `<repo>/.worktrees/<name>` on a new branch `<name>` (the task ID when one exists), and its space is bound to that worktree. `.worktrees/` is in the global gitignore, so the repo never learns about the convention. For parallel agents on one repo, each *task* gets its own worktree-backed space; parallel sessions on the *same* task still share one space as tabs.
+
+```sh
+herdr worktree create --cwd <repo-root> --branch <name> --path <repo-root>/.worktrees/<name> --label "<label>" --no-focus   # → root_pane.pane_id
+herdr worktree open --cwd <repo-root> --path <worktree> --label "<label>"   # bind a worktree that exists but has no space
+herdr worktree remove --workspace <id>                                      # task done: closes the space and removes the checkout
+```
+
+Pass `--cwd` every time: without it herdr resolves the repo from the UI-focused space, which can be a different repo. `--base <ref>` sets where the new branch starts. What a fresh checkout needs (deps, env files, a warm-up) is the repo's own business, in its own scripts or `.claude/` hooks. Closing a space alone keeps the worktree, `worktree remove` keeps the task branch, and a dirty checkout needs `--force`.
+
+Task scaffolding (decision records especially) lives in `.luidocs/` inside the worktree, so it dies with the worktree and cannot reach the PR. Before a worktree exists, keep it in the session scratchpad; a shared or main checkout never holds it. Your own subagent isolation (`isolation: "worktree"`) is separate machinery and does not go through this flow.
 
 ## Spawn an agent
 

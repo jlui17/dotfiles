@@ -28,7 +28,7 @@ venv-*/
 # Personal notes
 .luidocs/
 
-# Task worktrees (wtnew convention; keeps repos untouched by the flow)
+# Task worktrees (personal convention; ignored here so no repo has to know about it)
 .worktrees/
 
 **/.claude/settings.local.json
