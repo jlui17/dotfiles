@@ -63,6 +63,8 @@ Live/integration proof (a real run, a probe on real infra) is 2-4 numbered steps
 
 A UI change carries its screenshots inline in the body, captioned with what to look at (the defect before, the behavior after), never left as local paths for the author to drag in. Upload with `gh pr create|edit --attach '<path>#<alt text>'`, referencing each image in the body as `![alt](<path>)` with the *same path string* passed to `--attach`: gh rewrites a matching reference to the uploaded asset, and appends an unmatched file to the end instead (a relative reference with an absolute `--attach` path does not match).
 
+A demo recording is a screenshot that moves, so it goes in the same Screenshots section, above the stills, with one line saying what the clip shows. It never goes in a PR comment, where a reviewer reading the body misses it. `--attach` takes video too; a video renders as a player when its uploaded asset URL sits on its own line in the body.
+
 ## Condense pass
 
 After drafting, cut restatement and anything the diff already shows, keeping every claim and its evidence; then check the one-page budget, and still over means whole beats go, not words.
