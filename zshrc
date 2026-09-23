@@ -255,7 +255,8 @@ elif command -v pacman &>/dev/null; then
   # claude days behind.
   alias update_cc='MISE_MINIMUM_RELEASE_AGE=0 mise up claude'
 elif command -v apt-get &>/dev/null; then
-  alias update_pkgs='sudo apt-get update && sudo apt-get upgrade && mise up && bunx skills update -g && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval" && update_t3'
+  # Codex is npm-global on srv rather than mise-managed, so update it explicitly.
+  alias update_pkgs='sudo apt-get update && sudo apt-get upgrade && mise up && npm install -g @openai/codex && bunx skills update -g && zinit update && zinit cclear && rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-eval" && update_t3'
 fi
 
 # Mise (before shell integrations that depend on mise-managed tools)
