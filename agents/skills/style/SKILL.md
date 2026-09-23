@@ -71,7 +71,7 @@ Same voice, different density; read the matching resource before drafting. Every
 | Artifact | Density | Read first |
 |----------|---------|------------|
 | **Tech plan / design doc / RFC** | Formal, spacious. Numbered sections, fixed schemas, tradeoff tables, named alternatives. | `resources/tech-plans.md` |
-| **PR description** | Plain English, behavior first. Lead with what's happening + the conceptual fix; push mechanism into the code. Dense prose fine, jargon dumps aren't. | `resources/pr-descriptions.md` |
+| **PR description** | Short, in the repo's PR template. Each line answers a reviewer question the diff can't; about 150-250 words of prose. Behavior first, first-person test plan. | `resources/pr-descriptions.md` |
 | **Change walkthrough / scope summary** | Runtime order, bold behavioral claim + contract per step; or the `+`/`~`/`-` signature profile. | `resources/change-walkthroughs.md` |
 | **Design critique / UX walkthrough** | First-person, experiential. Actor flips from code to *you*. Fixed schema, captioned screenshots, priority up front. | `resources/design-critiques.md` |
 | **Report / standalone doc** | Numbers and findings first, a few sentences each. Stands alone; no session narrative. | `resources/reports.md` |

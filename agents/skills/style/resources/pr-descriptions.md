@@ -1,85 +1,53 @@
 # PR descriptions
 
-The body makes a reviewer fast and confident, not a restage of the diff. The diff shows *what changed*; the description carries what it can't: **what was happening** (the behavior, in plain terms) and **what we're doing about it conceptually**. Spend words there; cut anything readable straight from the code.
+A PR body answers the questions a reviewer must settle before approving, and nothing the diff already answers. Every line passes one test: **would the reviewer get the change wrong, or not trust it, without this line, and can't they see it in the diff?** Only a yes to both earns the line.
 
-**Hard budget: one page.** Only information a reviewer can't get from the diff earns space: the purpose of the change, invariants, decisions, architectural patterns/designs, and verification steps. Per-file walkthroughs, mechanism narration, signature dumps, and exhaustive test inventories restate the diff; cut them. When a draft runs long, drop whole beats before trimming words; a reviewer who wants more detail reads the code. The walkthrough shape (`resources/change-walkthroughs.md`) is for explanations and reviews; in a PR body it compresses to fit the page.
+## What the reviewer asks
 
-## The arc
+| Question | Section | When |
+|----------|---------|------|
+| What was wrong or missing? | Description | Always. 1-2 sentences of user-visible behavior. |
+| What's different now? | Description | Always. 1-2 sentences: the new behavior, then the idea that produces it. |
+| Why this approach? | Description | Only when a reviewer could reasonably disagree: the decision and one reason, a rejected alternative in a line. |
+| What does it look like? | Screenshots | Every UI change. |
+| How do I know it works and won't break prod? | Test plan | Always. |
+| What must I know to review, merge, or deploy? | Additional notes | Only when true: stack position, why it's safe to merge, deploy order, the load-bearing limit, a named follow-up. One line each. |
 
-The full arc is in SKILL.md ("Explaining engineering work").
+Everything else is the diff's job: per-file walkthroughs, helper and flag names, exact values, call order, full test inventories, and how the session got here. Write as if the working session never happened; every claim stands on what this PR shows.
 
-The beats a good description covers when they apply. **Guidelines, not a required template**: a one-line fix gets a sentence or two, a large feature gets the full arc. Headers vary freely; skip a beat when it's absent or the code makes it obvious; format however reads best (prose, headers, bullets).
+## Shape and size
 
-1. **Problem**: what's happening today, why it's wrong, and who/what it hurts, in user-visible behavior terms, not internals. For a system the reviewer likely hasn't touched, open with one line of orientation: what the component is, what breaks when it breaks ("a colony-vm build packs the prod databases into one image the eval platform boots; if it fails, no new eval environment ships").
-2. **Root cause**: the specific code or condition producing that behavior. Its own beat: the problem is what the reader sees, the root cause is why it happens. Cite the code, don't restate it.
-3. **Fix / Changes**: the new desired behavior, the conceptual fix that produces it, and why it's sound. Give the architecture's shape if the solution has one, name a rejected alternative in a line when one was live, and point at the code that proves the behavior holds.
-4. **Verification**: what you ran and what each run proves, paired with the concern it answers (see below).
-5. **Deploy plan**, when rollout isn't trivial: order, flags, what to check after.
-6. **Limits / Out of scope**: what the approach costs, what it deliberately doesn't cover, and what's safe to leave alone and why ("normal-sized sessions still get the full transcript, so this only touches the ones already failing"). Bold the load-bearing limit.
-7. **Follow-ups**: the next problem, named so it stays visible without scope-creeping this PR. Deferred concerns get filed as backlog tasks stating the problem, not a prescribed solution.
+When the repo has `.github/pull_request_template.md`, its sections are the skeleton, even for a two-line body; a section with nothing to say gets "N/A". Size to the reviewer's risk, not the diff's size: a one-line fix is one sentence and a one-line test plan. **Target 150-250 words of prose**, not counting media and the test plan's list. Draft, then keep only the 15% you'd keep if forced to cut; that is the body.
 
-The weight is on 1-3; 6 and 7 stay short. Don't pad a small change to hit every beat.
+**A body that can't get down to the target means the PR is too big**: split it into a stack before writing more prose. The exception is a PR that's large on purpose, like a prototype whose implementation details the reviewer doesn't need; the body says so in one line and stays short while the diff is large.
 
-## Lead in plain English, behavior first
+## Description
 
-Write so someone who's never seen the code gets the problem (beat 1) and the idea (beat 3), in that order:
+Behavior first and cold reader, as in SKILL.md. A user-visible change gets a concrete example of what the user now sees. Link the source you were given: the eval run, doc, or PR that surfaced the bug.
 
-- Behavior: "The worker hands the model a session's entire transcript. A few very large sessions don't fit the input limit, so the call fails and those annotations never get processed."
-- Concept: "The model doesn't need the whole conversation to read an annotation, just what was happening around it. So we send the slices near each annotation plus a bit of the start and end."
+## Screenshots and recordings
 
-Weak drafts open on the solution ("Adds windowing to...") or dump a feature list of internals ("short-circuits when under budget, hard cap with a warning, sentinel turns..."). Flip it: behavior, then concept, then the architecture's shape, then point at the code. If a reviewer needs the prose to follow the *mechanism*, the code isn't self-documenting: fix the code, not the writing.
+- Before and after for a fix, after for a feature. Each caption says what to look at.
+- A recording when the behavior happens over time (streaming, loading, a multi-step flow); it sits first in Screenshots with one line on what it shows.
+- Upload with `gh pr create|edit --attach '<path>#<alt>'` and reference each file in the body as `![alt](<path>)` with the *same path string*; gh swaps a matching reference for the uploaded asset and appends unmatched files at the end. A video renders as a player when its asset URL sits on its own line.
 
-## High-level architecture vs. mechanism
+## Test plan
 
-The line: **architecture is the shape a reviewer must agree with; mechanism is detail the code already shows.**
+Answers "how can I be confident this works and doesn't break prod?", in first person: "I ran X. It showed Y."
 
-Prose, yes (architecture):
-- The few moving parts and who owns what ("a new `Windower` slices the transcript; the worker just calls it").
-- A load-bearing *decision* a reviewer must agree with and the code won't surface ("we keep the original turn numbers so the model's citations stay valid"). State it as a property + reason, never a jargon checklist. When the code and tests already make it obvious, skip it.
+- One entry per behavior the description claims, plus the riskiest thing nearby that could break.
+- CI proof first, naming the test so a reviewer can open it. When CI can't prove it, one thorough manual run in 2-4 steps that says what was exercised; "all green" alone is a claim, not a proof.
+- Remaining coverage in one closing line.
 
-Code's job, not prose (mechanism): how turns are selected, exact window sizes and caps, parameter names, data threading, call order: anything a behavior-preserving refactor would obsolete. Even a single internal helper or flag is mechanism leak: naming `_run` or `check=True` makes the reader chase code; state the behavior instead ("a rejected push fails the build").
+## Stacks
 
-## Stand alone for a cold reviewer
-
-Assume the reviewer hasn't read the ticket and doesn't know this corner of the system; the body carries them on its own.
-
-- **A cited file or symbol gets a one-clause definition and why it's relevant, never a bare name.** "Same pattern in `vm_warm.py` and `vm_snapshot.py`" tells a stranger nothing; "both build layers that push images (`vm_warm` = warm base, `vm_snapshot` = data restored in), so the fix lands in both" does. Name for findability, but earn the name.
-- **Stand-alone holds per section, not just per document.** Reviewers jump straight to Verification or Limits, so each section re-grounds its own load-bearing nouns instead of borrowing a term ("the crash", "the predicate") only the root-cause prose defined. A section that only parses if you've memorized an earlier one isn't standalone.
-- **The reviewer knows the codebase and the product, never the session's history.** Everything reader-facing on a PR (body, review replies, comments) is written as if the working sessions never happened: no references to closed or superseded PRs, commits in them, earlier scope decisions, or "this was green before the split": the claim stands on what's verifiable from this PR alone. A reviewer has that history only when the user explicitly says so ("Yash knows about X").
-
-## Verification and non-goals
-
-Group proofs by the claim they prove, never a flat activity log ("we ran X, then Y" tells the reviewer neither what's proven nor why the method is trustworthy). Each entry reads on its own in four beats: the concern at stake, the broken behavior in plain terms (not a noun an earlier section defined), how you exercised it, why that proves the fix. The bold lead is the proven behavior with the method in a parenthetical, and a test-backed claim names the actual test, never a bare "unit tests": an independent reviewer must be able to open it without grepping. A worked entry:
-
-> **The smoke test no longer dies on a bad token (`test_smoke.py::test_bad_token_fails_loud`).** Could a bad login still crash the build? It used to, when the smoke step read a user's email out of a `null` login response; the test feeds that `null` and asserts a clean, loud failure instead.
-
-Live/integration proof (a real run, a probe on real infra) is 2-4 numbered steps under the concern, behaviorally described: not a command dump, and not the outcome alone ("all 8 jobs green" is a claim, not a proof; the reviewer can't tell what was exercised).
-
-**Spend the detail on architectural invariants; compress mechanics.** A claim that proves a design decision holds ("the DB itself rejects a second active row, so the invariant survives writers outside this module") earns a bold bullet naming the enforcement mechanism. Mechanical-fidelity claims (round-trip exactness, a clever fixture) don't earn their own bullets: close with one line naming the remaining coverage areas.
-
-**Non-goals**: what you didn't do and why deferred. Part of Limits / Out of scope (beat 6); keeps the next problem visible without scope-creeping this PR.
-
-## Screenshots for UI changes
-
-A UI change carries its screenshots inline in the body, captioned with what to look at (the defect before, the behavior after), never left as local paths for the author to drag in. Upload with `gh pr create|edit --attach '<path>#<alt text>'`, referencing each image in the body as `![alt](<path>)` with the *same path string* passed to `--attach`: gh rewrites a matching reference to the uploaded asset, and appends an unmatched file to the end instead (a relative reference with an absolute `--attach` path does not match).
-
-A demo recording is a screenshot that moves, so it goes in the same Screenshots section, above the stills, with one line saying what the clip shows. It never goes in a PR comment, where a reviewer reading the body misses it. `--attach` takes video too; a video renders as a player when its uploaded asset URL sits on its own line in the body.
-
-## Condense pass
-
-After drafting, cut restatement and anything the diff already shows, keeping every claim and its evidence; then check the one-page budget, and still over means whole beats go, not words.
+A stacked PR opens with "PR N of M, based on #X; retarget to `main` once #X merges", plus the tech plan link when one exists. The first PR carries the shared context; later PRs are a few lines on their own change and point back to it.
 
 ## After the first push
 
-The body stays accurate for the life of the PR. Strong defaults, sized to the PR:
+The body and title stay true for the life of the PR (the moving-world rule in SKILL.md):
 
-- **Later commits that change the story get an "Update" section** prepended with the head SHA, and the superseded body text marked as superseded, so the body never claims something the diff no longer does. A rebase or a sibling PR merging triggers the same audit (the moving-world rule in SKILL.md).
-- **Updates don't stack past two.** One or two Update sections during active review are fine; when a round rewrites the story (rename, removed feature, redesigned API), rewrite the whole body to describe the final state: a third supersession is the signal the body has become a changelog of the author's process instead of an answer to "what is this change".
-- **Fold review and chat answers back into the body**: a question one reviewer asked is a gap the next reviewer will hit.
-- **Post-merge verification lands as a PR comment with numbers** ("Post-merge prod verification: PASS across the board"), not silence.
-- **Review responses are numbered dispositions**, each mapping the comment to its fix commit SHA. Declining is fine when the reason is stated: "**Minor: `bash -e` without `pipefail`: leaving it.** A behavior change worth its own scoped pass, not a rider here."
-- **Scope stays clean**: unrelated tooling that rode along gets split to its own PR, ideally before a reviewer has to ask.
-
-## Where effort goes
-
-The weak part is almost always a missing plain-English problem statement plus too much internal mechanism. Put the effort on the opening behavior/concept beats and the architecture's shape; trust the code for the rest. Keep Limits and Follow-ups short.
+- One or two "Update" sections with the head SHA are fine during review; past that, rewrite the body to the final state.
+- A question a reviewer asked is a gap the next reviewer will hit: fold the answer into the body.
+- Review replies are numbered dispositions mapped to the fix commit SHA; declining is fine with the reason stated.
+- Post-merge verification lands as a PR comment with numbers.
