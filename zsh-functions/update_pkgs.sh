@@ -24,11 +24,11 @@ function update_pkgs() (
   source "$DOTFILES_DIR/lib/output.zsh"
   open_log
   emit "update_pkgs ($os)"
+  open_checklist $steps
 
-  local step index=0
+  local step
   for step in $steps; do
-    (( index++ ))
-    run_module "$step" "_update_pkgs_$step" "$index" "${#steps}"
+    run_module "$step" "_update_pkgs_$step"
   done
 
   closing_summary "✅ Packages updated."
@@ -60,7 +60,7 @@ _update_pkgs_brew() {
 # The result counts pacman's own log, which covers AUR builds too. mise tools
 # and migrations are not in it.
 _update_pkgs_omarchy() {
-  label_break
+  step_owns_terminal
   local -i pacman_log_start=$(wc -l < /var/log/pacman.log)
   _update_pkgs_try "omarchy update" _update_pkgs_on_terminal omarchy update -y || return
   local -i upgraded=$(tail -n +$((pacman_log_start + 1)) /var/log/pacman.log | grep -c '\[ALPM\] upgraded ')

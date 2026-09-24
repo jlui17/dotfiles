@@ -10,7 +10,7 @@
 
 `open_log` parks the terminal on fd 3 and gives stdout and stderr to the log for the whole run. Reaching the screen takes a deliberate call; everything else lands in `/tmp/dotfiles-install.log`.
 
-`open_log`, the calls below, `run_module` and `closing_summary` live in `lib/output.zsh`, not in install.sh, because `update_pkgs` (`zsh-functions/update_pkgs.sh`) reports through them too. The lib writes to whatever path the caller put in `OUTPUT_LOG`. A change there is verified against both callers.
+`open_log`, `open_checklist`, the calls below, `run_module` and `closing_summary` live in `lib/output.zsh`, not in install.sh, because `update_pkgs` (`zsh-functions/update_pkgs.sh`) reports through them too. The lib writes to whatever path the caller put in `OUTPUT_LOG`. A change there is verified against both callers.
 
 This is structural on purpose. A convention ("redirect noisy commands") rots one module at a time, and the failure mode is noise. Here, forgetting the API costs a summary line and nothing else: a bare `echo` in a module is not a bug, it is the log's per-item detail.
 
@@ -23,13 +23,30 @@ The only routes to the terminal:
 | `warn "..."` | Warning line, run continues. Failure bookkeeping stays with the caller |
 | `note "..."` | A follow-up action for the closing Notes block |
 | `track "label" cmd...` | Run a fallible command: label into the log first, 15-line tail to the screen on failure, label into `FAILURES`, command's exit code returned |
-| `ask var "prompt"` | Prompt the user |
+| `ask var "prompt"` | Prompt the user. When stdin is a terminal it first throws away anything typed before the prompt appeared, so a stray key from an earlier step cannot answer it; a piped answer is read as is |
 | `die "..."` | Fatal, with the log path (the summary that normally prints it is never reached) |
+| `step_owns_terminal` | For a step whose tool needs the real terminal (prompts, sudo): the live block goes away until the step's result line, and the step streams to fd 3 itself. `_update_pkgs_omarchy` is the one caller |
 | `emit "..."` | A raw line to both terminal and log. Reserved for `main` and the pre-module steps; a module uses the calls above |
 
 Two traps this shape creates. zsh's `read -r "var?prompt"` writes its prompt to stderr, which the log now owns, so a raw prompt looks like a hang: use `ask`. A fatal path that `echo`s before `exit` says nothing at all: use `die`.
 
 `track` runs the command with `&&`, not `if`, so `$?` still carries the real exit code. Keep that when editing it.
+
+## The live checklist
+
+The caller names every step once, `open_checklist name...` after `open_log` and the header, then calls `run_module name fn` for each in the same order. The checklist does the numbering.
+
+When fd 3 is a terminal, finished steps are permanent lines and under them sits a live block: the running step with its phase and timer, a `└` line, the pending steps, a progress bar. A background renderer redraws the block four times a second and reads everything it shows from the log. The phase is the label of the last `--- label: cmd` line since the step began, the `└` line is the last line of output since the block was last drawn (so it never repeats a warning or prompt that just printed above it). So a module gets live progress by using `track`, and by nothing else.
+
+While a step runs, fd 3 belongs to the renderer. The main shell writes to it only between `hide_live_block` and `show_live_block`, which is what `warn`, `ask`, `die` and `track`'s failure tail do. A new route to the screen does the same, or the renderer draws over it. A module never writes to fd 3 itself; the step that has to calls `step_owns_terminal` first. Call the API from the main shell, never inside `$( )` or the left side of a pipe: a renderer restarted in a subshell is one the main shell cannot stop.
+
+The bar counts steps finished out of steps. It is not a time estimate, because the tools do not report one.
+
+Marks carry the meaning by shape (`✓` done, `!` failed, `–` skipped, spinner running, `·` pending). Color only backs them: blue and yellow, never red against green.
+
+When fd 3 is not a terminal (`./install.sh > file`, a pipe, CI) each step is one static `[ 3/15] name .... result` line, and the log is the same in both modes.
+
+Known limits: the terminal size is read when the block is drawn, so a resize shows up at the next step. The cursor is hidden and terminal echo is off while the block is live, and `hide_live_block` gives both back on every way out; a SIGKILL cannot, and `stty sane` or `reset` recovers. A `sudo` password prompt in the middle of a module writes to `/dev/tty` and the renderer draws over it, so on Linux `main` runs `sudo -v` before `open_checklist` and `update_pkgs` does the same; nothing keeps the sudo timestamp alive, so a run that outlasts sudo's timeout (15 minutes by default) can still prompt under the block.
 
 ## Result lines are synthesized, not written
 
@@ -73,6 +90,16 @@ Capture a run, diff against it, and account for every line that moved:
 cp /tmp/dotfiles-install.log /tmp/dotfiles-install.before.log
 ./install.sh > /tmp/dotfiles-install.tty
 diff /tmp/dotfiles-install.before.log /tmp/dotfiles-install.log
+```
+
+For a change to `lib/output.zsh` itself, `lib/output-demo.zsh` runs fake steps through the real API in about 15 seconds, one of every route to the terminal: a plain result, tracked phases, a warning, a failure tail, a skipped step, a prompt, and enough steps to overflow a short terminal. Watch it on a terminal (a 12-row one for the `+N more` cap, a narrow one for truncation, Ctrl-C in the middle for the cursor), then check that the static fallback and the log did not move:
+
+```zsh
+print y | lib/output-demo.zsh > /tmp/output-demo.before.tty   # before the change
+cp /tmp/output-demo.log /tmp/output-demo.before.log
+print y | lib/output-demo.zsh > /tmp/output-demo.tty          # after it
+diff /tmp/output-demo.before.tty /tmp/output-demo.tty
+diff /tmp/output-demo.before.log /tmp/output-demo.log
 ```
 
 The paths this machine cannot reach (fresh-machine first run, the Arch and Ubuntu branches) are read, not run. Say so rather than implying coverage. An upgrade path is the exception. Verify it by running install.sh on a machine that still has the old layout and reading its result lines and log, not by reasoning about it. sfx over the tailnet is the usual one; the dev-machines skill has the access rules. A failure path is cheap to exercise deliberately (point a `track` call at a package name that does not exist) and worth doing whenever `track` or the summary changes.

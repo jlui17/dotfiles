@@ -1861,10 +1861,12 @@ main() {
     module_applies "$entry" && applicable+=("$entry")
   done
 
-  local index=0
+  # Before the checklist goes live, so the password prompt gets a plain terminal.
+  [[ "$OS" != "macos" ]] && command_exists sudo && sudo -v
+
+  open_checklist "${applicable[@]%%:*}"
   for entry in "${applicable[@]}"; do
-    (( index++ ))
-    run_module "${${(s.:.)entry}[1]}" "${${(s.:.)entry}[2]}" "$index" "${#applicable[@]}"
+    run_module "${${(s.:.)entry}[1]}" "${${(s.:.)entry}[2]}"
   done
 
   closing_summary "✅ Dotfiles installation complete."
