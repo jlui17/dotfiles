@@ -1,13 +1,13 @@
 When delegating, picking the right model for the job is really important. Think about the ambiguity, complexity, and scope of the job and balance it against the model's cost, intelligence, and taste. Intelligence is how much ambiguity the model can take. Taste is code quality, API design, and copy. For the GPT models it does not cover UI and UX: I trust Claude's taste there way more than Codex's. Small and medium UI changes can go to opus, and a big one (a new UI or a redesign) goes through fable. Whoever makes the UI call judges the screenshots. Producing them is worker work. Sol and astra are both good at driving a browser, so the setup, the clicks, the measurements, and the captures go to them, and the one who made the call reads the result.
 
-| model           | cost | intelligence | taste | effort            |
-|-----------------|------|--------------|-------|-------------------|
-| gpt-6-luna      | 1    | 4            | 3     | high, xhigh       |
-| sonnet-5        | 3    | 3            | 3     | —                 |
-| gpt-6-sol       | 5    | 7            | 6     | low, medium       |
-| opus-5-5        | 5    | 8            | 8     | —                 |
-| gpt-6-astra     | 9    | 9            | 7     | low, medium, high |
-| fable-5-1       | 10   | 10           | 10    | —                 |
+| model       | cost | intelligence | taste | effort              |
+|-------------|------|--------------|-------|---------------------|
+| gpt-6-luna  | 1    | 4            | 3     | high, xhigh         |
+| sonnet-5    | 3    | 3            | 3     | —                   |
+| gpt-6-sol   | 5    | 7            | 6     | low, medium         |
+| opus-5-5    | 5    | 8            | 8     | medium, high, xhigh |
+| gpt-6-astra | 9    | 9            | 7     | low, medium, high   |
+| fable-5-1   | 10   | 10           | 10    | medium, high        |
 
 Use luna for bulk mechanical passes and for reconnaissance: explore and gather evidence on luna, then move the real work up. Use sonnet only when luna usage is out; I'd rather not use sonnet or haiku at all for now. Sol and opus overlap, and it's not a hard line: when a job needs that level of intelligence, like coding or some design, prefer opus. Sol is cheaper and faster for computer use, ad-hoc verification, browser work, and a second review. Opus is a good reviewer too. Astra is for very thorough verification, testing, and review. Fable is an advisor for really careful design and thinking. When the output misses the bar, rerun it stronger. You don't need to ask me.
 
