@@ -1408,7 +1408,7 @@ setup_codex() {
 }
 
 setup_claude_code_skills() {
-  echo "==> Claude Code commands & output styles..."
+  echo "==> Claude Code commands, agents & output styles..."
   local module_dir="$DOTFILES_DIR/claude-code"
 
   local -a desired=()
@@ -1420,6 +1420,15 @@ setup_claude_code_skills() {
     backup_and_link "$cmd_file" "$commands_dir/$(basename "$cmd_file")"
   done
   prune_stale_links "$commands_dir" "$module_dir/commands" "${desired[@]}"
+
+  desired=()
+  local agents_dir="$HOME/.claude/agents" agent_file
+  ensure_dir "$agents_dir"
+  for agent_file in "$module_dir/agents/"*.md(N); do
+    desired+=("${agent_file:t}")
+    backup_and_link "$agent_file" "$agents_dir/${agent_file:t}"
+  done
+  prune_stale_links "$agents_dir" "$module_dir/agents" "${desired[@]}"
 
   desired=()
   local styles_dir="$HOME/.claude/output-styles" style_file name

@@ -14,6 +14,10 @@ Owns what only Claude Code reads: commands, Claude-only rule fragments in `rules
 
 `commands/*.md` are plain symlinks into `~/.claude/commands`, pruned when the source is deleted.
 
+## Agents
+
+`agents/*.md` are plain symlinks into `~/.claude/agents`, pruned when the source is deleted. They exist to pin a subagent's reasoning effort, which only frontmatter can set. A `model` passed to the Agent tool overrides the definition's `model`, so spawn these without one.
+
 ## Settings, statusline, hook
 
 `settings.json` is merged, not linked, because Claude Code rewrites `~/.claude/settings.json` at runtime (theme, model, `/fast`). `merge_json` deep-merges the repo's tracked keys into the machine's real file, repo winning on conflicts, and leaves machine-only keys alone. `settings.local.json` (gitignored) is merged after it, so for the keys it declares local wins over repo, re-asserted every run.
