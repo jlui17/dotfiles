@@ -24,6 +24,7 @@ The only routes to the terminal:
 | `note "..."` | A follow-up action for the closing Notes block |
 | `track "label" cmd...` | Run a fallible command: label into the log first, 15-line tail to the screen on failure, label into `FAILURES`, command's exit code returned |
 | `ask var "prompt"` | Prompt the user. When stdin is a terminal it first throws away anything typed before the prompt appeared, so a stray key from an earlier step cannot answer it; a piped answer is read as is |
+| `sudo_check_and_run cmd...` | sudo for a module. With no cached credential it takes the live block away and asks for the password right then; a run with no terminal to ask on fails the call with a line saying so |
 | `die "..."` | Fatal, with the log path (the summary that normally prints it is never reached) |
 | `step_owns_terminal` | For a step whose tool needs the real terminal (prompts, sudo): the live block goes away until the step's result line, and the step streams to fd 3 itself. `_update_pkgs_omarchy` is the one caller |
 | `emit "..."` | A raw line to both terminal and log. Reserved for `main` and the pre-module steps; a module uses the calls above |
@@ -46,7 +47,9 @@ Marks carry the meaning by shape (`✓` done, `!` failed, `–` skipped, spinner
 
 When fd 3 is not a terminal (`./install.sh > file`, a pipe, CI) each step is one static `[ 3/15] name .... result` line, and the log is the same in both modes.
 
-Known limits: the terminal size is read when the block is drawn, so a resize shows up at the next step. The cursor is hidden and terminal echo is off while the block is live, and `hide_live_block` gives both back on every way out; a SIGKILL cannot, and `stty sane` or `reset` recovers. A `sudo` password prompt in the middle of a module writes to `/dev/tty` and the renderer draws over it, so on Linux `main` runs `sudo -v` before `open_checklist` and `update_pkgs` does the same; nothing keeps the sudo timestamp alive, so a run that outlasts sudo's timeout (15 minutes by default) can still prompt under the block.
+Known limits: the terminal size is read when the block is drawn, so a resize shows up at the next step. The cursor is hidden and terminal echo is off while the block is live, and `hide_live_block` gives both back on every way out; a SIGKILL cannot, and `stty sane` or `reset` recovers.
+
+**sudo.** A bare `sudo` in a module skips the check, and its password prompt lands under the live block, so modules call `sudo_check_and_run`. A run that never reaches one never prompts. What cannot call it: a program that runs sudo itself (`sh -c`, `xargs`), which gets `sudo -n` after a call that did go through it, and a subshell (`$( )`, the left side of a pipe, a background job), which cannot move the live block. `omarchy update` runs its own sudo, which is fine under `step_owns_terminal`: the block is already gone.
 
 ## Result lines are synthesized, not written
 

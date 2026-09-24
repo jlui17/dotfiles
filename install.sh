@@ -96,15 +96,15 @@ case "$OS" in
     ;;
   arch)
     PKG_MANAGER="pacman"
-    PKG_INSTALL=(sudo pacman -S --noconfirm)
+    PKG_INSTALL=(sudo_check_and_run pacman -S --noconfirm)
     PKG_QUERY=(pacman -Qi)
-    PKG_UPDATE=(sudo pacman -Syu --noconfirm)
+    PKG_UPDATE=(sudo_check_and_run pacman -Syu --noconfirm)
     ;;
   ubuntu)
     PKG_MANAGER="apt"
-    PKG_INSTALL=(sudo apt-get install -y)
+    PKG_INSTALL=(sudo_check_and_run apt-get install -y)
     PKG_QUERY=(apt_pkg_installed)
-    PKG_UPDATE=(sudo apt-get update)
+    PKG_UPDATE=(sudo_check_and_run apt-get update)
     ;;
 esac
 
@@ -207,7 +207,7 @@ install_dd_cli() (
 GUI_APPS=(
   "AltTab|brew list --cask alt-tab|brew install --cask alt-tab||"
   "Tinycast|brew list --cask tinycast|brew install --cask abue-ammar/tinycast/tinycast||"
-  "Zed|zed_installed|brew install --cask zed|sudo pacman -S --noconfirm zed|"
+  "Zed|zed_installed|brew install --cask zed|sudo_check_and_run pacman -S --noconfirm zed|"
   "1Password CLI|command -v op|brew install --cask 1password-cli|yay -S --noconfirm 1password-cli|"
   "Hunk|command -v hunk|brew tap modem-dev/tap 2>/dev/null; brew install hunk|npm i -g hunkdiff|npm i -g hunkdiff"
   "OpenCode|command -v opencode|brew install opencode||npm i -g opencode-ai"
@@ -649,13 +649,15 @@ install_packages() {
   # normal install loop below installs it and `apt upgrade` keeps it current.
   if [[ "$OS" == "ubuntu" ]] && ! command_exists mise; then
     echo "  Adding the mise apt repository..."
-    track "apt update" sudo apt-get update
-    track "install curl gpg" sudo apt-get install -y curl gpg
-    sudo install -dm 755 /etc/apt/keyrings
+    track "apt update" sudo_check_and_run apt-get update
+    track "install curl gpg" sudo_check_and_run apt-get install -y curl gpg
+    sudo_check_and_run install -dm 755 /etc/apt/keyrings
+    # sh cannot reach sudo_check_and_run, and its sudo must not prompt: the calls
+    # above left the credential cached, or the run cannot ask and this fails too.
     track "mise apt key" sh -c \
-      "curl -fsSL https://mise.jdx.dev/gpg-key.pub | sudo gpg --yes --dearmor -o /etc/apt/keyrings/mise-archive-keyring.gpg"
+      "curl -fsSL https://mise.jdx.dev/gpg-key.pub | sudo -n gpg --yes --dearmor -o /etc/apt/keyrings/mise-archive-keyring.gpg"
     echo "deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.gpg arch=$(dpkg --print-architecture)] https://mise.jdx.dev/deb stable main" \
-      | sudo tee /etc/apt/sources.list.d/mise.list >/dev/null
+      | sudo_check_and_run tee /etc/apt/sources.list.d/mise.list >/dev/null
   fi
 
   # Omarchy refuses a direct `pacman -Syu` from a transaction hook: its own
@@ -817,8 +819,8 @@ TOML
     system)
       echo "  Installing Python $MISE_PYTHON_VERSION via OS package manager..."
       run_if_os "macos" track "brew python@$MISE_PYTHON_VERSION" brew install "python@$MISE_PYTHON_VERSION"
-      run_if_os "arch" track "pacman python" sudo pacman -S --noconfirm python
-      run_if_os "ubuntu" track "apt python3" sudo apt-get install -y python3
+      run_if_os "arch" track "pacman python" sudo_check_and_run pacman -S --noconfirm python
+      run_if_os "ubuntu" track "apt python3" sudo_check_and_run apt-get install -y python3
       ;;
   esac
 
@@ -870,7 +872,7 @@ setup_zshrc() {
     login_shell="$(getent passwd "$CURRENT_USER" | cut -d: -f7)"
     if [[ "$login_shell" != *zsh ]]; then
       echo "  Setting login shell to zsh..."
-      track "chsh to zsh" sudo chsh -s "$(command -v zsh)" "$CURRENT_USER" \
+      track "chsh to zsh" sudo_check_and_run chsh -s "$(command -v zsh)" "$CURRENT_USER" \
         && changed "login shell → zsh"
     else
       echo "  Login shell is already zsh."
@@ -894,7 +896,7 @@ setup_nvim() {
   if ! command_exists nvim; then
     echo "  Neovim not found. Installing..."
     run_if_os "macos" track "install neovim" brew install neovim
-    run_if_os "arch" track "install neovim" sudo pacman -S --noconfirm neovim
+    run_if_os "arch" track "install neovim" sudo_check_and_run pacman -S --noconfirm neovim
     # Ubuntu's neovim comes from mise (declared in conf.d/dotfiles-apt-gaps.toml).
     run_if_os "ubuntu" track "install neovim" mise install neovim
     changed "installed neovim"
@@ -992,7 +994,7 @@ setup_omarchy() {
     if [[ "$(readlink "$wrapper_link" 2>/dev/null)" == "$wrapper" ]]; then
       echo "  quickshell wrapper already linked."
       (( MODULE_UNCHANGED++ ))
-    elif track "link quickshell wrapper" sudo ln -sfn "$wrapper" "$wrapper_link"; then
+    elif track "link quickshell wrapper" sudo_check_and_run ln -sfn "$wrapper" "$wrapper_link"; then
       echo "  Linked quickshell wrapper."
       changed "linked quickshell wrapper"
       note "Restart the Omarchy shell to render it on the CPU: omarchy-restart-shell"
@@ -1864,9 +1866,6 @@ main() {
   for entry in "${MODULES[@]}"; do
     module_applies "$entry" && applicable+=("$entry")
   done
-
-  # Before the checklist goes live, so the password prompt gets a plain terminal.
-  [[ "$OS" != "macos" ]] && command_exists sudo && sudo -v
 
   open_checklist "${applicable[@]%%:*}"
   for entry in "${applicable[@]}"; do

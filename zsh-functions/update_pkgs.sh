@@ -15,8 +15,6 @@ function update_pkgs() (
     os=arch steps=(omarchy)
   elif command -v apt-get &>/dev/null; then
     os=ubuntu steps=(apt mise codex)
-    # Before the first progress label, so the password prompt gets its own line.
-    sudo -v
   fi
   steps+=(skills mdnote zinit zsh-eval-cache t3)
 
@@ -80,8 +78,8 @@ _update_pkgs_on_terminal() {
 
 # -y, because a Y/n prompt hidden in the log would look like a hang.
 _update_pkgs_apt() {
-  _update_pkgs_try "apt update" sudo apt-get update \
-    && _update_pkgs_try "apt upgrade" sudo apt-get upgrade -y \
+  _update_pkgs_try "apt update" sudo_check_and_run apt-get update \
+    && _update_pkgs_try "apt upgrade" sudo_check_and_run apt-get upgrade -y \
     && result "done"
 }
 

@@ -20,6 +20,8 @@ CHECKLIST_DONE=0
 CHECKLIST_START=0
 # Set when fd 3 is a terminal. Empty means static lines.
 CHECKLIST_LIVE=""
+# Set by open_log when the run can ask for a password. sudo_check_and_run reads it.
+RUN_IS_INTERACTIVE=""
 
 # The live block. LIVE_STEP names the running step while it has a block, on
 # screen or hidden for a moment; step_owns_terminal clears it. The main shell
@@ -76,12 +78,17 @@ MODULE_RESULT=""
 open_log() {
   if [[ -n "$DOTFILES_LOG_OPEN" ]]; then
     exec >>"$OUTPUT_LOG" 2>&1
-    return
+  else
+    exec 3>&1
+    export DOTFILES_LOG_OPEN=1
+    : > "$OUTPUT_LOG"
+    exec >>"$OUTPUT_LOG" 2>&1
   fi
-  exec 3>&1
-  export DOTFILES_LOG_OPEN=1
-  : > "$OUTPUT_LOG"
-  exec >>"$OUTPUT_LOG" 2>&1
+  # Whether this run can show a prompt and read the answer. `./install.sh > file`
+  # from a terminal counts as not: sudo could still reach /dev/tty there, but one
+  # rule for every redirected run beats a clever one. Decided here, once: inside
+  # `echo … | sudo_check_and_run tee` stdin is the pipe.
+  if [[ -t 3 && -t 0 ]]; then RUN_IS_INTERACTIVE=1; fi
 }
 
 # -- The output API ---------------------------------------------------------
@@ -302,6 +309,25 @@ track() {
   show_live_block
   FAILURES+=("$label")
   return $rc
+}
+
+# sudo, with the password asked for when a command first needs it: on a plain
+# terminal, the live block out of the way. A run that cannot ask fails instead
+# of waiting at a prompt nobody sees. Call it from the main shell, like the rest
+# of the API; a program that runs sudo itself (sh -c, xargs) cannot reach it.
+sudo_check_and_run() {
+  if ! sudo -n true 2>/dev/null; then
+    if [[ -z "$RUN_IS_INTERACTIVE" ]]; then
+      print -r -- "sudo needs a password and this run has no terminal to ask on. Run it in a terminal."
+      return 1
+    fi
+    hide_live_block
+    sudo -v
+    local rc=$?
+    show_live_block
+    (( rc )) && return $rc
+  fi
+  sudo "$@"
 }
 
 # Column the result lines align to. "macos-defaults" is the longest module name.
