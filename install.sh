@@ -1424,10 +1424,14 @@ setup_claude_code_skills() {
   desired=()
   local agents_dir="$HOME/.claude/agents" agent_file
   ensure_dir "$agents_dir"
-  for agent_file in "$module_dir/agents/"*.md(N); do
-    desired+=("${agent_file:t}")
-    backup_and_link "$agent_file" "$agents_dir/${agent_file:t}"
-  done
+  # The agents exist for the worker-cost rule, which spawns them by name. A
+  # machine that skips the rule gets none, and the prune removes old links.
+  if (( ! ${SKIP_RULES[(Ie)worker-cost]} )); then
+    for agent_file in "$module_dir/agents/"*.md(N); do
+      desired+=("${agent_file:t}")
+      backup_and_link "$agent_file" "$agents_dir/${agent_file:t}"
+    done
+  fi
   prune_stale_links "$agents_dir" "$module_dir/agents" "${desired[@]}"
 
   desired=()

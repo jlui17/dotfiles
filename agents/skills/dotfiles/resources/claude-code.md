@@ -16,7 +16,7 @@ Owns what only Claude Code reads: commands, Claude-only rule fragments in `rules
 
 ## Agents
 
-`agents/*.md` are plain symlinks into `~/.claude/agents`, pruned when the source is deleted. They exist to pin a subagent's reasoning effort, which only frontmatter can set. A `model` passed to the Agent tool overrides the definition's `model`, so spawn these without one.
+`agents/*.md` are plain symlinks into `~/.claude/agents`, pruned when the source is deleted. They exist to pin a subagent's reasoning effort, which only frontmatter can set. A `model` passed to the Agent tool overrides the definition's `model`, so spawn these without one. The worker-cost rule is their only caller, so a machine with `worker-cost` in `SKIP_RULES` links none of them.
 
 ## Settings, statusline, hook
 
