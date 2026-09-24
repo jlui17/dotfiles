@@ -30,15 +30,15 @@ The only routes to the terminal:
 
 Two traps this shape creates. zsh's `read -r "var?prompt"` writes its prompt to stderr, which the log now owns, so a raw prompt looks like a hang: use `ask`. A fatal path that `echo`s before `exit` says nothing at all: use `die`.
 
-`track` runs the command with `&&`, not `if`, so `$?` still carries the real exit code. Keep that when editing it.
+`track` reads `$?` on the line right after the command, before anything else runs, so it carries the real exit code. Keep that when editing it.
 
 ## The live checklist
 
 The caller names every step once, `open_checklist name...` after `open_log` and the header, then calls `run_module name fn` for each in the same order. The checklist does the numbering.
 
-When fd 3 is a terminal, finished steps are permanent lines and under them sits a live block: the running step with its phase and timer, a `└` line, the pending steps, a progress bar. A background renderer redraws the block four times a second and reads everything it shows from the log. The phase is the label of the last `--- label: cmd` line since the step began, the `└` line is the last line of output since the block was last drawn (so it never repeats a warning or prompt that just printed above it). So a module gets live progress by using `track`, and by nothing else.
+When fd 3 is a terminal, finished steps are permanent lines and under them sits a live block: the running step with its phase and timer, a `└` line, the pending steps, a progress bar. A background renderer redraws the block four times a second and reads everything it shows from the log. The phase is the label of the last `--- label: cmd` line since the step began, and goes blank once that command's `--> label: exit N` line is in. The `└` line is the last line of output since the block was last drawn (so it never repeats a warning or prompt that just printed above it) that has a letter or a digit in it, shown as the screen would have left it: only the last state of a line redrawn with `\r` or `\e[1G`, escapes dropped. So a module gets live progress by using `track`, and by nothing else.
 
-While a step runs, fd 3 belongs to the renderer. The main shell writes to it only between `hide_live_block` and `show_live_block`, which is what `warn`, `ask`, `die` and `track`'s failure tail do. A new route to the screen does the same, or the renderer draws over it. A module never writes to fd 3 itself; the step that has to calls `step_owns_terminal` first. Call the API from the main shell, never inside `$( )` or the left side of a pipe: a renderer restarted in a subshell is one the main shell cannot stop.
+While a step runs, fd 3 belongs to the renderer. The main shell writes to it only between `hide_live_block` and `show_live_block`, which is what `warn`, `ask`, `die` and `track`'s failure tail do. A new route to the screen does the same, or the renderer draws over it. From one step to the next nothing is erased: the result line overwrites the running row and the next block is drawn over the old one, so a run of fast steps does not blink. The block is erased only where a permanent line has to go above it, and by `closing_summary`. A module never writes to fd 3 itself; the step that has to calls `step_owns_terminal` first. Call the API from the main shell, never inside `$( )` or the left side of a pipe: a renderer restarted in a subshell is one the main shell cannot stop.
 
 The bar counts steps finished out of steps. It is not a time estimate, because the tools do not report one.
 
@@ -78,7 +78,7 @@ install.sh runs on machines that installed every earlier layout. A change that m
 
 ## The log
 
-Overwritten each run, so it always describes the run you just did. Structure: a `════ run` header naming machine, invocation and resolved skip lists (`log_run_header`), then a `════ <module>` banner per module, `--- <label>: <cmd>` blocks written before each tracked command starts (so a hung or interrupted run still shows what it was doing), and `──> <result>` lines.
+Overwritten each run, so it always describes the run you just did. Structure: a `════ run` header naming machine, invocation and resolved skip lists (`log_run_header`), then a `════ <module>` banner per module, `--- <label>: <cmd>` lines written before each tracked command starts (so a hung or interrupted run still shows what it was doing), a `--> <label>: exit <N>` line when it returns (what follows is the module's own output again, and a `---` with no `-->` is where a run hung), and `──> <result>` lines.
 
 It is a superset of what the terminal showed. When output "disappears" after an edit, it is in there. Check before assuming it was dropped.
 

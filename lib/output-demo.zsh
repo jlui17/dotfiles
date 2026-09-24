@@ -8,8 +8,11 @@
 #   print y | lib/output-demo.zsh                unattended (answers the prompt)
 #
 # Every route to the terminal is here once: a plain result, tracked phases with
-# colored and \r-redrawn output, a warning, a failure tail, a skipped step, a
+# colored and redrawn output, a warning, a failure tail, a skipped step, a
 # prompt, and enough steps to overflow a 12-line terminal.
+
+# update_pkgs runs in an interactive shell whose zshrc made SECONDS a float.
+typeset -F SECONDS
 
 OUTPUT_LOG="${OUTPUT_LOG:-/tmp/output-demo.log}" FAILURES=() NOTES=()
 SKIP_MODULES=(fonts) DOTFILES_LOCAL_CONFIG=.dotfiles-local
@@ -33,6 +36,13 @@ demo_download() {
     print -n -- $'\r'"node 22.11.0  ${percent}%"; sleep 0.4
   done
   print
+  # The same redraw done the other way (cursor to column 1, clear), and a box
+  # edge after it that says nothing.
+  local glyph
+  for glyph in ◒ ◐ ◓ ◑; do
+    print -n -- "$glyph  Verifying node"$'\e[1G\e[J'; sleep 0.4
+  done
+  print "◇  Verified node"; print "│"; sleep 1
 }
 
 demo_compile() {

@@ -32,8 +32,13 @@ CHECKLIST_LIVE=""
 LIVE_STEP=""
 LIVE_STEP_START=0
 LIVE_COLUMNS=0
-LIVE_BLOCK_HEIGHT=0
 RENDERER_PID=""
+# The block's pending rows, "+N more" included. Every frame redraws them.
+LIVE_PENDING=()
+# Set while the terminal is the block's: its rows are on screen, the cursor is
+# hidden and echo is off. It stays set from one step to the next, so the next
+# block is drawn over the last one and nothing blinks in between.
+LIVE_BLOCK_SHOWN=""
 
 # Where in the log (a line count) each half of the running step's display starts
 # reading. The phase reads from where the step began. The detail reads from
@@ -97,92 +102,113 @@ label_break() {
   LABEL_INTERRUPTED=1
 }
 
-# Stop the renderer and erase the live block, so a permanent line can print
-# where the block was. The cursor rests on the block's first row between frames
-# and a frame is one write, so the kill can't leave it anywhere else.
+# Stop the renderer. The block's rows stay on screen, the cursor on the first of
+# them: it rests there between frames and a frame is one write, so the kill
+# can't leave it anywhere else.
+stop_renderer() {
+  [[ -n "$RENDERER_PID" ]] || return 0
+  kill "$RENDERER_PID" 2>/dev/null
+  wait "$RENDERER_PID" 2>/dev/null
+  RENDERER_PID=""
+}
+
+# Erase the live block, so a permanent line can print where it was.
 #
 # Every way out of a live block comes through here, which is what gives the
 # cursor and the echo back. A SIGKILL can't, and leaves both off: `stty sane`
 # or `reset` recovers.
 hide_live_block() {
-  [[ -n "$RENDERER_PID" ]] || return 0
-  kill "$RENDERER_PID" 2>/dev/null
-  wait "$RENDERER_PID" 2>/dev/null
-  RENDERER_PID=""
+  [[ -n "$LIVE_BLOCK_SHOWN" ]] || return 0
+  stop_renderer
   print -rn -- $'\r\e[J\e[?25h' >&3
   stty echo <&3
+  LIVE_BLOCK_SHOWN=""
 }
 
-# Draw the live block under whatever printed last and hand fd 3 to the renderer.
-# The block has to fit the terminal, or moving back up to its first row would
-# stop short: the pending list gives way, down to a "+N more" line. One row is
-# left for the line above the block.
+# Draw the live block from the cursor's row down, over the last step's block
+# when that is what's there, and hand fd 3 to the renderer. The block has to fit
+# the terminal, or moving back up to its first row would stop short: the pending
+# list gives way, down to a "+N more" line. One row is left for the line above
+# the block.
 show_live_block() {
   [[ -n "$LIVE_STEP" ]] || return 0
-  local -a size=($(stty size <&3)) pending=("${(@)CHECKLIST_STEPS[CHECKLIST_DONE + 2, -1]}")
+  local -a size=($(stty size <&3))
   LIVE_COLUMNS=$size[2]
+  LIVE_PENDING=("${(@)CHECKLIST_STEPS[CHECKLIST_DONE + 2, -1]}")
   local -i room=$(( size[1] - 5 ))
-  if (( ${#pending} > room )); then
-    pending=("${(@)pending[1, room - 1]}" "+$(( ${#pending} - room + 1 )) more")
+  if (( ${#LIVE_PENDING} > room )); then
+    LIVE_PENDING=("${(@)LIVE_PENDING[1, room - 1]}" "+$(( ${#LIVE_PENDING} - room + 1 )) more")
   fi
-
-  # The running line, its detail line and the bar are the renderer's to fill.
-  local block=$'\n' name
-  for name in "${pending[@]}"; do
-    block+=$'\n'"$COLOR_DIM · $name$COLOR_RESET"
-  done
-  block+=$'\n\n'
-  LIVE_BLOCK_HEIGHT=$(( ${#pending} + 4 ))
   LIVE_DETAIL_LOG_START=$(wc -l < "$OUTPUT_LOG")
   # No echo while the block is live: a typed Enter would move the cursor off
   # the block's first row.
-  stty -echo <&3
-  print -rn -- $'\e[?25l'"$block"$'\e['$(( LIVE_BLOCK_HEIGHT - 1 ))$'A\r' >&3
+  [[ -n "$LIVE_BLOCK_SHOWN" ]] || stty -echo <&3
+  LIVE_BLOCK_SHOWN=1
+  # Newlines make the room (at the bottom of the screen they scroll it) and
+  # erase nothing. The frame fills the rows in.
+  local -i below=$(( ${#LIVE_PENDING} + 3 ))
+  print -rn -- $'\e[?25l'"${(pl:$below::\n:):-}"$'\e['$below$'A\r' >&3
+  draw_live_frame 0
 
   render_live_block >/dev/null 2>&1 &
   RENDERER_PID=$!
 }
 
-# The renderer's loop, four frames a second. The log is its only source: the
-# phase is the label of the last "--- label: cmd" line track wrote since the
-# step began, the detail is the last line of output since the block was drawn.
-#
-# A frame holds no newline: stdio would flush there, and a kill between the two
-# writes would strand the cursor a row down.
+# The renderer's loop, four frames a second. show_live_block drew the first.
 render_live_block() {
+  local -i tick=0
+  while :; do
+    sleep 0.25
+    draw_live_frame $(( ++tick ))
+  done
+}
+
+# One frame: the whole block, each row cleared to its end as it is written and
+# the screen cleared below the last. The log is the only source for the running
+# step: the phase is the label of the last "--- label: cmd" line track wrote
+# since the step began, unless that command has returned ("--> label: exit N");
+# the detail is the last line of output since the block was drawn.
+#
+# A frame is one write and holds no newline: stdio would flush there, and a kill
+# between the two writes would strand the cursor a row down.
+draw_live_frame() {
   setopt local_options extended_glob
   local -a spinner=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏) log_lines
-  local -i tick=0 i cells filled
-  local phase detail running bar
-  while :; do
-    log_lines=("${(@f)$(tail -n +$(( LIVE_PHASE_LOG_START + 1 )) "$OUTPUT_LOG")}")
-    phase="${${log_lines[(R)--- *]#--- }%%: *}"
-    detail=""
-    for (( i = ${#log_lines}; i > LIVE_DETAIL_LOG_START - LIVE_PHASE_LOG_START && ! ${#detail}; i-- )); do
-      [[ "$log_lines[i]" == (---|════|──\>)* ]] && continue
-      # What the screen would have ended up showing: escape sequences (CSI,
-      # OSC, charset) dropped, only the last state of a line redrawn with \r.
-      detail="${log_lines[i]//$'\e'(\[[0-?]#[ -\/]#[@-~]|\][^$'\e\a']#($'\a'|$'\e'\\)|\(B)/}"
-      detail="${${detail%$'\r'}##*$'\r'}"
-      detail="${${detail//[[:cntrl:]]/ }##[[:space:]]#}"
-    done
-
-    running="$(checklist_line "${spinner[tick % ${#spinner} + 1]}" "$LIVE_STEP" "$phase" "$(format_elapsed $(( SECONDS - LIVE_STEP_START )))" cut)"
-    running[2]="$COLOR_RUNNING$running[2]$COLOR_RESET"
-    detail="$COLOR_DIM${(mr:$(( LIVE_COLUMNS - 1 )):):-   └ $detail}$COLOR_RESET"
-
-    # Steps finished out of steps, not a time estimate: the bar only moves when
-    # a step ends. Narrower than 32 cells when the terminal is.
-    bar="  $CHECKLIST_DONE/${#CHECKLIST_STEPS} · $(format_elapsed $(( SECONDS - CHECKLIST_START )))"
-    cells=$(( LIVE_COLUMNS - 2 - ${#bar} ))
-    (( cells > 32 )) && cells=32
-    filled=$(( cells * CHECKLIST_DONE / ${#CHECKLIST_STEPS} ))
-    bar=" $COLOR_RUNNING${(l:$filled::━:):-}╸$COLOR_RESET$COLOR_DIM${(l:$(( cells - filled - 1 ))::─:):-}$COLOR_RESET$bar"
-
-    print -rn -- $'\r'"$running"$'\e[K\e[1B\r'"$detail"$'\e[K\e['$(( LIVE_BLOCK_HEIGHT - 2 ))$'B\r'"$bar"$'\e[K\e['$(( LIVE_BLOCK_HEIGHT - 1 ))$'A\r' >&3
-    sleep 0.25
-    (( tick++ ))
+  local -i tick=$1 i cells filled
+  local phase detail running bar frame name cr=$'\r'
+  log_lines=("${(@f)$(tail -n +$(( LIVE_PHASE_LOG_START + 1 )) "$OUTPUT_LOG")}")
+  phase="${log_lines[(R)--[->] *]}"
+  [[ "$phase" == "--- "* ]] && phase="${${phase#--- }%%: *}" || phase=""
+  detail=""
+  for (( i = ${#log_lines}; i > LIVE_DETAIL_LOG_START - LIVE_PHASE_LOG_START && ! ${#detail}; i-- )); do
+    [[ "$log_lines[i]" == (---|--\>|════|──\>)* ]] && continue
+    # What the screen would have ended up showing: only the last state of a
+    # line redrawn from column 1 (\r, or the cursor sent there), then escape
+    # sequences (CSI, OSC, charset) dropped.
+    detail="${log_lines[i]//$'\e['(1|)G/$cr}"
+    detail="${detail//$'\e'(\[[0-?]#[ -\/]#[@-~]|\][^$'\e\a']#($'\a'|$'\e'\\)|\(B)/}"
+    detail="${${detail%%$'\r'#}##*$'\r'}"
+    detail="${${detail//[[:cntrl:]]/ }##[[:space:]]#}"
+    # A box edge or a spinner glyph on its own says nothing: keep looking.
+    [[ "$detail" == *[[:alnum:]]* ]] || detail=""
   done
+
+  running="$(checklist_line "${spinner[tick % ${#spinner} + 1]}" "$LIVE_STEP" "$phase" "$(format_elapsed $(( SECONDS - LIVE_STEP_START )))" cut)"
+  running[2]="$COLOR_RUNNING$running[2]$COLOR_RESET"
+  frame=$'\r'"$running"$'\e[K\e[1B\r'"$COLOR_DIM${(mr:$(( LIVE_COLUMNS - 1 )):):-   └ $detail}$COLOR_RESET"
+  for name in "${LIVE_PENDING[@]}"; do
+    frame+=$'\e[K\e[1B\r'"$COLOR_DIM · $name$COLOR_RESET"
+  done
+
+  # Steps finished out of steps, not a time estimate: the bar only moves when
+  # a step ends. Narrower than 32 cells when the terminal is.
+  bar="  $CHECKLIST_DONE/${#CHECKLIST_STEPS} · $(format_elapsed $(( SECONDS - CHECKLIST_START )))"
+  cells=$(( LIVE_COLUMNS - 2 - ${#bar} ))
+  (( cells > 32 )) && cells=32
+  filled=$(( cells * CHECKLIST_DONE / ${#CHECKLIST_STEPS} ))
+  bar=" $COLOR_RUNNING${(l:$filled::━:):-}╸$COLOR_RESET$COLOR_DIM${(l:$(( cells - filled - 1 ))::─:):-}$COLOR_RESET$bar"
+
+  print -rn -- "$frame"$'\e[K\e[1B\r\e[K\e[1B\r'"$bar"$'\e[J\e['$(( ${#LIVE_PENDING} + 3 ))$'A\r' >&3
 }
 
 # For a step that needs the real terminal (its tool prompts, or sudo may): the
@@ -256,14 +282,15 @@ track() {
   print -r -- "--- $label: $*"
   local start_line
   start_line=$(wc -l < "$OUTPUT_LOG")
-  # `&&` (not `if`) so $? still holds the command's real exit code on failure —
-  # an `if` with no `else` resets $? to 0 when the condition is false.
-  "$@" && return 0
-  local rc=$?
-  # Read the tail before warning: warn writes to the log too, and would
-  # otherwise be the last thing the tail picks up.
-  local tail_text
-  tail_text=$(tail -n +$((start_line + 1)) "$OUTPUT_LOG" | tail -n 15 | sed 's/^/      /')
+  "$@"
+  local rc=$? tail_text
+  # Read the tail before anything else reaches the log: the closing line and
+  # the warning would otherwise be the last things the tail picks up.
+  (( rc )) && tail_text=$(tail -n +$((start_line + 1)) "$OUTPUT_LOG" | tail -n 15 | sed 's/^/      /')
+  # Closes the "---" line: what follows in the log is no longer this command's,
+  # and the live block stops naming it as the phase.
+  print -r -- "--> $label: exit $rc"
+  (( rc )) || return 0
   # warn, spelled out: the tail has to reach fd 3 before the renderer is back.
   hide_live_block
   label_break
@@ -286,8 +313,8 @@ open_checklist() {
   [[ -t 3 ]] || return 0
   CHECKLIST_LIVE=1
   CHECKLIST_START=$SECONDS
-  # hide_live_block is also what gives the cursor back. Every other way out
-  # (die, closing_summary) is reached with the block already hidden.
+  # hide_live_block is also what gives the cursor back. die and
+  # closing_summary, the other ways out, call it themselves.
   trap 'hide_live_block; exit 130' INT
   trap 'hide_live_block; exit 143' TERM
 }
@@ -303,7 +330,8 @@ run_module() {
   local name="$1" fn="$2" skipped="skipped (SKIP_MODULES in ${DOTFILES_LOCAL_CONFIG:t})"
   if (( ${SKIP_MODULES[(Ie)$name]} )); then
     if [[ -n "$CHECKLIST_LIVE" ]]; then
-      checklist_line "–" "$name" "$skipped" >&3
+      # \e[K: the row may hold what is left of the last step's block.
+      print -r -- "$(checklist_line "–" "$name" "$skipped")"$'\e[K' >&3
     else
       print -r -- "$(module_label "$name")$skipped" >&3
     fi
@@ -341,12 +369,14 @@ run_module() {
   fi
 
   if [[ -n "$CHECKLIST_LIVE" ]]; then
-    hide_live_block
+    # The result replaces the running row. The rest of the block stays for
+    # the next step's block, or closing_summary's erase.
+    stop_renderer
     LIVE_STEP=""
     local final
     final="$(checklist_line "✓" "$name" "$line" "$( (( elapsed > 5 )) && format_elapsed $elapsed )")"
     (( ${#FAILURES[@]} > failures_before )) && final[2]="$COLOR_FAILED!$COLOR_RESET"
-    print -r -- "$final" >&3
+    print -r -- "$final"$'\e[K' >&3
   fi
 
   # Timing only when it's news. Every line carrying "(0s)" would be the same
@@ -385,15 +415,18 @@ checklist_line() {
   print -r -- " $mark $name $dots $text${time:+  $time}"
 }
 
-# "41s", "1m 52s"
+# "41s", "1m 52s". Whole seconds whatever it is handed: SECONDS is a float in a
+# shell that declared it one, and update_pkgs runs in such a shell.
 format_elapsed() {
-  (( $1 >= 60 )) && print -rn -- "$(( $1 / 60 ))m "
-  print -r -- "$(( $1 % 60 ))s"
+  local -i seconds=$1
+  (( seconds >= 60 )) && print -rn -- "$(( seconds / 60 ))m "
+  print -r -- "$(( seconds % 60 ))s"
 }
 
 # Close the run: the failures or $1 (the caller's success line), the log path,
 # the notes.
 closing_summary() {
+  hide_live_block
   emit ""
   local headline="$1" f
   (( ${#FAILURES[@]} )) && headline="⚠️  Finished with ${#FAILURES[@]} issue(s):"
