@@ -1,6 +1,6 @@
 ---
 name: herdr-agents
-description: Use when driving herdr programmatically — starting a new session, space, or tab; giving a coding task its own git worktree; launching a coding agent (Claude Code, codex, etc.) in a pane; sending it a prompt; checking or waiting on its output; or tearing any of that down — including when Justin says "teardown" at the end of a task (that word covers the session's own herdr tab).
+description: Use only in a session that the SessionStart hook said runs inside a herdr pane, when driving herdr programmatically — starting a new session, space, or tab; giving a coding task its own git worktree; launching a coding agent (Claude Code, codex, etc.) in a pane; sending it a prompt; checking or waiting on its output; or tearing any of that down — including when Justin says "teardown" at the end of a task (that word covers the session's own herdr tab).
 ---
 
 # Driving herdr
@@ -13,7 +13,7 @@ This skill covers cross-session orchestration; pane-level mechanics in the curre
 
 ## Orient first
 
-You may be running inside a herdr pane or in a plain terminal; both are normal, and a SessionStart hook already injects which one at startup. The ground truth is the environment: herdr exports `HERDR_ENV=1`, `HERDR_PANE_ID`, `HERDR_TAB_ID`, and `HERDR_WORKSPACE_ID` into every pane shell, so a set `HERDR_PANE_ID` means you're inside that pane. When inside, treat that pane as yours: don't close it, its tab, or start an agent in it (one exception: an explicit teardown ask — see Teardown). (`herdr pane current` is NOT you: it returns the session's focused pane, whoever that is.)
+You are inside a herdr pane: the SessionStart hook named your pane, tab, and space at startup, and the same IDs are in `HERDR_PANE_ID`, `HERDR_TAB_ID`, and `HERDR_WORKSPACE_ID`. Treat that pane as yours: don't close it, its tab, or start an agent in it (one exception: an explicit teardown ask — see Teardown). (`herdr pane current` is NOT you: it returns the session's focused pane, whoever that is.)
 
 ## When to start a session (and how to kick it off)
 
