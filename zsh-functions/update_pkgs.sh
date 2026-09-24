@@ -71,9 +71,10 @@ _update_pkgs_omarchy() {
 # tools get a pty of their own and the prompts read the keyboard through it.
 # tee shows the run live. sed gives the log what the screen ended up showing:
 # escape sequences (CSI, OSC, charset) dropped, and only the last state of a
-# line redrawn with \r.
+# line redrawn with \r. LC_ALL=C makes the ranges byte ranges: en_US.UTF-8
+# collates ? before 0, and GNU sed then rejects [0-?] and takes tee down with it.
 _update_pkgs_on_terminal() {
-  "$@" 2>&1 | tee /dev/fd/3 | sed -E 's/\x1b(\[[0-?]*[ -\/]*[@-~]|\][^\x1b]*\x1b\\|\(B)//g; s/\r$//; s/.*\r//'
+  "$@" 2>&1 | tee /dev/fd/3 | LC_ALL=C sed -E 's/\x1b(\[[0-?]*[ -\/]*[@-~]|\][^\x1b]*\x1b\\|\(B)//g; s/\r$//; s/.*\r//'
   return $pipestatus[1]
 }
 
