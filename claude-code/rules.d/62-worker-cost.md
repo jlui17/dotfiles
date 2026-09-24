@@ -4,12 +4,12 @@ When delegating, picking the right model for the job is really important. Think 
 |-------------|------|--------------|-------|---------------------|
 | gpt-6-luna  | 1    | 4            | 3     | high, xhigh         |
 | sonnet-5    | 3    | 3            | 3     | —                   |
-| gpt-6-sol   | 5    | 7            | 6     | low, medium         |
+| gpt-6-sol   | 5    | 7            | 6     | low, medium, high   |
 | opus-5-5    | 5    | 8            | 8     | medium, high, xhigh |
 | gpt-6-astra | 9    | 9            | 7     | low, medium, high   |
 | fable-5-1   | 10   | 10           | 10    | medium, high        |
 
-Use luna for bulk mechanical passes and for reconnaissance: explore and gather evidence on luna, then move the real work up. Use sonnet only when luna usage is out; I'd rather not use sonnet or haiku at all for now. Sol and opus overlap, and it's not a hard line: when a job needs that level of intelligence, like coding or some design, prefer opus. Sol is cheaper and faster for computer use, ad-hoc verification, browser work, and a second review. Opus is a good reviewer too. Astra is for very thorough verification, testing, and review. Fable is an advisor for really careful design and thinking. When the output misses the bar, rerun it stronger. You don't need to ask me.
+Use luna for bulk mechanical passes and for reconnaissance: explore and gather evidence on luna, then move the real work up. Use sonnet only when luna usage is out; I'd rather not use sonnet or haiku at all for now. Sol and opus overlap, and it's not a hard line: when a job needs that level of intelligence, like coding or some design, prefer opus. Sol is cheaper and faster for computer use, ad-hoc verification, browser work, and a second review. Opus is a good reviewer too. Astra is for very thorough verification, testing, and review. On high, astra goes very deep: use it when we need to be really sure a change works. Fable is an advisor for really careful design and thinking. When the output misses the bar, rerun it stronger. You don't need to ask me.
 
 Every worker is a delegated worker, including the ones a packaged skill tells you to spawn: /simplify, /code-review, pr-review, the context sweeps. Run the skill's procedure as written, but you stay the orchestrator: you write the prompts, verify the findings, apply the fixes, and report them. When a skill names a Claude tier, map it: Haiku is luna, Sonnet is sol, Opus is opus, and no name means you pick from the table. The work that stays with you is the overarching kind: the design, the architecture, the UI and UX calls, and whatever only you can reach. If you aren't fable, bring in a fable advisor for the hard design calls.
 
