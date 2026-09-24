@@ -50,30 +50,75 @@ _update_pkgs_brew() {
 
 # omarchy update wraps pacman, AUR and mise up, and adds the snapshot and the
 # migrations that ship with new packages. -y skips its opening confirmation and
-# makes a package conflict fail rather than ask. The orphan and reboot
-# questions still get asked when they apply, and sudo may want a password, so
-# this one step runs on the terminal. A yes to the reboot question reboots
-# within seconds, and the steps after this one never run.
+# makes a package conflict fail rather than ask. Its output goes to the log like
+# any other step's, so nothing in it may ask a question: a prompt in the log is
+# a hang. That rests on how Omarchy 4.0.4 works inside:
+#
+# - sudo. Left alone, omarchy update re-execs itself under script(1), and sudo
+#   tickets are per tty: the one taken here would not count on script's pty.
+#   OMARCHY_UPDATE_LOGGED=1 is its own guard against that re-exec. If Omarchy
+#   drops the guard, its sudo prompt lands in the log and shows on the └ row.
+#   stdin stays the terminal, or its stay-awake asks through pkexec, a GUI prompt.
+# - The reboot question is a gum confirm whatever stdout is, and its default is
+#   Yes, so a timeout would reboot. omarchy/update-shims/gum answers No and
+#   records the question, which becomes a note.
+# - The orphan question is skipped when stdout is not a terminal. Omarchy prints
+#   a line saying so, which becomes a note.
 #
 # The result counts pacman's own log, which covers AUR builds too. mise tools
 # and migrations are not in it.
 _update_pkgs_omarchy() {
-  step_owns_terminal
+  _update_pkgs_try "sudo for omarchy" sudo_check_and_run true || return
   local -i pacman_log_start=$(wc -l < /var/log/pacman.log)
-  _update_pkgs_try "omarchy update" _update_pkgs_on_terminal omarchy update -y || return
+  local omarchy_log=/tmp/omarchy-update.log gum_questions=/tmp/update-pkgs-gum-questions
+  : > "$gum_questions"
+  _update_pkgs_try "omarchy update" _update_pkgs_omarchy_unattended "$omarchy_log" "$gum_questions"
+  local -i rc=$?
+
+  local line
+  for line in ${(f)"$(<$gum_questions)"}; do
+    note "Omarchy: ${line%. *}. Reboot when ready."
+  done
+  rm -f "$gum_questions"
+  line="$(grep -m 1 'orphaned package(s) found' "$omarchy_log")" && note "Omarchy: $line"
+  (( rc )) && return $rc
+
   local -i upgraded=$(tail -n +$((pacman_log_start + 1)) /var/log/pacman.log | grep -c '\[ALPM\] upgraded ')
   result "$upgraded upgraded (pacman and AUR)"
 }
 
-# The pipe is safe because omarchy update re-execs itself under script(1): its
-# tools get a pty of their own and the prompts read the keyboard through it.
-# tee shows the run live. sed gives the log what the screen ended up showing:
-# escape sequences (CSI, OSC, charset) dropped, and only the last state of a
-# line redrawn with \r. LC_ALL=C makes the ranges byte ranges: en_US.UTF-8
-# collates ? before 0, and GNU sed then rejects [0-?] and takes tee down with it.
-_update_pkgs_on_terminal() {
-  "$@" 2>&1 | tee /dev/fd/3 | LC_ALL=C sed -E 's/\x1b(\[[0-?]*[ -\/]*[@-~]|\][^\x1b]*\x1b\\|\(B)//g; s/\r$//; s/.*\r//'
-  return $pipestatus[1]
+# $1 is where script(1) would have put the raw output: omarchy update greps
+# that file for known failures as it finishes, so it has to be this run's.
+# sed gives our log what a screen would have ended up showing: escape sequences
+# (CSI, OSC, charset) dropped, and only the last state of a line redrawn with
+# \r. -u, or sed writes to a file in blocks and the └ row has nothing to show
+# for minutes. LC_ALL=C makes the ranges byte ranges: en_US.UTF-8 collates ?
+# before 0, and GNU sed then rejects [0-?] and takes tee down with it.
+_update_pkgs_omarchy_unattended() {
+  # Read here: a background command expands its arguments after the fork, and
+  # would get its own PID.
+  zmodload zsh/system
+  local -i shell_pid=$sysparams[pid]
+  _update_pkgs_sudo_keepalive $shell_pid &>/dev/null &
+  local keepalive_pid=$!
+  PATH="$DOTFILES_DIR/omarchy/update-shims:$PATH" OMARCHY_UPDATE_LOGGED=1 UPDATE_PKGS_GUM_QUESTIONS="$2" \
+    omarchy update -y 2>&1 | tee "$1" | LC_ALL=C sed -u -E 's/\x1b(\[[0-?]*[ -\/]*[@-~]|\][^\x1b]*\x1b\\|\(B)//g; s/\r$//; s/.*\r//'
+  local -i rc=$pipestatus[1]
+  kill $keepalive_pid 2>/dev/null
+  wait $keepalive_pid 2>/dev/null
+  return $rc
+}
+
+# sudo's ticket runs out (5 minutes by default) partway through a long pacman
+# run, and the next sudo inside omarchy update would prompt under the live
+# block. Ends by itself within a second of the shell it serves ($1) going,
+# however that shell went, so no trap has to know about it.
+_update_pkgs_sudo_keepalive() {
+  local -i tick=0
+  while kill -0 $1 2>/dev/null; do
+    sleep 1
+    (( ++tick % 60 )) || sudo -n -v
+  done
 }
 
 # -y, because a Y/n prompt hidden in the log would look like a hang.

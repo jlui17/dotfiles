@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# gum, for the `omarchy update` that update_pkgs runs with its output in a log,
+# where a question is a hang nobody can see. `gum confirm` is answered No and
+# the question recorded for update_pkgs to pass on as a note; zsh-functions/
+# update_pkgs.sh says why No. Anything else is the real gum's.
+#
+# Reached only through the PATH update_pkgs gives that one command. install.sh
+# must never link this directory's contents onto the machine's PATH.
+
+if [[ ${1:-} == confirm ]]; then
+  # The question is the last argument; flags come before it.
+  printf '%s\n' "${@: -1}" >> "$UPDATE_PKGS_GUM_QUESTIONS"
+  exit 1
+fi
+
+# The real gum is the next one on PATH, as in omarchy/bin/quickshell.
+IFS=: read -ra path_dirs <<< "$PATH"
+
+for dir in "${path_dirs[@]}"; do
+  candidate="$dir/gum"
+  [[ -f $candidate && -x $candidate ]] || continue
+  [[ $candidate -ef $0 ]] && continue
+  exec "$candidate" "$@"
+done
+
+echo "gum shim: no gum on PATH besides $0" >&2
+exit 127

@@ -24,9 +24,9 @@ CHECKLIST_LIVE=""
 RUN_IS_INTERACTIVE=""
 
 # The live block. LIVE_STEP names the running step while it has a block, on
-# screen or hidden for a moment; step_owns_terminal clears it. The main shell
-# draws the block and then leaves fd 3 alone until it has stopped the renderer,
-# the background subshell behind RENDERER_PID that redraws the block.
+# screen or hidden for a moment. The main shell draws the block and then leaves
+# fd 3 alone until it has stopped the renderer, the background subshell behind
+# RENDERER_PID that redraws the block.
 #
 # Assumes the output API is called from the main shell, as every module does
 # today. A warn inside $( ) or a pipeline would restart the renderer in a
@@ -218,15 +218,6 @@ draw_live_frame() {
   print -rn -- "$frame"$'\e[K\e[1B\r\e[K\e[1B\r'"$bar"$'\e[J\e['$(( ${#LIVE_PENDING} + 3 ))$'A\r' >&3
 }
 
-# For a step that needs the real terminal (its tool prompts, or sudo may): the
-# live block goes and stays gone until the step's result line, and the step
-# streams to fd 3 itself.
-step_owns_terminal() {
-  hide_live_block
-  LIVE_STEP=""
-  label_break
-}
-
 # A problem worth the user's attention that doesn't stop the install. Failure
 # bookkeeping is the caller's (track does it, so do the merge_json paths).
 warn() {
@@ -272,7 +263,8 @@ ask() {
 # normally prints the path is never reached.
 die() {
   # No live block to come back after the warning: this is the way out.
-  step_owns_terminal
+  hide_live_block
+  LIVE_STEP=""
   warn "$*"
   emit "  Log: $OUTPUT_LOG"
   exit 1
