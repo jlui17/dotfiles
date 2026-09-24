@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-# Fake steps through the real output API, about 15 seconds, so a change to
+# Fake steps through the real output API, about 16 seconds, so a change to
 # lib/output.zsh can be watched by hand:
 #
 #   lib/output-demo.zsh                          the live checklist
@@ -47,12 +47,15 @@ demo_download() {
 
 demo_compile() {
   print "Linking node 22.11.0 with a line long enough that a narrow terminal has to truncate it instead of wrapping"; sleep 1.5
+  # Ends the way zinit does: a bare carriage return and no newline.
+  print -n -- "The build took 1.5 seconds"$'\r'
 }
 
 demo_runtimes() {
   track "fetch index" demo_fetch_index
   track "download node" demo_download
   track "compile" demo_compile
+  print "Pruning old versions"; sleep 1
   result "1 upgraded: node"
 }
 

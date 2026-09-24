@@ -288,7 +288,9 @@ track() {
   # the warning would otherwise be the last things the tail picks up.
   (( rc )) && tail_text=$(tail -n +$((start_line + 1)) "$OUTPUT_LOG" | tail -n 15 | sed 's/^/      /')
   # Closes the "---" line: what follows in the log is no longer this command's,
-  # and the live block stops naming it as the phase.
+  # and the live block stops naming it as the phase. It needs a line of its own,
+  # and zinit ends its output with a bare carriage return.
+  [[ -z "$(tail -c 1 "$OUTPUT_LOG")" ]] || print -r -- ""
   print -r -- "--> $label: exit $rc"
   (( rc )) || return 0
   # warn, spelled out: the tail has to reach fd 3 before the renderer is back.
