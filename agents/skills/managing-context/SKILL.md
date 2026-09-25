@@ -13,7 +13,7 @@ Personal facts go to auto-memory, standing rules go to rules.d. Auto-memory cove
 
 Within a layer, split by what the text does. A trigger or gate belongs to the always-on layer, because a skill loads too late to gate its own loading. Detail, procedure, and reference material belong to the skill, which pays its cost only when it fires.
 
-Judgment goes to context, determinism goes to code. Decisions, tradeoffs, and taste are prose; a fixed procedure (runbook, check, recovery sequence) gets codified as a script, hook, or skill script, with the prose keeping only the pointer and the why.
+Judgment goes to context, determinism goes to code. Decisions, tradeoffs, and taste are prose; a fixed procedure (runbook, check, recovery sequence) gets codified as a script, hook, or skill script, with the prose keeping only the pointer and the why. When a lesson comes from a repeated failure, check first whether a script, hook, or allow rule can prevent it: a mechanical fix holds every time, and a prose rule holds only in part.
 
 ## One home per instruction
 
@@ -29,7 +29,9 @@ An addition is an edit. A new lesson lands in its topic's existing home, so grep
 
 ## Maintain in both directions
 
-Stale or wrong context gets removed with the same energy new lessons get added. Confident in the edit, or it was already discussed → apply and commit it yourself end to end (repo edits get their own commit, never folded into the task's commits), reporting what changed. Unsure → propose and wait. A repeated correction is the deadline, not the trigger: save the lesson the first time when it clearly generalizes.
+Stale or wrong context gets removed with the same energy new lessons get added. Confident in the edit, or it was already discussed → apply and commit it yourself end to end (repo edits get their own commit, never folded into the task's commits), reporting what changed. Unsure → propose the edit and leave it unapplied while the rest of the task keeps going (the letter's rule for a decision you aren't confident in). A repeated correction is the deadline, not the trigger: save the lesson the first time when it clearly generalizes. The test for "generalizes" is whether the lesson would have helped most recent sessions or only the one that hit it; one session's stumble saved as a standing rule makes every later session work around a problem it does not have.
+
+A removal is a hypothesis. Check the behavior after it (the baseline test under "Writing a skill" is the method) and re-add the line plainly if something regresses. A new model release calls for the full audit, because the instructions tuned to the previous model's failures are the ones that start to hurt.
 
 The writing bar for both layers, what earns a line in a CLAUDE.md and what earns a skill, is the next three sections; read them before writing either layer.
 
@@ -37,8 +39,14 @@ The writing bar for both layers, what earns a line in a CLAUDE.md and what earns
 
 The general craft (context pointers, the information hierarchy, completion criteria, leading words, pruning) is the `writing-for-agents` skill in the mattpocock-skills plugin; where it is installed, read it alongside this one. Two of its rules hold here for every layer, and this skill is written to them:
 
-- **State the target behavior.** A prohibition drags the banned behavior into context and half-reads as an instruction to do it. Write what to do; keep a prohibition only as a guardrail that has no positive phrasing, and pair it with the positive target.
+- **State the target behavior.** A prohibition drags the banned behavior into context and half-reads as an instruction to do it. Write what to do. A prohibition earns its place in two cases: a guardrail that has no positive phrasing, and a specific failure that was seen, named with its reason (the letter's list of stops is the example). Pair either with the positive target.
 - **One trigger per branch.** A skill description and a pointer line in a CLAUDE.md are the same object: they name material and the distinct cases that should reach it. Give each distinct case one trigger, front-loaded with the word that does the work; synonyms that rename one case are one branch written twice.
+
+Three more come from Anthropic's prompt-audit guide (`/claude-api prompt-audit`), which is also the tool for auditing context against the current model:
+
+- **Normal volume.** Say exactly what you mean in plain sentences, with the reason beside the rule. Caps and stacked emphasis make the model over-apply the rule, and an anxious register in the prompt becomes a hedging register in the output. A hedge ("try to", "if possible", "ideally") on a real requirement is read literally as permission to skip it, so a requirement is written as a requirement.
+- **State the scope.** The model reads an instruction literally and does not extend it from one case to the next. Say where a rule holds (every message, one repo, the main session only) whenever the reader could not tell.
+- **Write each rule as if it always existed.** "Now", "no longer", an incident, a PR number, or a model name makes the text a diff against a version the reader never saw. State the current rule and its reason; the history belongs in the commit message.
 
 ## Writing a skill
 
@@ -52,11 +60,11 @@ Distilled from Anthropic's skill-creator (https://github.com/anthropics/skills/b
 
 ## Writing the global CLAUDE.md
 
-`~/CLAUDE.md` is a letter from Justin to Claude. It is one fragment, `agents/rules.d/10-letter.md`, and it reads as Justin speaking: first person, casual, short sentences that flow. One topic per paragraph, ordered by importance, with no headings and no topic prefixes ("Scope first."). It explains why and trusts the model's judgment; gates, steps, and case lists belong in skills. Less is more: an addition is an edit to the paragraph it belongs to, rewritten so it still flows. About ten paragraphs is the size; past that, something has to go.
+`~/CLAUDE.md` is a letter from Justin to Claude. It is one fragment, `agents/rules.d/10-letter.md`, and it reads as Justin speaking: first person, casual, short sentences that flow. One topic per paragraph, ordered by importance, with no headings and no topic prefixes ("Scope first."). It explains why and trusts the model's judgment; steps, procedures, and reference lists belong in skills. A gate on an action (what waits for Justin, what is already Claude's) stays in the letter, because a skill loads too late to gate anything. It addresses the main session, and subagents read it too, so a paragraph that speaks only to the main session says so. An addition is an edit to the paragraph it belongs to, rewritten so it still flows. The test for every line is what it tells Claude that Claude would not do by itself: context only Justin has (his preferences, the environment, the reasons) stays however long it runs, and a line that restates a default goes.
 
 Ask what a line is for before writing it. A trap, a procedure, or reference material goes in the skill that fires when it's needed; the letter carries at most a pointer, and none at all when a skill description already triggers on the situation. herdr-specific text goes in `claude-code/herdr-session-hook.sh`, which fires only where herdr runs. The other rules.d fragments assemble right after the letter and read as part of it: same voice, no heading, and a table where a table carries the content (the worker table is the example). `99-local.md` opens with "A few things that only apply on this machine."
 
-The voice, by example. Not: "Comments default to none. Write one only when it says something a reader can't get from the code." But: "The most readable code is code where everything can be inferred from reading it. If something can be expressed in code, express it in code. Comments and docs are for what the code can't say on its own: taste, assumptions, limitations that aren't obvious."
+The voice, by example. Not: "Comments default to none. Write one only when it says something a reader can't get from the code." But: "The most readable code is code where everything can be inferred from reading it. If something can be expressed in code, express it in code. Comments and docs are for what the code can't say on its own: taste, assumptions, limitations that aren't obvious." Every instruction reads right on the first skim: a named actor and a plain verb, not a pronoun, dropped verb, or compressed phrase the reader has to resolve. Not: "For a small task that's one line, and for a task that will run for hours it's all five." But: "For a small task just provide one line, and for a task that will run for hours you need all five."
 
 ## Writing a repo CLAUDE.md
 
