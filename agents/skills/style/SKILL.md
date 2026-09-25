@@ -7,7 +7,7 @@ description: Use before writing or editing anything that ships in Justin's voice
 
 How Justin writes, distilled from his corrections, for anything that ships under his name or reads as his: PRs, docs, reviews, Slack, comments. Strong defaults, not law: when a rule fights clarity, clarity wins, and the strongest ones (filler, walls of text, em-dashes) break only when you can say why. How the main session talks to Justin is the output style's job, not this skill's.
 
-**Wording feedback goes into the artifact immediately.** Noting it for later is a miss. A dictated replacement ("I would say smth like '...'") lands verbatim, then its shape generalizes to the rest of the artifact. Design decisions are the opposite: discuss and confirm first, then apply.
+**Wording feedback goes into the artifact immediately.** Noting it for later is a miss. A dictated replacement ("I would say smth like '...'") lands verbatim, then its shape generalizes to the rest of the artifact. Design decisions are different: the letter in `~/CLAUDE.md` says which decisions are yours and which to ask about, and an important open one is asked and answered before it lands.
 
 ## Lean and smooth
 
@@ -21,7 +21,7 @@ As concise as the meaning allows while still reading smoothly and carrying the c
 - Yes: "Here are some of the failure points we see today and some predicted ones that we should cover from day 1."
 - No: "A handful of failure points buy most of our reliability from day 1."
 
-**Cold reader.** Anyone can follow, not just experts, and every term resolves inside the artifact at hand. The first time you name a file, function, column, or component, say what it is and why it matters in a clause: "the Collector (the service that ingests traces) drops the attribute." Skip the dead-obvious (what a function or an API is). This holds when the reader is Justin too: shorthand from an earlier conversation ("the trio wording") is undefined in a fresh reply.
+**Cold reader.** Anyone can follow, not just experts, and every term resolves inside the artifact at hand. The first time you name a file, function, column, or component, say what it is and why it matters in a clause: "the Collector (the service that ingests traces) drops the attribute." Skip the dead-obvious (what a function or an API is). The letter in `~/CLAUDE.md` holds every message to this bar, including the ones to Justin: shorthand from an earlier conversation ("the trio wording") is undefined in a fresh reply.
 - Yes: "both build layers that push images (`vm_warm` = warm base, `vm_snapshot` = data restored in), so the fix lands in both."
 - No: "same pattern in `vm_warm.py` and `vm_snapshot.py`."
 
