@@ -1,0 +1,27 @@
+#!/bin/zsh
+# herdr-goto — fuzzy-pick any pane in the session and focus it. config.toml
+# binds it to prefix+g, where it runs in a popup.
+
+# The popup inherits the herdr server's PATH, and launchd and systemd give the
+# server a minimal one: no Homebrew and no mise shims, where fzf lives on macOS
+# and Ubuntu.
+path+=(/opt/homebrew/bin "$HOME/.local/share/mise/shims")
+
+pick=$("$HERDR_BIN_PATH" api snapshot | jq -r '
+  .result.snapshot
+  | (.workspaces | map({key: .workspace_id, value: .label}) | from_entries) as $space
+  | (.tabs | map({key: .tab_id, value: .label}) | from_entries) as $tab
+  | ["SPACE", "TAB", "AGENT", "STATUS", "PANE"],
+    (.panes[] | [$space[.workspace_id], $tab[.tab_id],
+                 .display_agent // .agent // "-",
+                 (if .agent then .agent_status else "-" end), .pane_id])
+  | map(if . == "" then "-" else . end) | @tsv' |
+  column -t -s $'\t' |
+  fzf --header-lines=1 --layout=reverse) || exit 0
+
+# The CLI focuses a pane by id only when it hosts an agent (`agent focus`), so
+# pane.focus goes to the socket API directly.
+zmodload zsh/net/socket
+zsocket "$HERDR_SOCKET_PATH"
+print -r -u $REPLY -- '{"id":"herdr-goto","method":"pane.focus","params":{"pane_id":"'${pick##* }'"}}'
+read -r -u $REPLY
