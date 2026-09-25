@@ -5,7 +5,7 @@ description: Use when Justin says "babysit" a PR, or asks to carry a PR through 
 
 # Babysitting a PR
 
-Justin's definition: loop over the automated feedback on a PR, fixing and replying and resolving on GitHub, until a poll on the current head shows nothing left to address. Stop and align with him only when blocking feedback is valid and either contradicts a decision we made together or meaningfully expands the PR's scope. Everything else is yours to handle. Summoning a bot (`@claude review`, `@codex review`) is his, per `~/CLAUDE.md`.
+Justin's definition: loop over the automated feedback on a PR, fixing and replying and resolving on GitHub, until a poll on the current head shows nothing left to address. Stop and align with him only when blocking feedback is valid and either contradicts a decision we made together or meaningfully expands the PR's scope. Everything else is yours to handle. Address the review bot comments that come in on their own, and never summon a bot yourself (`@claude review`, `@codex review`).
 
 Per-item handling is the `pr-feedback` skill (one commit per item, resolve the thread once addressed, feedback as a documentation signal); reply prose is the `style` skill; fixes go to workers per `~/CLAUDE.md`. This skill is the loop around them.
 
