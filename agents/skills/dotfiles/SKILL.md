@@ -11,7 +11,7 @@ description: Use for Justin's dotfiles: a change to his machine setup (shell, te
 
 1. Edit the source in the repo, in the module that owns it (table below).
 2. Run `./install.sh` from `~/src/personal/dotfiles`. Symlinked files are live the moment they are edited. The run matters for a new or deleted file (its link is created or pruned) and for what is generated, merged, or replayed (the global rules files, settings.json, plugins, external skills, the Codex block). It is idempotent and prints one result line per module; the full log is `/tmp/dotfiles-install.log`.
-3. Verify with the module's own check (each resource names it), then commit. Changes reach other machines when they pull and run `./install.sh`.
+3. Verify with the module's own check (each resource names it), then commit it on main and push. This repo takes no branches or PRs. Changes reach other machines when they pull and run `./install.sh`.
 
 Deployed files that look editable are not: `~/CLAUDE.md` and `~/.codex/AGENTS.md` are generated and overwritten on every run, `~/.claude/settings.json` has its repo-declared keys re-asserted, `~/.codex/config.toml` has a managed block that is rewritten. Trace a file back to its module before editing it; `readlink` on a symlink names the source.
 
