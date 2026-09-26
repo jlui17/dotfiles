@@ -11,13 +11,23 @@ pick=$("$HERDR_BIN_PATH" api snapshot | jq -r '
   .result.snapshot
   | (.workspaces | map({key: .workspace_id, value: .label}) | from_entries) as $space
   | (.tabs | map({key: .tab_id, value: .label}) | from_entries) as $tab
-  | ["SPACE", "TAB", "AGENT", "STATUS", "PANE"],
-    (.panes[] | [$space[.workspace_id], $tab[.tab_id],
-                 .display_agent // .agent // "-",
-                 (if .agent then .agent_status else "-" end), .pane_id])
+  # Most urgent first, in the order of the priority sidebar in herdr.
+  | {blocked: 0, done: 1, working: 2, idle: 3} as $urgency
+  | ["STATUS", "TAB", "SPACE", "AGENT", "PANE"],
+    (.panes | sort_by($urgency[.agent_status] // 4)[]
+     | [$urgency[.agent_status] // 4, $tab[.tab_id], $space[.workspace_id],
+        .display_agent // .agent // "-", .pane_id])
   | map(if . == "" then "-" else . end) | @tsv' |
-  column -t -s $'\t' |
-  fzf --header-lines=1 --layout=reverse) || exit 0
+  # The popup has no locale, and column needs a UTF-8 one to count a multibyte
+  # character in a label as one cell.
+  LC_ALL=C.UTF-8 column -t -s $'\t' |
+  # The urgency digit becomes the symbol of its state here, after column, which
+  # counts the bytes of a color escape as width. The shape carries the state.
+  # The colors are the Okabe-Ito four from config.toml.
+  sed -e $'s/^0/\e[38;2;213;94;0m×\e[m/' -e $'s/^1/\e[38;2;86;180;233m✓\e[m/' \
+      -e $'s/^2/\e[38;2;240;228;66m◐\e[m/' -e $'s/^3/\e[38;2;0;158;115m○\e[m/' \
+      -e 's/^4/·/' |
+  fzf --ansi --header-lines=1 --layout=reverse) || exit 0
 
 # The CLI focuses a pane by id only when it hosts an agent (`agent focus`), so
 # pane.focus goes to the socket API directly.
