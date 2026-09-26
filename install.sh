@@ -241,6 +241,7 @@ MODULES=(
   apps:setup_apps
   retire-raycast:retire_raycast:macos
   retire-rectangle:retire_rectangle:macos
+  retire-vscode:retire_vscode:macos
   tpm:setup_tpm
   zshrc:setup_zshrc
   tmux:setup_tmux
@@ -1783,6 +1784,17 @@ retire_rectangle() {
   fi
   track "brew uninstall Rectangle" brew uninstall --cask rectangle \
     && changed "uninstalled Rectangle"
+}
+
+# VS Code is not in GUI_APPS; remove the cask where an earlier install left it.
+retire_vscode() {
+  echo "==> VS Code retirement..."
+  if ! brew list --cask visual-studio-code &>/dev/null; then
+    result "already gone"
+    return 0
+  fi
+  track "brew uninstall VS Code" brew uninstall --cask visual-studio-code \
+    && changed "uninstalled VS Code"
 }
 
 # ──────────────────────────────────────────────
