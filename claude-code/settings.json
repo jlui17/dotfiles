@@ -32,5 +32,34 @@
   "voice": {
     "enabled": true,
     "mode": "hold"
+  },
+  "autoMode": {
+    "environment": [
+      "### Org-wide",
+      "**Organization**: None configured",
+      "**Cloud provider(s)**: None configured",
+      "**Repository visibility**: PUBLIC — github.com/jlui17/dotfiles (any push here is publishing)",
+      "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary",
+      "**Secrets management**: None configured",
+      "**Default / protected branches**: main (default); no branch protection rules or rulesets listed via gh",
+      "**CI/CD deploy targets**: None configured",
+      "**Network posture**: None configured",
+      "**Host containment**: None configured — assume Claude Code runs on an ordinary developer machine with open internet",
+      "**Source control**: The trusted repo (jlui17/dotfiles) and its origin remote only (github.com/jlui17/dotfiles.git) — no additional orgs configured",
+      "**Trusted internal domains**: None configured",
+      "**Trusted cloud buckets**: None configured",
+      "**Key internal services**: None configured",
+      "**Internal package registry**: None configured",
+      "**Sensitive data locations & audiences**: any file or store holding personal data, confidential business data, credentials, regulated data, or similarly sensitive material; preserve exact handles when known and share only with audiences cleared at the [named+specifics] bar; note repo contains sensitive-looking paths codex/session-start-hook-allowlist and op-secret-cache/op-secret-cache — treat as credential-adjacent and handle accordingly",
+      "**Data retention / declassification**: None configured",
+      "**Sensitive remote targets**: any namespace, host, or container whose name carries `prod` or `production` as a whole word or name segment",
+      "**Protected deployment namespaces / environments**: None configured — fall back to the Sensitive remote targets heuristic",
+      "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries `prod` or `production` as a whole word or name segment",
+      "### User-specific",
+      "**Primary use of Claude Code**: software development (dotfiles/config management across personal machines — macOS, Arch/Omarchy, Ubuntu VPS)",
+      "**Trusted repo**: jlui17/dotfiles (public), working directory /Users/justinlui/src/personal/dotfiles, remote origin https://github.com/jlui17/dotfiles.git — since public, only this repo's own work is safe to commit/push here; secrets and sensitive data are never cleared into it regardless of visibility",
+      "**Org-specific CLIs**: None configured (herdr, survey, dev-machines, hunk, slk, hd, hdm, mdnote, tea, gauth appear to be personal/custom tools used routinely by this user, not org-mandated)",
+      "routine under ~/src/personal/dotfiles/ prefix qualifies as this project's trusted working tree"
+    ]
   }
 }
