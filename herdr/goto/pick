@@ -11,14 +11,16 @@ exec < "$GOTO_LIST"
 rm -f "$GOTO_LIST"
 
 # Vim-like modes. The picker opens in normal mode with the input hidden: j and
-# k move, Enter picks, Esc quits. / shows the input in place of the header to
-# search. In search mode, Enter keeps the filter and Esc clears it, and both go
-# back to normal mode on the first row. fzf runs transform with /bin/sh in the
-# popup, where clear-query does not stick, so Esc clears the query before it.
+# k move, ctrl-d and ctrl-u move half a page, Enter picks, Esc quits. / shows
+# the input in place of the header to search. In search mode, Enter keeps the
+# filter and Esc clears it, and both go back to normal mode on the first row.
+# fzf runs transform with /bin/sh in the popup, where clear-query does not
+# stick, so Esc clears the query before it.
 # --with-nth hides the pane id, the last field, and --accept-nth prints only it.
 pick=$(fzf --ansi --header-lines=1 --layout=reverse --no-input --info=inline-right --no-separator --no-scrollbar \
   --with-nth=..-2 --accept-nth=-1 \
-  --bind 'j:down,k:up,/:show-input+hide-header+unbind(j,k,/)' \
+  --bind 'j:down,k:up,ctrl-d:half-page-down,ctrl-u:half-page-up' \
+  --bind '/:show-input+hide-header+unbind(j,k,/)' \
   --bind 'enter:transform:[ "$FZF_INPUT_STATE" = hidden ] && echo accept || echo "hide-input+show-header+rebind(j,k,/)+first"' \
   --bind 'esc:clear-query+transform:[ "$FZF_INPUT_STATE" = hidden ] && echo abort || echo "hide-input+show-header+rebind(j,k,/)+first"')
 [[ -n $pick ]] || exit 0
