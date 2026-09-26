@@ -1083,9 +1083,15 @@ setup_herdr() {
   ensure_dir "$herdr_dir"
 
   backup_and_link "$DOTFILES_DIR/herdr/config.toml" "$herdr_dir/config.toml"
-  # config.toml's prefix+space binding runs this by its deployed path.
-  ensure_dir "$HOME/.local/bin"
-  backup_and_link "$DOTFILES_DIR/herdr/herdr-goto" "$HOME/.local/bin/herdr-goto"
+  # config.toml's prefix+space binding runs this plugin's action.
+  if ! herdr plugin list 2>/dev/null | grep -q dotfiles.goto; then
+    track "link herdr goto plugin" herdr plugin link "$DOTFILES_DIR/herdr/goto"
+  fi
+  local retired_goto="$HOME/.local/bin/herdr-goto"
+  if [[ -L "$retired_goto" && "$(readlink "$retired_goto")" == "$DOTFILES_DIR/herdr/herdr-goto" ]]; then
+    rm "$retired_goto"
+    changed "removed herdr-goto"
+  fi
 
   # Nothing supervises the server out of the box: a client spawns one on
   # demand and it dies with the machine. A user unit (Linux) or LaunchAgent
