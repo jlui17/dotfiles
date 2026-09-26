@@ -1082,6 +1082,9 @@ setup_herdr() {
   ensure_dir "$herdr_dir"
 
   backup_and_link "$DOTFILES_DIR/herdr/config.toml" "$herdr_dir/config.toml"
+  # config.toml's prefix+space binding runs this by its deployed path.
+  ensure_dir "$HOME/.local/bin"
+  backup_and_link "$DOTFILES_DIR/herdr/herdr-goto" "$HOME/.local/bin/herdr-goto"
 
   # Nothing supervises the server out of the box: a client spawns one on
   # demand and it dies with the machine. A user unit (Linux) or LaunchAgent
@@ -1094,7 +1097,6 @@ setup_herdr() {
     if launchctl print "gui/$UID/sh.brew.herdr" &>/dev/null; then
       track "stop brew's herdr service" brew services stop herdr
     fi
-    ensure_dir "$HOME/.local/bin"
     backup_and_link "$DOTFILES_DIR/herdr/herdr-server-daemon" "$HOME/.local/bin/herdr-server-daemon"
     backup_and_link "$DOTFILES_DIR/herdr/herdr.plist" "$agents_dir/herdr.plist"
     if ! launchctl print "gui/$UID/herdr" &>/dev/null; then

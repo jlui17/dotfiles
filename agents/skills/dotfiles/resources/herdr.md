@@ -1,6 +1,6 @@
 # Herdr
 
-Owns `herdr/config.toml` (keybindings, theme, sidebar) and the server supervisor: `herdr/herdr.service` (systemd user unit, Linux) or `herdr/herdr.plist` (LaunchAgent, macOS), all linked by `setup_herdr`. The app itself installs through the `Herdr` row of `GUI_APPS`, so `SKIP_MODULES` and `SKIP_APPS` skip the config and the app independently. Check the server with `herdr status server --json`: `detached_server_daemon` must be true, or `herdr machine add` from another machine refuses it. That flag is why the plist wraps the server in perl's `setsid` and why brew's own service is stopped and replaced: launchd does not start jobs as session leaders. Loading the supervisor restarts the server once (panes die); after that the module leaves a running server alone, so an edit to `herdr.plist` or `herdr-server-daemon` takes effect only after `launchctl bootout gui/$UID/herdr` and a re-run (another one-time restart). This resource covers the config only; driving herdr programmatically (sessions, panes, agents) is the sibling global skill `herdr-agents`.
+Owns `herdr/config.toml` (keybindings, theme, sidebar), `herdr/herdr-goto` (the fzf pane picker on `prefix+space`, linked into `~/.local/bin`), and the server supervisor: `herdr/herdr.service` (systemd user unit, Linux) or `herdr/herdr.plist` (LaunchAgent, macOS), all linked by `setup_herdr`. The app itself installs through the `Herdr` row of `GUI_APPS`, so `SKIP_MODULES` and `SKIP_APPS` skip the config and the app independently. Check the server with `herdr status server --json`: `detached_server_daemon` must be true, or `herdr machine add` from another machine refuses it. That flag is why the plist wraps the server in perl's `setsid` and why brew's own service is stopped and replaced: launchd does not start jobs as session leaders. Loading the supervisor restarts the server once (panes die); after that the module leaves a running server alone, so an edit to `herdr.plist` or `herdr-server-daemon` takes effect only after `launchctl bootout gui/$UID/herdr` and a re-run (another one-time restart). This resource covers the config only; driving herdr programmatically (sessions, panes, agents) is the sibling global skill `herdr-agents`.
 
 ## Split keys mirror tmux
 
@@ -24,6 +24,20 @@ herdr config check
 ```
 
 If it passes, keep it. If it fails, re-comment it.
+
+## Testing a keybinding in a second session
+
+The CLI has no command that presses a key, so a binding is tested from a second herdr session with a client attached inside `<pane>`, a scratch pane you create in the live session and close afterwards. `pane send-keys` then types into that client, and `pane read` shows what it drew, popups included.
+
+```sh
+env -i HOME=$HOME USER=$USER SHELL=/bin/zsh PATH=/usr/bin:/bin:/usr/sbin:/sbin "$(command -v herdr)" --session keytest server &
+herdr --session keytest workspace create --cwd /tmp --label alpha --no-focus
+herdr pane run <pane> "env -u HERDR_ENV -u HERDR_SOCKET_PATH -u HERDR_PANE_ID -u HERDR_TAB_ID -u HERDR_WORKSPACE_ID herdr --session keytest"
+herdr pane send-keys <pane> ctrl+b g
+herdr pane read <pane> --source visible
+```
+
+`env -i` with that PATH is what launchd gives the real server, and a popup or shell command inherits it. `ctrl+b q` detaches the client; `herdr session stop keytest` and `herdr session delete keytest` remove the session. A throwaway config goes in through `HERDR_CONFIG_PATH` on both the server and the client, and it needs `onboarding = false`: without it the first client opens the welcome modal, then an integrations page where Enter installs an agent integration into `~/.claude`.
 
 ## Commands
 

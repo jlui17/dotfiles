@@ -59,6 +59,16 @@ next_tab = "prefix+n"
 split_vertical = "prefix+%"
 split_horizontal = "prefix+quote"
 
+# herdr runs the command as `/bin/sh -c` with the server's own environment, so
+# `~` expands but ~/.local/bin is not on PATH. setup_herdr links the script there.
+[[keys.command]]
+key = "prefix+space"
+type = "popup"
+description = "Go to any pane (fzf)"
+command = "~/.local/bin/herdr-goto"
+width = "80%"
+height = "60%"
+
 [ui]
 agent_panel_sort = "priority"
 # Unreleased as of 0.8.0. When it ships: distinct shape per state (× blocked,
