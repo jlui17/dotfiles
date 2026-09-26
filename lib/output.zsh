@@ -38,8 +38,9 @@ RENDERER_PID=""
 # The block's pending rows, "+N more" included. Every frame redraws them.
 LIVE_PENDING=()
 # Set while the terminal is the block's: its rows are on screen, the cursor is
-# hidden and echo is off. It stays set from one step to the next, so the next
-# block is drawn over the last one and nothing blinks in between.
+# hidden, and echo and line mode are off. It stays set from one step to the
+# next, so the next block is drawn over the last one and nothing blinks in
+# between.
 LIVE_BLOCK_SHOWN=""
 
 # Where in the log (a line count) each half of the running step's display starts
@@ -122,13 +123,13 @@ stop_renderer() {
 # Erase the live block, so a permanent line can print where it was.
 #
 # Every way out of a live block comes through here, which is what gives the
-# cursor and the echo back. A SIGKILL can't, and leaves both off: `stty sane`
-# or `reset` recovers.
+# cursor, the echo and line mode back. A SIGKILL can't, and leaves them off:
+# `stty sane` or `reset` recovers.
 hide_live_block() {
   [[ -n "$LIVE_BLOCK_SHOWN" ]] || return 0
   stop_renderer
   print -rn -- $'\r\e[J\e[?25h' >&3
-  stty echo <&3
+  stty echo icanon <&3
   LIVE_BLOCK_SHOWN=""
 }
 
@@ -148,8 +149,9 @@ show_live_block() {
   fi
   LIVE_DETAIL_LOG_START=$(wc -l < "$OUTPUT_LOG")
   # No echo while the block is live: a typed Enter would move the cursor off
-  # the block's first row.
-  [[ -n "$LIVE_BLOCK_SHOWN" ]] || stty -echo <&3
+  # the block's first row. Line mode goes too, because Ghostty takes echo off
+  # with line mode on for a password prompt and draws a lock at the cursor.
+  [[ -n "$LIVE_BLOCK_SHOWN" ]] || stty -echo -icanon <&3
   LIVE_BLOCK_SHOWN=1
   # Newlines make the room (at the bottom of the screen they scroll it) and
   # erase nothing. The frame fills the rows in.

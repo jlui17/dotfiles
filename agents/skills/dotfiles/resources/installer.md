@@ -46,7 +46,7 @@ Marks carry the meaning by shape (`✓` done, `!` failed, `–` skipped, spinner
 
 When fd 3 is not a terminal (`./install.sh > file`, a pipe, CI) each step is one static `[ 3/15] name .... result` line, and the log is the same in both modes.
 
-Known limits: the terminal size is read when the block is drawn, so a resize shows up at the next step. The cursor is hidden and terminal echo is off while the block is live, and `hide_live_block` gives both back on every way out; a SIGKILL cannot, and `stty sane` or `reset` recovers.
+Known limits: the terminal size is read when the block is drawn, so a resize shows up at the next step. The cursor is hidden and terminal echo and line mode are off while the block is live (echo off with line mode on looks like a password prompt to Ghostty, which then draws a lock at the cursor), and `hide_live_block` gives them back on every way out; a SIGKILL cannot, and `stty sane` or `reset` recovers.
 
 **sudo.** A bare `sudo` in a module skips the check, and its password prompt lands under the live block, so modules call `sudo_check_and_run`. A run that never reaches one never prompts. What cannot call it: a program that runs sudo itself (`sh -c`, `xargs`), which gets `sudo -n` after a call that did go through it, and a subshell (`$( )`, the left side of a pipe, a background job), which cannot move the live block. `omarchy update` runs its own sudo many times over many minutes, so `_update_pkgs_omarchy` takes the ticket first with `sudo_check_and_run true` and keeps it fresh while the command runs; the comment there says what that depends on inside Omarchy.
 
