@@ -1,0 +1,31 @@
+#!/bin/zsh
+# pick — the popup that `open` sizes to the pane list in $GOTO_LIST. fzf picks
+# a pane, and pick focuses it.
+
+# The popup inherits the herdr server's minimal PATH (see open).
+path+=(/opt/homebrew/bin "$HOME/.local/share/mise/shims")
+
+# fzf reads the list from stdin, which stays open after the file is deleted.
+# Deleting it first leaves nothing behind when herdr closes the popup.
+exec < "$GOTO_LIST"
+rm -f "$GOTO_LIST"
+
+# Vim-like modes. The picker opens in normal mode with the input hidden: j and
+# k move, Enter picks, Esc quits. / shows the input in place of the header to
+# search. In search mode, Enter keeps the filter and Esc clears it, and both go
+# back to normal mode on the first row. fzf runs transform with /bin/sh in the
+# popup, where clear-query does not stick, so Esc clears the query before it.
+# --with-nth hides the pane id, the last field, and --accept-nth prints only it.
+pick=$(fzf --ansi --header-lines=1 --layout=reverse --no-input --info=inline-right --no-separator --no-scrollbar \
+  --with-nth=..-2 --accept-nth=-1 \
+  --bind 'j:down,k:up,/:show-input+hide-header+unbind(j,k,/)' \
+  --bind 'enter:transform:[ "$FZF_INPUT_STATE" = hidden ] && echo accept || echo "hide-input+show-header+rebind(j,k,/)+first"' \
+  --bind 'esc:clear-query+transform:[ "$FZF_INPUT_STATE" = hidden ] && echo abort || echo "hide-input+show-header+rebind(j,k,/)+first"')
+[[ -n $pick ]] || exit 0
+
+# The CLI focuses a pane by id only when it hosts an agent (`agent focus`), so
+# pane.focus goes to the socket API directly.
+zmodload zsh/net/socket
+zsocket "$HERDR_SOCKET_PATH"
+print -r -u $REPLY -- '{"id":"goto-pick","method":"pane.focus","params":{"pane_id":"'$pick'"}}'
+read -r -u $REPLY

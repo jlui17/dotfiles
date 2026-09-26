@@ -1,0 +1,20 @@
+# A plugin only because plugin.pane.open is the one way to open a popup at a
+# size chosen at open time. `open` measures the pane list and opens `pick` in a
+# popup that fits it, so the popup never resizes after it appears.
+id = "dotfiles.goto"
+name = "Go to pane"
+version = "0.1.0"
+min_herdr_version = "0.9.0"
+platforms = ["macos", "linux"]
+
+[[panes]]
+id = "pick"
+title = "Go to pane"
+placement = "popup"
+command = ["zsh", "pick"]
+
+[[actions]]
+id = "open"
+title = "Go to any pane"
+contexts = ["workspace"]
+command = ["zsh", "open"]

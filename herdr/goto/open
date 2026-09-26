@@ -1,0 +1,48 @@
+#!/bin/zsh
+# open — the action config.toml binds to prefix+space. It builds the list of
+# every pane in the session and opens `pick` over it in a popup sized to fit
+# the list, so the popup never resizes after it appears.
+
+# herdr runs the action with the server's PATH, and launchd and systemd give
+# the server a minimal one: no Homebrew and no mise shims, where jq lives on
+# macOS and Ubuntu. The action has no locale, and column and ${(m)#} need a
+# UTF-8 one to count a multibyte character in a label as one cell.
+path+=(/opt/homebrew/bin "$HOME/.local/share/mise/shims")
+export LC_ALL=C.UTF-8
+
+lines=("${(@f)$("$HERDR_BIN_PATH" api snapshot | jq -r '
+  .result.snapshot
+  | (.workspaces | map({key: .workspace_id, value: .label}) | from_entries) as $space
+  | (.tabs | map({key: .tab_id, value: .label}) | from_entries) as $tab
+  # Most urgent first, in the order of the priority sidebar in herdr.
+  | {blocked: 0, done: 1, working: 2, idle: 3} as $urgency
+  # The status column is one symbol wide, so its header is one no-break space,
+  # which fzf does not strip as leading whitespace when it splits fields.
+  | [" ", "TAB", "SPACE", "AGENT", "PANE"],
+    (.panes | sort_by($urgency[.agent_status] // 4)[]
+     | [$urgency[.agent_status] // 4, $tab[.tab_id], $space[.workspace_id],
+        .display_agent // .agent // "-", .pane_id])
+  | map(if . == "" then "-" else . end) | @tsv' |
+  column -t -s $'\t')}")
+
+# pick shows each line up to the pane id, the last field, and column starts
+# that field at the same cell in every line, so the header measures them all.
+width=${(m)#${lines[1]%PANE}}
+
+# The urgency digit becomes the symbol of its state here, after column, which
+# counts the bytes of a color escape as width. The shape carries the state.
+# The colors are the Okabe-Ito four from config.toml. pick deletes the file.
+list=$(mktemp)
+print -rl -- $lines |
+  sed -e $'s/^0/\e[38;2;213;94;0m×\e[m/' -e $'s/^1/\e[38;2;86;180;233m✓\e[m/' \
+      -e $'s/^2/\e[38;2;240;228;66m◐\e[m/' -e $'s/^3/\e[38;2;0;158;115m○\e[m/' \
+      -e 's/^4/·/' > $list
+
+# The outer size in cells. The border takes 2 each way, fzf's pointer and
+# gutter take 2 columns, and herdr keeps 1 more column free inside a popup.
+# The rows are the header plus one per pane; search mode shows the input in
+# place of the header, so it needs no extra row.
+zmodload zsh/net/socket
+zsocket "$HERDR_SOCKET_PATH"
+print -r -u $REPLY -- '{"id":"goto-open","method":"plugin.pane.open","params":{"plugin_id":"dotfiles.goto","entrypoint":"pick","placement":"popup","width":'$((width + 5))',"height":'$((${#lines} + 2))',"env":{"GOTO_LIST":"'$list'"}}}'
+read -r -u $REPLY
