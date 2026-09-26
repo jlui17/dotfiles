@@ -58,13 +58,11 @@ next_tab = "prefix+n"
 # " stacked) — mirrored here so the muscle memory carries over.
 split_vertical = "prefix+%"
 split_horizontal = "prefix+quote"
-# herdr-goto takes prefix+g from the native goto.
-goto = ""
 
 # herdr runs the command as `/bin/sh -c` with the server's own environment, so
 # `~` expands but ~/.local/bin is not on PATH. setup_herdr links the script there.
 [[keys.command]]
-key = "prefix+g"
+key = "prefix+space"
 type = "popup"
 description = "Go to any pane (fzf)"
 command = "~/.local/bin/herdr-goto"

@@ -1,6 +1,6 @@
 #!/bin/zsh
 # herdr-goto — fuzzy-pick any pane in the session and focus it. config.toml
-# binds it to prefix+g, where it runs in a popup.
+# binds it to prefix+space, where it runs in a popup.
 
 # The popup inherits the herdr server's PATH, and launchd and systemd give the
 # server a minimal one: no Homebrew and no mise shims, where fzf lives on macOS

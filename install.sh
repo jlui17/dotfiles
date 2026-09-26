@@ -1082,7 +1082,7 @@ setup_herdr() {
   ensure_dir "$herdr_dir"
 
   backup_and_link "$DOTFILES_DIR/herdr/config.toml" "$herdr_dir/config.toml"
-  # config.toml's prefix+g binding runs this by its deployed path.
+  # config.toml's prefix+space binding runs this by its deployed path.
   ensure_dir "$HOME/.local/bin"
   backup_and_link "$DOTFILES_DIR/herdr/herdr-goto" "$HOME/.local/bin/herdr-goto"
 
