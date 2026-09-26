@@ -27,7 +27,15 @@ pick=$("$HERDR_BIN_PATH" api snapshot | jq -r '
   sed -e $'s/^0/\e[38;2;213;94;0m×\e[m/' -e $'s/^1/\e[38;2;86;180;233m✓\e[m/' \
       -e $'s/^2/\e[38;2;240;228;66m◐\e[m/' -e $'s/^3/\e[38;2;0;158;115m○\e[m/' \
       -e 's/^4/·/' |
-  fzf --ansi --header-lines=1 --layout=reverse) || exit 0
+  # Vim-like modes. The picker opens in normal mode with the input hidden: j and
+  # k move, Enter picks, Esc quits. / shows the input to search. In search mode,
+  # Enter keeps the filter and Esc clears it, and both go back to normal mode
+  # on the first row. fzf runs transform with /bin/sh in the popup, and with the
+  # input hidden it filters again only on the search action.
+  fzf --ansi --header-lines=1 --layout=reverse --no-input \
+    --bind 'j:down,k:up,/:show-input+unbind(j,k,/)' \
+    --bind 'enter:transform:[ "$FZF_INPUT_STATE" = hidden ] && echo accept || echo "hide-input+rebind(j,k,/)+first"' \
+    --bind 'esc:transform:[ "$FZF_INPUT_STATE" = hidden ] && echo abort || echo "clear-query+search()+hide-input+rebind(j,k,/)+first"') || exit 0
 
 # The CLI focuses a pane by id only when it hosts an agent (`agent focus`), so
 # pane.focus goes to the socket API directly.
